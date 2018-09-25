@@ -1,6 +1,6 @@
 package ru.yandex.clickhouse.jdbcbridge.servlet;
 
-import com.google.common.util.concurrent.Runnables;
+import lombok.SneakyThrows;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.StringUtil;
 import ru.yandex.clickhouse.settings.ClickHouseProperties;
@@ -21,6 +21,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Types;
+import java.util.function.Function;
 
 /**
  * Created by krash on 21.09.18.
@@ -55,58 +56,64 @@ public class QueryHandlerServlet extends HttpServlet {
                     for (int i = 1; i <= meta.getColumnCount(); i++) {
                         final boolean nullable = ResultSetMetaData.columnNullable == meta.isNullable(i);
 
-                        Runnable cb = nullable ? () -> {
-                            try {
-                                stream.writeByte((byte) 0);
-                            } catch (Exception err) {
-                                throw new RuntimeException(err);
-                            }
+                        Function<ResultSet, Boolean> markedAsNull = resultSet -> false;
 
-                        } : Runnables.doNothing();
+                        if (nullable) {
+                            markedAsNull = new Function<ResultSet, Boolean>() {
+                                @Override
+                                @SneakyThrows
+                                public Boolean apply(ResultSet resultSet) {
+
+                                    boolean retval = resultSet.wasNull();
+                                    stream.writeByte((byte) (retval ? 1 : 0));
+
+                                    return retval;
+                                }
+                            };
+                        }
 
                         switch (meta.getColumnType(i)) {
                             case Types.INTEGER:
-                                cb.run();
-                                stream.writeInt32(resultset.getInt(i));
+                                int value1 = resultset.getInt(i);
+                                if (!markedAsNull.apply(resultset)) {
+                                    stream.writeInt32(value1);
+                                }
                                 break;
                             case Types.SMALLINT:
-                                cb.run();
-                                stream.writeInt16(resultset.getInt(i));
+                                int value2 = resultset.getInt(i);
+                                if (!markedAsNull.apply(resultset)) {
+                                    stream.writeInt16(value2);
+                                }
                                 break;
                             case Types.FLOAT:
                             case Types.REAL:
-                                cb.run();
-                                stream.writeFloat32(resultset.getFloat(i));
+                                float value3 = resultset.getFloat(i);
+                                if (!markedAsNull.apply(resultset)) {
+                                    stream.writeFloat32(value3);
+                                }
                                 break;
                             case Types.DOUBLE:
-                                cb.run();
-                                stream.writeFloat64(resultset.getDouble(i));
+                                double value4 = resultset.getDouble(i);
+                                if (!markedAsNull.apply(resultset)) {
+                                    stream.writeFloat64(value4);
+                                }
                                 break;
                             case Types.TIMESTAMP:
                             case Types.TIME:
                                 final Time time = resultset.getTime(i);
-                                if (null == time) {
-                                    stream.writeByte((byte) 1);
-                                } else {
-                                    cb.run();
+                                if (!markedAsNull.apply(resultset) && null != time) {
                                     stream.writeDateTime(time);
                                 }
                                 break;
                             case Types.DATE:
                                 final Date date = resultset.getDate(i);
-                                if (null == date) {
-                                    stream.writeByte((byte) 1);
-                                } else {
-                                    cb.run();
+                                if (!markedAsNull.apply(resultset) && null != date) {
                                     stream.writeDate(date);
                                 }
                                 break;
                             default:
                                 final String string = resultset.getString(i);
-                                if (null == string) {
-                                    stream.writeByte((byte) 1);
-                                } else {
-                                    cb.run();
+                                if (!markedAsNull.apply(resultset) && null != string) {
                                     stream.writeString(string);
                                 }
 
