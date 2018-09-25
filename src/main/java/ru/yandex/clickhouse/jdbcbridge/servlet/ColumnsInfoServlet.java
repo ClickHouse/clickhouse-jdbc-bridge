@@ -26,7 +26,7 @@ public class ColumnsInfoServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-        try (Connection connection = DriverManager.getConnection("jdbc:mariadb://dbm1.d3:3306/?user=developer&password=developerovich"); Statement sth = connection.createStatement()) {
+        try (Connection connection = DriverManager.getConnection(req.getParameter("connection_string")); Statement sth = connection.createStatement()) {
             String table = req.getParameter("table");
             String schema = req.getParameter("schema");
 
@@ -41,9 +41,17 @@ public class ColumnsInfoServlet extends HttpServlet {
             builder.append(meta.getColumnCount());
             builder.append(" columns:\n");
             for (int i = 0; i < meta.getColumnCount(); i++) {
+                boolean nullable = ResultSetMetaData.columnNullable == meta.isNullable(i + 1);
+//                nullable = false;
                 builder.append(ClickHouseUtil.quoteIdentifier(meta.getColumnName(i + 1)));
                 builder.append(" ");
+                if (nullable) {
+                    builder.append("Nullable(");
+                }
                 builder.append(extractClickHouseDataType(meta.getColumnType(i + 1)));
+                if (nullable) {
+                    builder.append(")");
+                }
                 builder.append('\n');
             }
             resp.setContentType("application/octet-stream");
