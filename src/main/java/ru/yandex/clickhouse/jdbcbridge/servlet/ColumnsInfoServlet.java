@@ -1,7 +1,10 @@
 package ru.yandex.clickhouse.jdbcbridge.servlet;
 
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.util.StringUtil;
-import ru.yandex.clickhouse.ClickHouseUtil;
+import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseConverter;
+import ru.yandex.clickhouse.jdbcbridge.db.jdbc.BridgeConnectionManager;
 import ru.yandex.clickhouse.settings.ClickHouseProperties;
 import ru.yandex.clickhouse.util.ClickHouseRowBinaryStream;
 
@@ -12,76 +15,39 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.Statement;
-import java.sql.Types;
 
 /**
+ * This servlet infer the schema of given table, and writes it back
  * Created by krash on 21.09.18.
  */
+@Data
+@Slf4j
 public class ColumnsInfoServlet extends HttpServlet {
+
+    private final BridgeConnectionManager manager;
+    private final ClickHouseConverter converter;
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-        try (Connection connection = DriverManager.getConnection(req.getParameter("connection_string")); Statement sth = connection.createStatement()) {
+        try (Connection connection = manager.get(req.getParameter("connection_string")); Statement sth = connection.createStatement()) {
             String table = req.getParameter("table");
             String schema = req.getParameter("schema");
 
             String tableAndSchema = StringUtil.isBlank(schema) ? table : schema + "." + table;
 
             String queryRewrite = "SELECT * FROM " + tableAndSchema + " WHERE 1 = 0";
-            ResultSet resultset = sth.executeQuery(queryRewrite);
-            resp.setContentType("application/octet-stream");
-            ResultSetMetaData meta = resultset.getMetaData();
+            log.info("Inferring schema by query {}", queryRewrite);
 
-            StringBuilder builder = new StringBuilder("columns format version: 1\n");
-            builder.append(meta.getColumnCount());
-            builder.append(" columns:\n");
-            for (int i = 0; i < meta.getColumnCount(); i++) {
-                boolean nullable = ResultSetMetaData.columnNullable == meta.isNullable(i + 1);
-//                nullable = false;
-                builder.append(ClickHouseUtil.quoteIdentifier(meta.getColumnName(i + 1)));
-                builder.append(" ");
-                if (nullable) {
-                    builder.append("Nullable(");
-                }
-                builder.append(extractClickHouseDataType(meta.getColumnType(i + 1)));
-                if (nullable) {
-                    builder.append(")");
-                }
-                builder.append('\n');
-            }
+            ResultSet resultset = sth.executeQuery(queryRewrite);
+            String ddl = converter.getColumnsDDL(resultset.getMetaData());
             resp.setContentType("application/octet-stream");
             ClickHouseRowBinaryStream stream = new ClickHouseRowBinaryStream(resp.getOutputStream(), null, new ClickHouseProperties());
-            stream.writeString(builder.toString());
+            stream.writeString(ddl);
         } catch (Exception err) {
             throw new IOException(err);
-        }
-    }
-
-    private String extractClickHouseDataType(int columnType) {
-
-        switch (columnType) {
-            case Types.INTEGER:
-                return "Int32";
-            case Types.SMALLINT:
-                return "Int16";
-            case Types.FLOAT:
-                return "Float32";
-            case Types.REAL:
-                return "Float32";
-            case Types.DOUBLE:
-                return "Float64";
-            case Types.TIMESTAMP:
-            case Types.TIME:
-                return "DateTime";
-            case Types.DATE:
-                return "Date";
-            default:
-                return "String";
         }
     }
 }

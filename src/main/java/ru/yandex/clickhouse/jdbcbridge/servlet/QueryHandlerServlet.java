@@ -1,8 +1,12 @@
 package ru.yandex.clickhouse.jdbcbridge.servlet;
 
+import lombok.Data;
 import lombok.SneakyThrows;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.StringUtil;
+import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseFieldSerializer;
+import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.FieldValueExtractor;
+import ru.yandex.clickhouse.jdbcbridge.db.jdbc.BridgeConnectionManager;
 import ru.yandex.clickhouse.settings.ClickHouseProperties;
 import ru.yandex.clickhouse.util.ClickHouseRowBinaryStream;
 import ru.yandex.clickhouse.util.guava.StreamUtils;
@@ -15,9 +19,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Types;
@@ -26,13 +30,17 @@ import java.util.function.Function;
 /**
  * Created by krash on 21.09.18.
  */
+@Data
 public class QueryHandlerServlet extends HttpServlet {
+
+    private final BridgeConnectionManager manager;
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-        String query = req.getParameter("query");
+
         try {
+            String query = req.getParameter("query");
             if (StringUtil.isBlank(query)) {
                 // a hack for wrong input from CH
                 String requestBody = StreamUtils.toString(req.getInputStream());
@@ -45,13 +53,15 @@ public class QueryHandlerServlet extends HttpServlet {
             if (StringUtil.isBlank(query)) {
                 throw new IllegalArgumentException("Query is blank or empty");
             }
-            System.out.println(query);
 
             ClickHouseRowBinaryStream stream = new ClickHouseRowBinaryStream(resp.getOutputStream(), null, new ClickHouseProperties());
-            try (Connection connection = DriverManager.getConnection(req.getParameter("connection_string")); Statement sth = connection.createStatement()) {
+            try (Connection connection = manager.get(req.getParameter("connection_string")); Statement sth = connection.createStatement()) {
                 ResultSet resultset = sth.executeQuery(query);
                 ResultSetMetaData meta = resultset.getMetaData();
                 resp.setContentType("application/octet-stream");
+
+                new ClickHouseFieldSerializer<>(false, ResultSet::getInt, (value, s) -> s.writeUInt32(value));
+
                 while (resultset.next()) {
                     for (int i = 1; i <= meta.getColumnCount(); i++) {
                         final boolean nullable = ResultSetMetaData.columnNullable == meta.isNullable(i);
@@ -111,12 +121,17 @@ public class QueryHandlerServlet extends HttpServlet {
                                     stream.writeDate(date);
                                 }
                                 break;
+                            case Types.BIT:
+                                boolean bool = resultset.getBoolean(i);
+                                if (!markedAsNull.apply(resultset)) {
+                                    stream.writeUInt8(bool);
+                                }
+                                break;
                             default:
                                 final String string = resultset.getString(i);
                                 if (!markedAsNull.apply(resultset) && null != string) {
                                     stream.writeString(string);
                                 }
-
                                 break;
                         }
                     }
