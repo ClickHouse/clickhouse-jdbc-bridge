@@ -2,27 +2,41 @@ package ru.yandex.clickhouse.jdbcbridge;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.reflections.Reflections;
 import ru.yandex.clickhouse.jdbcbridge.servlet.ColumnsInfoServlet;
 import ru.yandex.clickhouse.jdbcbridge.servlet.PingHandlerServlet;
 import ru.yandex.clickhouse.jdbcbridge.servlet.QueryHandlerServlet;
 import ru.yandex.clickhouse.jdbcbridge.servlet.QuoteStyleServlet;
+import ru.yandex.clickhouse.jdbcbridge.util.ChildFirstURLClassLoader;
+import ru.yandex.clickhouse.jdbcbridge.util.MutableURLClassLoader;
+import ru.yandex.clickhouse.util.apache.StringUtils;
+import sun.misc.Service;
 
 import javax.servlet.http.HttpServletRequest;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.security.CodeSource;
+import java.sql.*;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
 
 /**
  * Created by krash on 21.09.18.
@@ -36,8 +50,7 @@ public class JdbcBridge implements Runnable {
 
     private Arguments arguments;
 
-    private JdbcBridge(String...argv)
-    {
+    private JdbcBridge(String... argv) {
         try {
             arguments = parseArguments(argv);
         } catch (Throwable err) {
@@ -46,10 +59,68 @@ public class JdbcBridge implements Runnable {
         }
     }
 
+    /**
+     * Append JARs from external directory to class path
+     */
     @SneakyThrows
-    private void runInternal()
-    {
+    private void loadDrivers(File sourceDir) {
+        if (!sourceDir.exists()) {
+            throw new IllegalArgumentException("Directory with drivers '" + sourceDir + "' does not exists");
+        }
+        File[] driverList = sourceDir.listFiles(file -> file.isFile() && file.getName().endsWith(".jar"));
+        if (null == driverList) {
+            driverList = new File[0];
+        }
+        log.info("Found {} JAR files in driver dir {}", driverList.length, sourceDir);
+
+        MutableURLClassLoader loader = new MutableURLClassLoader(Thread.currentThread().getContextClassLoader());
+//        MutableURLClassLoader loader = new ChildFirstURLClassLoader(Thread.currentThread().getContextClassLoader());
+        Thread.currentThread().setContextClassLoader(loader);
+
+        Arrays.stream(driverList).forEach(new Consumer<File>() {
+            @Override
+            @SneakyThrows
+            public void accept(File file) {
+                log.info("Registering external driver {}", file);
+                loader.addURL(file.toURI().toURL());
+            }
+        });
+
+
+        log.info("Loading driver list");
+        Iterator<Driver> ps = Service.providers(Driver.class);
+        log.info("List loaded");
+        ps.forEachRemaining(new Consumer<Driver>() {
+            @Override
+            @SneakyThrows
+            public void accept(Driver driver) {
+                log.info("Found driver " + driver.getClass().getName());
+                DriverManager.registerDriver(new DriverShim(driver));
+            }
+        });
+
+        log.info("Final size is: {}", Iterators.size(Iterators.forEnumeration(DriverManager.getDrivers())));
+        Enumeration<Driver> a = DriverManager.getDrivers();
+        while (a.hasMoreElements()) {
+            Driver driver = a.nextElement();
+            String name = driver.getClass().getName();
+            if (driver instanceof DriverShim) {
+                name = ((DriverShim) driver).getWrappedClassName();
+            }
+            System.out.println(name + " " + driver.acceptsURL("jdbc:mysql://localhost/test"));
+        }
+        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/test");
+        int r = 10;
+    }
+
+    @SneakyThrows
+    private void runInternal() {
         log.info("Starting jdbc-bridge");
+
+        if (!StringUtils.isBlank(arguments.getDriverPath())) {
+            loadDrivers(new File(arguments.getDriverPath()));
+        }
+
         ServletHandler handler = new ServletHandler();
         handler.addServletWithMapping(new ServletHolder(new QueryHandlerServlet()), "/");
         handler.addServletWithMapping(new ServletHolder(new PingHandlerServlet()), "/ping");
@@ -86,14 +157,12 @@ public class JdbcBridge implements Runnable {
         } catch (Throwable err) {
             log.error("Fatal error, exiting", err);
             System.exit(1);
-        }
-        finally {
+        } finally {
             log.info("Finish jdbc-bridge");
         }
     }
 
     public static void main(String... argv) throws Exception {
-
         new JdbcBridge(argv).run();
     }
 
@@ -126,6 +195,54 @@ public class JdbcBridge implements Runnable {
         return args;
     }
 
+    public static class DriverShim implements Driver {
+        private Driver driver;
+
+        DriverShim(Driver d) {
+            this.driver = d;
+        }
+
+        @Override
+        public Connection connect(String s, Properties properties) throws SQLException {
+            return driver.connect(s, properties);
+        }
+
+        @Override
+        public boolean acceptsURL(String u) throws SQLException {
+            return this.driver.acceptsURL(u);
+        }
+
+        @Override
+        public int getMajorVersion() {
+            return this.driver.getMajorVersion();
+        }
+
+        @Override
+        public int getMinorVersion() {
+            return this.driver.getMinorVersion();
+        }
+
+        @Override
+        public DriverPropertyInfo[] getPropertyInfo(String u, Properties p) throws SQLException {
+            return this.driver.getPropertyInfo(u, p);
+        }
+
+        @Override
+        public boolean jdbcCompliant() {
+            return this.driver.jdbcCompliant();
+        }
+
+        @Override
+        public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+            return driver.getParentLogger();
+        }
+
+        public String getWrappedClassName() {
+            return driver.getClass().getName();
+        }
+
+    }
+
     @Data
     public static class Arguments {
         @Parameter(names = "--http-port", description = "Port to listen on")
@@ -145,6 +262,9 @@ public class JdbcBridge implements Runnable {
 
         @Parameter(names = "--log-level", description = "Log level")
         String logLevel = "DEBUG";
+
+        @Parameter(names = "--driver-path", description = "Path to directory, containing JDBC drivers")
+        String driverPath = null;
 
         @Parameter(names = "--help", help = true, description = "Show help message")
         boolean help = false;
