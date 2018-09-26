@@ -6,7 +6,7 @@ import lombok.Data;
  * Created by krash on 26.09.18.
  */
 @Data
-public class SQL2ClickHouseSerializer<T> {
+public class ExtractorConverter<T> {
 
     private final FieldValueExtractor<T> extractor;
     private final FieldValueSerializer<T> serializer;

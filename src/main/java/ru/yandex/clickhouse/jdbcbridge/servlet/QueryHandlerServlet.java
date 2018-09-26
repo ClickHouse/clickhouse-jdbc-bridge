@@ -5,6 +5,7 @@ import lombok.SneakyThrows;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.StringUtil;
 import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseFieldSerializer;
+import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseRowSerializer;
 import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.FieldValueExtractor;
 import ru.yandex.clickhouse.jdbcbridge.db.jdbc.BridgeConnectionManager;
 import ru.yandex.clickhouse.settings.ClickHouseProperties;
@@ -54,94 +55,22 @@ public class QueryHandlerServlet extends HttpServlet {
                 throw new IllegalArgumentException("Query is blank or empty");
             }
 
-            ClickHouseRowBinaryStream stream = new ClickHouseRowBinaryStream(resp.getOutputStream(), null, new ClickHouseProperties());
             try (Connection connection = manager.get(req.getParameter("connection_string")); Statement sth = connection.createStatement()) {
                 ResultSet resultset = sth.executeQuery(query);
                 ResultSetMetaData meta = resultset.getMetaData();
-                resp.setContentType("application/octet-stream");
 
-                new ClickHouseFieldSerializer<>(false, ResultSet::getInt, (value, s) -> s.writeUInt32(value));
+                ClickHouseRowSerializer serializer = ClickHouseRowSerializer.create(meta);
+
+                resp.setContentType("application/octet-stream");
+                ClickHouseRowBinaryStream stream = new ClickHouseRowBinaryStream(resp.getOutputStream(), null, new ClickHouseProperties());
 
                 while (resultset.next()) {
-                    for (int i = 1; i <= meta.getColumnCount(); i++) {
-                        final boolean nullable = ResultSetMetaData.columnNullable == meta.isNullable(i);
-
-                        Function<ResultSet, Boolean> markedAsNull = resultSet -> false;
-
-                        if (nullable) {
-                            markedAsNull = new Function<ResultSet, Boolean>() {
-                                @Override
-                                @SneakyThrows
-                                public Boolean apply(ResultSet resultSet) {
-
-                                    boolean retval = resultSet.wasNull();
-                                    stream.writeByte((byte) (retval ? 1 : 0));
-
-                                    return retval;
-                                }
-                            };
-                        }
-
-                        switch (meta.getColumnType(i)) {
-                            case Types.INTEGER:
-                                int value1 = resultset.getInt(i);
-                                if (!markedAsNull.apply(resultset)) {
-                                    stream.writeInt32(value1);
-                                }
-                                break;
-                            case Types.SMALLINT:
-                                int value2 = resultset.getInt(i);
-                                if (!markedAsNull.apply(resultset)) {
-                                    stream.writeInt16(value2);
-                                }
-                                break;
-                            case Types.FLOAT:
-                            case Types.REAL:
-                                float value3 = resultset.getFloat(i);
-                                if (!markedAsNull.apply(resultset)) {
-                                    stream.writeFloat32(value3);
-                                }
-                                break;
-                            case Types.DOUBLE:
-                                double value4 = resultset.getDouble(i);
-                                if (!markedAsNull.apply(resultset)) {
-                                    stream.writeFloat64(value4);
-                                }
-                                break;
-                            case Types.TIMESTAMP:
-                            case Types.TIME:
-                                final Time time = resultset.getTime(i);
-                                if (!markedAsNull.apply(resultset) && null != time) {
-                                    stream.writeDateTime(time);
-                                }
-                                break;
-                            case Types.DATE:
-                                final Date date = resultset.getDate(i);
-                                if (!markedAsNull.apply(resultset) && null != date) {
-                                    stream.writeDate(date);
-                                }
-                                break;
-                            case Types.BIT:
-                                boolean bool = resultset.getBoolean(i);
-                                if (!markedAsNull.apply(resultset)) {
-                                    stream.writeUInt8(bool);
-                                }
-                                break;
-                            default:
-                                final String string = resultset.getString(i);
-                                if (!markedAsNull.apply(resultset) && null != string) {
-                                    stream.writeString(string);
-                                }
-                                break;
-                        }
-                    }
+                    serializer.serialize(resultset, stream);
                 }
             }
         } catch (Exception err) {
             err.printStackTrace();
             resp.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, err.getMessage());
-//            resp.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
-//            resp.getWriter().write(err.getMessage());
         }
     }
 

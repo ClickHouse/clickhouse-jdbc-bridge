@@ -15,13 +15,7 @@ import static java.sql.Types.TIME;
 import static java.sql.Types.TIMESTAMP;
 import static java.sql.Types.TINYINT;
 import static java.sql.Types.VARCHAR;
-import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.DateTime;
-import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Float32;
-import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Float64;
-import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Int32;
-import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Int64;
-import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.String;
-import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.UInt8;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.*;
 
 import ru.yandex.clickhouse.ClickHouseUtil;
 
@@ -30,9 +24,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This utility converts SQL datatypes to appropriate in ClickHouse
@@ -45,7 +37,7 @@ public class ClickHouseConverter {
     static {
         Map<Integer, MappingInstruction> map = new HashMap<>();
         map.put(INTEGER, new MappingInstruction<>(Int32, ResultSet::getInt, (i, s) -> s.writeInt32(i)));
-        map.put(SMALLINT, new MappingInstruction<>(Int32, ResultSet::getInt, (i, s) -> s.writeInt16(i)));
+        map.put(SMALLINT, new MappingInstruction<>(Int16, ResultSet::getInt, (i, s) -> s.writeInt16(i)));
         map.put(TINYINT, new MappingInstruction<>(UInt8, ResultSet::getInt, (i, s) -> s.writeUInt8(i)));
         map.put(BIGINT, new MappingInstruction<>(Int64, ResultSet::getLong, (i, s) -> s.writeInt64(i)));
 
@@ -53,9 +45,9 @@ public class ClickHouseConverter {
         map.put(REAL, new MappingInstruction<>(Float32, ResultSet::getFloat, (i, s) -> s.writeFloat32(i)));
         map.put(DOUBLE, new MappingInstruction<>(Float64, ResultSet::getFloat, (i, s) -> s.writeFloat64(i)));
 
-        map.put(TIMESTAMP, new MappingInstruction<>(DateTime, ResultSet::getTime, (i, s) -> s.writeDateTime(i)));
+        map.put(TIMESTAMP, new MappingInstruction<>(DateTime, ResultSet::getTimestamp, (i, s) -> s.writeDateTime(i)));
         map.put(TIME, new MappingInstruction<>(DateTime, ResultSet::getTime, (i, s) -> s.writeDateTime(i)));
-        map.put(DATE, new MappingInstruction<>(DateTime, ResultSet::getDate, (i, s) -> s.writeDate(i)));
+        map.put(DATE, new MappingInstruction<>(Date, ResultSet::getDate, (i, s) -> s.writeDate(i)));
 
         map.put(BIT, new MappingInstruction<>(UInt8, ResultSet::getBoolean, (i, s) -> s.writeUInt8(i)));
         map.put(BOOLEAN, new MappingInstruction<>(UInt8, ResultSet::getBoolean, (i, s) -> s.writeUInt8(i)));
@@ -73,13 +65,13 @@ public class ClickHouseConverter {
         return getInstructionBySQLType(type).clickHouseDataType;
     }
 
-    public static SQL2ClickHouseSerializer getSerializerBySQLType(int type) throws SQLException {
+    public static ExtractorConverter<?> getSerializerBySQLType(int type) throws SQLException {
         return getInstructionBySQLType(type).serializer;
     }
 
 
-    private static MappingInstruction getInstructionBySQLType(int sqlType) throws SQLException {
-        MappingInstruction instruction = MAP.get(sqlType);
+    private static MappingInstruction<?> getInstructionBySQLType(int sqlType) throws SQLException {
+        MappingInstruction<?> instruction = MAP.get(sqlType);
         if (null == instruction) {
             // try to infer name of constant
             String typeName = "unknown";
@@ -117,13 +109,22 @@ public class ClickHouseConverter {
         return builder.toString();
     }
 
+    public static String getCLIStructure(ResultSetMetaData meta) throws SQLException {
+        List<String> list = new ArrayList<>();
+        for (int i = 1; i <= meta.getColumnCount(); i++) {
+            boolean nullable = ResultSetMetaData.columnNullable == meta.isNullable(i);
+            list.add(meta.getColumnName(i) + " " + getBySQLType(meta.getColumnType(i)).getName(nullable));
+        }
+        return java.lang.String.join(", ", list);
+    }
+
     private static class MappingInstruction<T> {
         private final ClickHouseDataType clickHouseDataType;
-        private final SQL2ClickHouseSerializer<T> serializer;
+        private final ExtractorConverter<T> serializer;
 
         public MappingInstruction(ClickHouseDataType type, FieldValueExtractor<T> extractor, FieldValueSerializer<T> serializer) {
             this.clickHouseDataType = type;
-            this.serializer = new SQL2ClickHouseSerializer<>(extractor, serializer);
+            this.serializer = new ExtractorConverter<>(extractor, serializer);
         }
     }
 }

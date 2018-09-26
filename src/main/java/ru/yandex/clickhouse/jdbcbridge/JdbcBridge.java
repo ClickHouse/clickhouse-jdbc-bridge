@@ -59,7 +59,12 @@ public class JdbcBridge implements Runnable {
 
     public static void main(String... argv) throws Exception {
 
-        new JdbcBridge(argv).run();
+        try {
+            new JdbcBridge(argv).run();
+        } catch (Exception err) {
+            log.error("Stop JDBC bridge with error: {}", err.getMessage());
+        }
+
     }
 
     private static Arguments parseArguments(String... argv) {
@@ -90,8 +95,9 @@ public class JdbcBridge implements Runnable {
         return args;
     }
 
+    @Override
     @SneakyThrows
-    private void runInternal() {
+    public void run() {
         log.info("Starting jdbc-bridge");
 
         JdbcDriverLoader.load(config.getDriverPath());
@@ -138,18 +144,6 @@ public class JdbcBridge implements Runnable {
         }
     }
 
-    @Override
-    public void run() {
-
-        try {
-            runInternal();
-        } catch (Throwable err) {
-            log.error("Fatal error, exiting", err);
-            System.exit(1);
-        } finally {
-            log.info("Finish jdbc-bridge");
-        }
-    }
 
     @Data
     public static class Arguments {
