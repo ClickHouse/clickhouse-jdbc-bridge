@@ -33,7 +33,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
-import java.sql.Types;
 import java.util.EnumSet;
 
 /**
@@ -44,7 +43,6 @@ public class JdbcBridge implements Runnable {
 
     private static int DEFAULT_PORT = 9019;
     private static String DEFAULT_HOST = "localhost";
-    private static int HTTP_TIMEOUT = 1800;
 
     private Arguments config;
 
@@ -58,13 +56,11 @@ public class JdbcBridge implements Runnable {
     }
 
     public static void main(String... argv) throws Exception {
-
         try {
             new JdbcBridge(argv).run();
         } catch (Exception err) {
             log.error("Stop JDBC bridge with error: {}", err.getMessage());
         }
-
     }
 
     private static Arguments parseArguments(String... argv) {

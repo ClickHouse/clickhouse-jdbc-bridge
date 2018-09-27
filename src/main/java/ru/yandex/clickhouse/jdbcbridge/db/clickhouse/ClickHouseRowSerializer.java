@@ -1,6 +1,5 @@
 package ru.yandex.clickhouse.jdbcbridge.db.clickhouse;
 
-import lombok.Data;
 import ru.yandex.clickhouse.util.ClickHouseRowBinaryStream;
 
 import java.io.IOException;

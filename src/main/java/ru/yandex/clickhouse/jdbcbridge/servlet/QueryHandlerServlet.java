@@ -1,12 +1,9 @@
 package ru.yandex.clickhouse.jdbcbridge.servlet;
 
 import lombok.Data;
-import lombok.SneakyThrows;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.StringUtil;
-import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseFieldSerializer;
 import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseRowSerializer;
-import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.FieldValueExtractor;
 import ru.yandex.clickhouse.jdbcbridge.db.jdbc.BridgeConnectionManager;
 import ru.yandex.clickhouse.settings.ClickHouseProperties;
 import ru.yandex.clickhouse.util.ClickHouseRowBinaryStream;
@@ -19,14 +16,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Types;
-import java.util.function.Function;
 
 /**
  * Created by krash on 21.09.18.

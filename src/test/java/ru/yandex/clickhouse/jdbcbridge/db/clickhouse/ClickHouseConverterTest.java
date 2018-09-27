@@ -1,27 +1,21 @@
 package ru.yandex.clickhouse.jdbcbridge.db.clickhouse;
 
-import org.h2.Driver;
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import ru.yandex.clickhouse.settings.ClickHouseProperties;
 import ru.yandex.clickhouse.util.ClickHouseRowBinaryStream;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,6 +23,12 @@ import java.util.stream.Stream;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.*;
 
+/**
+ * A tricky test, that checks two things:
+ * 1.) That serializer can deal with data from database (parse it and output)
+ * 2.) [optionally] Transfer the given output to clickouse-local, and ensure it
+ * is able to parse the incoming data
+ */
 public class ClickHouseConverterTest {
 
     private Connection conn;
@@ -89,6 +89,10 @@ public class ClickHouseConverterTest {
         }
     }
 
+    /**
+     * Test that for given table all the fields can be converted to ClickHouse
+     * data structures
+     */
     @Test
     public void testInferSchema() throws Exception {
         try (ResultSet resultset = conn.createStatement()

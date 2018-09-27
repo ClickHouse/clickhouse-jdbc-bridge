@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
+ * This test checks converter functionality over expected set of
+ * SQL primitives to be converted
  * Created by krash on 26.09.18.
  */
 @RunWith(Parameterized.class)
