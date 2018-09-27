@@ -18,7 +18,7 @@ import ru.yandex.clickhouse.jdbcbridge.db.jdbc.JdbcDriverLoader;
 import ru.yandex.clickhouse.jdbcbridge.servlet.ColumnsInfoServlet;
 import ru.yandex.clickhouse.jdbcbridge.servlet.PingHandlerServlet;
 import ru.yandex.clickhouse.jdbcbridge.servlet.QueryHandlerServlet;
-import ru.yandex.clickhouse.jdbcbridge.servlet.QuoteStyleServlet;
+import ru.yandex.clickhouse.jdbcbridge.servlet.IdentifierQuoteServlet;
 import ru.yandex.clickhouse.jdbcbridge.servlet.RequestLogger;
 import ru.yandex.clickhouse.util.apache.StringUtils;
 
@@ -106,7 +106,7 @@ public class JdbcBridge implements Runnable {
         ServletHandler handler = new ServletHandler();
         handler.addServletWithMapping(new ServletHolder(new QueryHandlerServlet(manager)), "/");
         handler.addServletWithMapping(new ServletHolder(new ColumnsInfoServlet(manager, new ClickHouseConverter())), "/columns_info");
-        handler.addServletWithMapping(new ServletHolder(new QuoteStyleServlet(manager)), "/quote_style");
+        handler.addServletWithMapping(new ServletHolder(new IdentifierQuoteServlet(manager)), "/identifier_quote");
         handler.addServletWithMapping(new ServletHolder(new PingHandlerServlet()), "/ping");
         handler.addFilterWithMapping(RequestLogger.class, "/*", EnumSet.of(DispatcherType.REQUEST));
 
