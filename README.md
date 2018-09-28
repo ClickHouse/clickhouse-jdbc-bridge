@@ -22,22 +22,23 @@ for convenience reasons, `jdbc:` part of connection string can be ommitted:
 select * from jdbc('mysql://host.port/?user=user&password=passord', 'schema', 'table')
 ```
 
-#### Aliasing
+#### Named datasources
 As we can see, exposing credentials in query is not very secure. 
 
-To hide user/password, and/or to setup particular settings for JDBC driver, there is an "alias" or "named connection" system.
-You may create a file, containing aliases for particular DSN for connections:
+To hide user/password, and/or to setup particular settings for JDBC driver, there is an "datasource" or "named connection" subsystem.
+It is similar to ODBC - in separate file you have to specify settings, and give it an alias.
+You may create a file, containing aliases for particular datasource:
 
  ```properties
 # An example file with connections
 # Format:
-# connection.$alias=[jdbc:]$DSN
-connection.mysql-localhost=mysql://localhost:3306/?user=root&password=root&useSSL=false
+# datasource.$alias=[jdbc:]$DSN
+datasource.mysql-localhost=mysql://localhost:3306/?user=root&password=root&useSSL=false
  ```
 E.g. each connection alias starts with `connection.` keyword, then goes alias value, then - connection string.
 When applied, you may use the following from ClickHouse:
 ```roomsql
-SELECT * FROM jdbc('alias://mysql-localhost', 'schema', 'table')
+SELECT * FROM jdbc('datasource://mysql-localhost', 'schema', 'table')
  ```
  
 ### Data types notes

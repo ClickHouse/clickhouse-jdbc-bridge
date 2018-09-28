@@ -24,8 +24,8 @@ import java.util.Properties;
 @Slf4j
 public class BridgeConnectionManager {
 
-    private static final String ALIAS_SCHEMA = "alias";
-    private static final String ALIAS_CONFIG_PREFIX = "connection.";
+    private static final String ALIAS_SCHEMA = "datasource";
+    private static final String ALIAS_CONFIG_PREFIX = "datasource.";
     private static final String CLIENT_NAME = "clickhouse-jdbc-bridge";
 
     private final Map<String, String> aliasMap = new HashMap<>();
@@ -47,7 +47,7 @@ public class BridgeConnectionManager {
                     // validate URI
                     URI uri = new URI(value);
                     // log only part
-                    log.info("Registering alias '{}' for {}://{}****", key, uri.getScheme(), uri.getHost());
+                    log.info("Registering datasource alias '{}' for {}://{}****", key, uri.getScheme(), uri.getHost());
 
                     aliasMap.put(key, value);
                 } catch (URISyntaxException err) {
