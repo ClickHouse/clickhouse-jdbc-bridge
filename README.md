@@ -70,13 +70,35 @@ Building script:
 ```
 mvn clean package
 ```
-During the build, tests would be launched. If you have `clickhouse-local` binary installed, you may specify it's full path, 
-and then integration tests would be launched:
-```
-mvn clean package -Dclickhouse.local.bin=/usr/bin/clickhouse-local
-```
+
 Once build finished, you'll find `target/jdbc.bridge-1.0.jar`, ready to work.
 
+## Testing
+Bridge was tested against following JDBC drivers:
+1. H2 (in-memory)
+2. SQLite
+3. MySQL
+4. PostgreSQL
+
+To launch the tests:
+```
+mvn test
+```
+
+By default, tests would be launched with H2 and SQLite (cause they does not require external service).
+To launch with MySQL and/or PostgreSQL integration test, add following instructions:
+```
+mvn test \
+-Ddatasource.mysql='jdbc:mysql://localhost:3306/test?user=root&password=root&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC' \
+-Ddatasource.postgresql='jdbc:postgresql://localhost:5432/test?user=root&password=root'
+```
+
+If you have `clickhouse-local` binary installed, you may specify it's full path, to launch validation of RowBinary protocol implementation:
+```
+mvn test -Dclickhouse.local.bin=/usr/bin/clickhouse-local
+```
+
+Without this option, all the tests would be marked incomplete.
 ## Running bridge
 ```
 java -jar jdbc.bridge-1.0.jar --help
