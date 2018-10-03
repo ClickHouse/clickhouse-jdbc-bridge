@@ -1,6 +1,7 @@
 package ru.yandex.clickhouse.jdbcbridge.servlet;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.StringUtil;
 import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseRowSerializer;
@@ -24,13 +25,13 @@ import java.sql.Statement;
  * Created by krash on 21.09.18.
  */
 @Data
+@Slf4j
 public class QueryHandlerServlet extends HttpServlet {
 
     private final BridgeConnectionManager manager;
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
 
         try {
             String query = req.getParameter("query");
@@ -52,16 +53,15 @@ public class QueryHandlerServlet extends HttpServlet {
                 ResultSetMetaData meta = resultset.getMetaData();
 
                 ClickHouseRowSerializer serializer = ClickHouseRowSerializer.create(meta);
-
-                resp.setContentType("application/octet-stream");
                 ClickHouseRowBinaryStream stream = new ClickHouseRowBinaryStream(resp.getOutputStream(), null, new ClickHouseProperties());
 
+                resp.setContentType("application/octet-stream");
                 while (resultset.next()) {
                     serializer.serialize(resultset, stream);
                 }
             }
         } catch (Exception err) {
-            err.printStackTrace();
+            log.error(err.getMessage(), err);
             resp.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, err.getMessage());
         }
     }

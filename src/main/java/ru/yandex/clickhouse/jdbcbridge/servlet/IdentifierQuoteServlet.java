@@ -1,6 +1,8 @@
 package ru.yandex.clickhouse.jdbcbridge.servlet;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.http.HttpStatus;
 import ru.yandex.clickhouse.jdbcbridge.db.jdbc.BridgeConnectionManager;
 import ru.yandex.clickhouse.settings.ClickHouseProperties;
 import ru.yandex.clickhouse.util.ClickHouseRowBinaryStream;
@@ -17,6 +19,7 @@ import java.sql.Connection;
  * Created by krash on 21.09.18.
  */
 @Data
+@Slf4j
 public class IdentifierQuoteServlet extends HttpServlet {
 
     private final BridgeConnectionManager manager;
@@ -29,7 +32,8 @@ public class IdentifierQuoteServlet extends HttpServlet {
             resp.setContentType("application/octet-stream");
             stream.writeString(identifierQuoteString);
         } catch (Exception err) {
-            throw new IOException(err);
+            log.error(err.getMessage(), err);
+            resp.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, err.getMessage());
         }
     }
 }

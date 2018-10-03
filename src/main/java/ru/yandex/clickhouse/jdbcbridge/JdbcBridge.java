@@ -2,23 +2,27 @@ package ru.yandex.clickhouse.jdbcbridge;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseConverter;
 import ru.yandex.clickhouse.jdbcbridge.db.jdbc.BridgeConnectionManager;
 import ru.yandex.clickhouse.jdbcbridge.db.jdbc.JdbcDriverLoader;
 import ru.yandex.clickhouse.jdbcbridge.servlet.ColumnsInfoServlet;
+import ru.yandex.clickhouse.jdbcbridge.servlet.IdentifierQuoteServlet;
 import ru.yandex.clickhouse.jdbcbridge.servlet.PingHandlerServlet;
 import ru.yandex.clickhouse.jdbcbridge.servlet.QueryHandlerServlet;
-import ru.yandex.clickhouse.jdbcbridge.servlet.IdentifierQuoteServlet;
 import ru.yandex.clickhouse.jdbcbridge.servlet.RequestLogger;
 import ru.yandex.clickhouse.util.apache.StringUtils;
 
@@ -27,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -34,6 +39,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Created by krash on 21.09.18.
@@ -49,6 +57,8 @@ public class JdbcBridge implements Runnable {
     private JdbcBridge(String... argv) {
         try {
             config = parseArguments(argv);
+            configureLogging();
+
         } catch (Throwable err) {
             log.error("Failed to parse config: {}", err.getMessage());
             System.exit(1);
@@ -89,6 +99,30 @@ public class JdbcBridge implements Runnable {
             System.exit(1);
         }
         return args;
+    }
+
+    /**
+     * If a path to log file given, then redirect logs there
+     */
+    private void configureLogging() throws Exception {
+        if (!StringUtil.isBlank(config.getLogPath())) {
+            Map<String, String> pocoToJavaLogMap = new HashMap<>();
+            pocoToJavaLogMap.put("critical", "error");
+            pocoToJavaLogMap.put("warning", "warn");
+            pocoToJavaLogMap.put("notice", "warn");
+            pocoToJavaLogMap.put("information", "info");
+            String givenLogLevel = pocoToJavaLogMap.getOrDefault(config.getLogLevel(), "trace").toUpperCase();
+
+            URL url = Resources.getResource("log4j-redirect.properties");
+            String text = Resources.toString(url, Charsets.UTF_8);
+            text = text
+                    .replaceAll("#LOGLEVEL#", givenLogLevel)
+                    .replaceAll("#LOGFILE#", config.getLogPath());
+
+            Properties properties = new Properties();
+            properties.load(new StringReader(text));
+            PropertyConfigurator.configure(properties);
+        }
     }
 
     @Override

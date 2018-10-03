@@ -2,6 +2,7 @@ package ru.yandex.clickhouse.jdbcbridge.servlet;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.StringUtil;
 import ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseConverter;
 import ru.yandex.clickhouse.jdbcbridge.db.jdbc.BridgeConnectionManager;
@@ -47,7 +48,8 @@ public class ColumnsInfoServlet extends HttpServlet {
             ClickHouseRowBinaryStream stream = new ClickHouseRowBinaryStream(resp.getOutputStream(), null, new ClickHouseProperties());
             stream.writeString(ddl);
         } catch (Exception err) {
-            throw new IOException(err);
+            log.error(err.getMessage(), err);
+            resp.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, err.getMessage());
         }
     }
 }
