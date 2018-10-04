@@ -54,22 +54,18 @@ public class JdbcBridge implements Runnable {
 
     private Arguments config;
 
-    private JdbcBridge(String... argv) {
-        try {
-            config = parseArguments(argv);
-            configureLogging();
-
-        } catch (Throwable err) {
-            log.error("Failed to parse config: {}", err.getMessage());
-            System.exit(1);
-        }
+    private JdbcBridge(String... argv) throws Exception {
+        config = parseArguments(argv);
+        configureLogging();
     }
 
     public static void main(String... argv) throws Exception {
         try {
             new JdbcBridge(argv).run();
+            log.info("Application finished");
         } catch (Exception err) {
             log.error("Stop JDBC bridge with error: {}", err.getMessage());
+            System.exit(1);
         }
     }
 
@@ -95,7 +91,7 @@ public class JdbcBridge implements Runnable {
                 System.exit(0);
             }
         } catch (Exception err) {
-            System.err.println("Error parsing incoming config: " + err.getMessage());
+            log.error("Error parsing incoming config: " + err.getMessage());
             System.exit(1);
         }
         return args;
@@ -105,7 +101,13 @@ public class JdbcBridge implements Runnable {
      * If a path to log file given, then redirect logs there
      */
     private void configureLogging() throws Exception {
-        if (!StringUtil.isBlank(config.getLogPath())) {
+        final boolean isLogFileBlank = StringUtil.isBlank(config.getLogPath());
+
+        if (config.isDaemon() && isLogFileBlank) {
+            throw new IllegalArgumentException("You can not run as daemon, and without specifying log path");
+        }
+
+        if (!isLogFileBlank) {
             Map<String, String> pocoToJavaLogMap = new HashMap<>();
             pocoToJavaLogMap.put("critical", "error");
             pocoToJavaLogMap.put("warning", "warn");
@@ -174,7 +176,6 @@ public class JdbcBridge implements Runnable {
         }
     }
 
-
     @Data
     public static class Arguments {
         @Parameter(names = "--http-port", description = "Port to listen on")
@@ -198,18 +199,21 @@ public class JdbcBridge implements Runnable {
         @Parameter(names = "--driver-path", description = "Path to directory, containing JDBC drivers")
         String driverPath = null;
 
-        @Parameter(names = "--connection-file", description = "File, containing specifications for connections")
-        String connectionFile = null;
+        @Parameter(names = "--datasources", description = "File, containing specifications for connections")
+        String datasources = null;
 
         @Parameter(names = "--help", help = true, description = "Show help message")
         boolean help = false;
+
+        @Parameter(names = "--daemon", description = "Run as daemon")
+        boolean daemon = false;
 
         public Path getDriverPath() {
             return StringUtils.isBlank(driverPath) ? null : Paths.get(driverPath);
         }
 
         public File getConnectionFile() {
-            return null == connectionFile ? null : new File(connectionFile);
+            return null == datasources ? null : new File(datasources);
         }
     }
 }

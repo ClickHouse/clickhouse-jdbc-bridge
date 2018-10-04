@@ -1,0 +1,33 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    remove)
+        if [ -d "/var/lib/clickhouse-jdbc-bridge" ] ; then
+            rm -rf /var/lib/clickhouse-jdbc-bridge
+        fi
+    ;;
+
+    purge)
+        deluser clickhouse-jdbc-bridge || true
+        # Log directory
+        rm -rf /var/log/clickhouse-jdbc-bridge
+        # Cache directory
+        if [ -d "/var/cache/clickhouse-jdbc-bridge" ] ; then
+            rm -rf /var/cache/clickhouse-jdbc-bridge
+        fi
+        # Driver directory
+        if [ -d "/var/lib/clickhouse-jdbc-bridge" ] ; then
+            rm -rf /var/lib/clickhouse-jdbc-bridge
+        fi
+    ;;
+
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        # Nothing to do here
+    ;;
+
+    *)
+        echo "$0 called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac

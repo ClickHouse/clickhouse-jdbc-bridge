@@ -61,7 +61,7 @@ Table of conversion:
 | BIT            | UInt8 |
 | BOOLEAN        | UInt8 |
 
-## Building bridge
+## Building and installing bridge
 Prerequisites:
 1. JDK 1.8+
 2. Maven
@@ -72,6 +72,18 @@ mvn clean package
 ```
 
 Once build finished, you'll find `target/jdbc.bridge-1.0.jar`, ready to work.
+
+### Installation
+```
+sudo dpkg -i target/clickhouse-jdbc-bridge.deb
+```
+Start the service:
+```
+sudo service clickhouse-jdbc-bridge start
+```
+Configuration:
+`/etc/clickhouse-jdbc-bridge/defaults` - main configuration params
+`/etc/clickhouse-jdbc-bridge/datasources.properties` - list of datasources
 
 ## Testing
 Bridge was tested against following JDBC drivers:
@@ -105,7 +117,7 @@ java -jar jdbc.bridge-1.0.jar --help
 
 Usage: /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java -jar /home/krash/dev/java/clickhouse-jdbc-bridge/target/jdbc.bridge-1.0.jar [options]
   Options:
-    --connection-file
+    --datasources
       File, containing specifications for connections
     --driver-path
       Path to directory, containing JDBC drivers
@@ -127,7 +139,7 @@ Usage: /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java -jar /home/krash/dev/java/
 ```
 Options meaning:
 
-`--connection-file` a .properties file, containing so-called "aliases" for connections (see below)
+`--datasources` a .properties file, containing so-called "aliases" for connections (see below)
 
 `--driver-path` a path to a directory, containing jar-files with JDBC driver's implementation. Bridge will automatically 
 find implementations of `java.sql.Driver` in each jar, and make it available for usage

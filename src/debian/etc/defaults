@@ -1,0 +1,29 @@
+# change to 1 to prevent bridge from starting
+NO_START=0
+
+# Run bridge as this user ID (default: clickhouse-jdbc-bridge)
+# Set this to an empty string to prevent Jetty from starting automatically
+#BRIDGE_USER=clickhouse-jdbc-bridge
+
+# The home directory of the Java Runtime Environment (JRE). You need at least
+# Java 8. If JAVA_HOME is not set, some common directories for OpenJDK and
+# the Oracle JDK are tried.
+#JAVA_HOME=
+
+# Extra options to pass to the JVM
+#JAVA_OPTIONS="-Xmx1G -Djava.awt.headless=true"
+
+# Timeout in seconds for the shutdown of all webapps
+#BRIDGE_SHUTDOWN=10
+
+# Jetty uses a directory to store temporary files like unpacked webapps
+#BRIDGE_TMP=/var/cache/clickhouse-jdbc-bridge/data/
+
+# Arguments for bridge itself
+
+#BRIDGE_BIND_HOST=localhost
+#BRIDGE_BIND_PORT=9019
+# Where to look for JDBC drivers
+#BRIDGE_DRIVER_DIR=/var/lib/clickhouse-jdbc-bridge/
+# Where to get aliases for datasources
+#BRIDGE_DATASOURCE_FILE=/etc/clickhouse-jdbc-bridge/datasources.properties

@@ -1,0 +1,318 @@
+#!/bin/sh -e
+#
+# /etc/init.d/clickhouse-jdbc-bridge -- startup script for ClickHouse JDBC bridge
+#
+#
+### BEGIN INIT INFO
+# Provides:          clickhouse-jdbc-bridge
+# Required-Start:    $local_fs $remote_fs $network
+# Required-Stop:     $local_fs $remote_fs $network
+# Should-Start:      $named
+# Should-Stop:       $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: ClickHouse JDBC bridge
+# Description:       ClickHouse JDBC bridge
+### END INIT INFO
+
+# Configuration files
+#
+# /etc/default/clickhouse-jdbc-bridge
+#   If it exists, this is read at the start of script. It may perform any
+#   sequence of shell commands, like setting relevant environment variables.
+#
+# Configuration variables (to define in /etc/default/clickhouse-jdbc-bridge)
+#
+# JAVA_HOME
+#   Home of Java installation.
+#
+# JAVA_OPTIONS
+#   Extra options to pass to the JVM
+#
+# BRIDGE_USER
+#   if set, then used as a username to run the server as
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+NAME=clickhouse-jdbc-bridge
+DESC="ClickHouse JDBC bridge"
+BRIDGE_HOME=/usr/share/$NAME
+LOGDIR="/var/log/$NAME"
+START_JAR="$BRIDGE_HOME/$NAME.jar"
+DEFAULT=/etc/$NAME/defaults
+JVM_TMP=/var/cache/$NAME/tmp
+
+if [ `id -u` -ne 0 ]; then
+	echo "You need root privileges to run this script"
+	exit 1
+fi
+
+. /lib/lsb/init-functions
+
+if [ -r /etc/default/rcS ]; then
+	. /etc/default/rcS
+fi
+
+
+# The following variables can be overwritten in /etc/clickhouse-jdbc-bridge/defaults
+
+# Whether to start jetty (as a daemon) or not
+NO_START=0
+
+# Run Jetty as this user ID (default: jetty)
+# Set this to an empty string to prevent Jetty from starting automatically
+BRIDGE_USER=clickhouse-jdbc-bridge
+
+# Extra options to pass to the JVM
+JAVA_OPTIONS="-Xmx1G -Djava.awt.headless=true"
+
+BRIDGE_DRIVER_DIR=/var/lib/$NAME/
+
+# This function sets the variable JDK_DIRS
+find_jdks()
+{
+    for java_version in 9 8 7
+    do
+        for jvmdir in /usr/lib/jvm/java-${java_version}-openjdk-* \
+                      /usr/lib/jvm/jdk-${java_version}-oracle-* \
+                      /usr/lib/jvm/jre-${java_version}-oracle-* \
+                      /usr/lib/jvm/java-${java_version}-oracle
+        do
+            if [ -d "${jvmdir}" ]
+            then
+                JDK_DIRS="${JDK_DIRS} ${jvmdir}"
+            fi
+        done
+    done
+
+    # Add the paths for the JVMs packaged by the older versions of java-package (<< 0.52 as in Wheezy and Trusty)
+    JDK_DIRS="${JDK_DIRS} /usr/lib/jvm/j2re1.7-oracle /usr/lib/jvm/j2sdk1.7-oracle"
+}
+
+# The first existing directory is used for JAVA_HOME (if JAVA_HOME is not
+# defined in $DEFAULT)
+JDK_DIRS="/usr/lib/jvm/default-java"
+find_jdks
+
+# Timeout in seconds for the shutdown of all webapps
+BRIDGE_SHUTDOWN=10
+
+BRIDGE_TMP=/var/cache/$NAME/data
+BRIDGE_DRIVER_PATH=/var/lib/$NAME
+BRIDGE_DATASOURCE_FILE=/etc/$NAME/datasources.properties
+
+# End of variables that can be overwritten in /etc/clickhouse-jdbc-bridge/defaults
+
+# overwrite settings from default file
+if [ -f "$DEFAULT" ]; then
+	. "$DEFAULT"
+fi
+
+if [ -z "$BRIDGE_DRIVER_PATH" ]; then
+	log_failure_msg "BRIDGE_DRIVER_PATH is empty ($BRIDGE_DRIVER_PATH)"
+	exit 1
+fi
+
+BRIDGE_ARGS="--driver-path $BRIDGE_DRIVER_PATH --log-path $LOGDIR/out.log"
+[ -z "$BRIDGE_BIND_HOST" ] || BRIDGE_ARGS="--listen-host $BRIDGE_BIND_HOST $BRIDGE_ARGS"
+[ -z "$BRIDGE_BIND_PORT" ] || BRIDGE_ARGS="--bind-port $BRIDGE_BIND_PORT $BRIDGE_ARGS"
+[ -z "$BRIDGE_DATASOURCE_FILE" ] || BRIDGE_ARGS="--datasources $BRIDGE_DATASOURCE_FILE $BRIDGE_ARGS"
+
+# Check whether jetty is still installed (it might not be if this package was
+# removed and not purged)
+if [ ! -r "$START_JAR" ]; then
+	log_failure_msg "$NAME is not installed ($START_JAR is missing)"
+	exit 1
+fi
+
+# Check whether startup has been disabled
+if [ "$NO_START" != "0" -a "$1" != "stop" ]; then
+	[ "$VERBOSE" != "no" ] && log_failure_msg "Not starting jetty - edit /etc/default/$NAME and change NO_START to be 0 (or comment it out)."
+	exit 0
+fi
+
+if [ -z "$BRIDGE_USER" ]; then
+	log_failure_msg "Not starting/stopping $DESC as configured"
+	log_failure_msg "(BRIDGE_USER is empty in /etc/default/clickhouse-jdbc-bridge)."
+	exit 0
+fi
+
+# Look for the right JVM to use
+for jdir in $JDK_DIRS; do
+	if [ -d "$jdir" -a -z "${JAVA_HOME}" ]; then
+		JAVA_HOME="$jdir"
+	fi
+done
+export JAVA_HOME
+
+export JAVA="$JAVA_HOME/bin/java"
+
+JAVA_OPTIONS="$JAVA_OPTIONS \
+	-Djava.io.tmpdir=$BRIDGE_TMP \
+	-Djava.library.path=/usr/lib"
+
+export JAVA_OPTIONS
+
+# Define other required variables
+PIDFILE="/var/run/$NAME.pid"
+ROTATELOGS=/usr/sbin/rotatelogs
+
+##################################################
+# Check for JAVA_HOME
+##################################################
+if [ -z "$JAVA_HOME" ]; then
+	log_failure_msg "Could not start $DESC because no Java Runtime Environment (JRE)"
+	log_failure_msg "was found. Please download and install Java 8 or higher and set"
+	log_failure_msg "JAVA_HOME in /etc/default/clickhouse-jdbc-bridge to the JDK's installation directory."
+	exit 0
+fi
+
+
+##################################################
+# Do the action
+##################################################
+case "$1" in
+  start)
+	log_daemon_msg "Starting $DESC" "$NAME"
+	if start-stop-daemon --quiet --test --start --pidfile "$PIDFILE" \
+	                --user "$BRIDGE_USER" --startas "$JAVA" > /dev/null; then
+
+		if [ -f $PIDFILE ] ; then
+			log_warning_msg "$PIDFILE exists, but bridge was not running. Ignoring $PIDFILE"
+		fi
+
+		chown -R $BRIDGE_USER:$BRIDGE_USER "$LOGDIR"
+
+		# Remove / recreate BRIDGE_TMP directory
+		rm -rf "$BRIDGE_TMP"
+		mkdir "$BRIDGE_TMP" || {
+			log_failure_msg "could not create $DESC temporary directory at $BRIDGE_TMP"
+			exit 1
+		}
+		chown $BRIDGE_USER "$BRIDGE_TMP"
+
+		# Remove / recreate JVM_TMP directory
+		rm -rf "$JVM_TMP"
+		mkdir "$JVM_TMP" || {
+			log_failure_msg "could not create JVM temporary directory at $JVM_TMP"
+			exit 1
+		}
+		chown $BRIDGE_USER "$JVM_TMP"
+		cd "$JVM_TMP"
+
+		BRIDGE_CMD="$JAVA $JAVA_OPTIONS -jar $START_JAR $BRIDGE_ARGS --daemon"
+
+		log_daemon_msg "Starting daemon with command $BRIDGE_CMD"
+
+		start-stop-daemon --start --pidfile "$PIDFILE" --chuid "$BRIDGE_USER" \
+		    --chdir "$BRIDGE_HOME" --background --make-pidfile -x /bin/bash -- -c \
+		    "$BRIDGE_CMD"
+
+		sleep 2
+		if start-stop-daemon --test --start --pidfile "$PIDFILE" \
+			--user $BRIDGE_USER --exec "$JAVA" >/dev/null; then
+			log_end_msg 1
+		else
+			log_end_msg 0
+		fi
+
+	else
+		log_warning_msg "(already running)."
+		log_end_msg 0
+		exit 1
+	fi
+	;;
+
+  stop)
+	log_daemon_msg "Stopping $DESC" "$NAME"
+
+	if start-stop-daemon --quiet --test --start --pidfile "$PIDFILE" \
+		--user "$BRIDGE_USER" --startas "$JAVA" > /dev/null; then
+		if [ -x "$PIDFILE" ]; then
+			log_warning_msg "(not running but $PIDFILE exists)."
+		else
+			log_warning_msg "(not running)."
+		fi
+	else
+		start-stop-daemon --quiet --stop \
+			--pidfile "$PIDFILE" --user "$BRIDGE_USER" \
+			--startas "$JAVA" > /dev/null
+		while ! start-stop-daemon --quiet --test --start \
+			  --pidfile "$PIDFILE" --user "$BRIDGE_USER" \
+			  --startas "$JAVA" > /dev/null; do
+			sleep 1
+			log_progress_msg "."
+			BRIDGE_SHUTDOWN=`expr $BRIDGE_SHUTDOWN - 1` || true
+			if [ $BRIDGE_SHUTDOWN -ge 0 ]; then
+				start-stop-daemon --oknodo --quiet --stop \
+					--pidfile "$PIDFILE" --user "$BRIDGE_USER" \
+					--startas "$JAVA"
+			else
+				log_progress_msg " (killing) "
+				start-stop-daemon --stop --signal 9 --oknodo \
+					--quiet --pidfile "$PIDFILE" \
+					--user "$BRIDGE_USER"
+			fi
+		done
+		rm -f "$PIDFILE"
+		rm -rf "$JVM_TMP"
+		rm -rf "$BRIDGE_TMP/*"
+		log_end_msg 0
+	fi
+	;;
+
+  status)
+	if start-stop-daemon --quiet --test --start --pidfile "$PIDFILE" \
+		--user "$BRIDGE_USER" --startas "$JAVA" > /dev/null; then
+
+		if [ -f "$PIDFILE" ]; then
+		    log_success_msg "$DESC is not running, but pid file exists."
+			exit 1
+		else
+		    log_success_msg "$DESC is not running."
+			exit 3
+		fi
+	else
+		log_success_msg "$DESC is running with pid `cat $PIDFILE`"
+	fi
+	;;
+
+  restart|force-reload)
+	if ! start-stop-daemon --quiet --test --start --pidfile "$PIDFILE" \
+		--user "$BRIDGE_USER" --startas "$JAVA" > /dev/null; then
+		$0 stop $*
+		sleep 1
+	fi
+	$0 start $*
+	;;
+
+  try-restart)
+	if start-stop-daemon --quiet --test --start --pidfile "$PIDFILE" \
+		--user "$BRIDGE_USER" --startas "$JAVA" > /dev/null; then
+		$0 start $*
+	fi
+	;;
+
+  check)
+	log_success_msg "Checking arguments for Jetty: "
+	log_success_msg ""
+	log_success_msg "PIDFILE        =  $PIDFILE"
+	log_success_msg "JAVA_OPTIONS   =  $JAVA_OPTIONS"
+	log_success_msg "JAVA           =  $JAVA"
+	log_success_msg "BRIDGE_USER     =  $BRIDGE_USER"
+	log_success_msg "ARGUMENTS      =  $ARGUMENTS"
+
+	if [ -f $PIDFILE ]
+	then
+		log_success_msg "$DESC is running with pid `cat $PIDFILE`"
+		exit 0
+	fi
+	exit 1
+	;;
+
+  *)
+	log_success_msg "Usage: $0 {start|stop|restart|force-reload|try-restart|status|check}"
+	exit 1
+	;;
+esac
+
+exit 0

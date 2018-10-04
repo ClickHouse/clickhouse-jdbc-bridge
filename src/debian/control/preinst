@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# Ensures that we have an appropriate group and user, and add them, if needed
+
+set -e
+
+case "$1" in
+    install|upgrade)
+	if ! getent group 'clickhouse-jdbc-bridge' > /dev/null 2>&1 ; then
+	    addgroup --system clickhouse-jdbc-bridge --quiet
+	fi
+	if ! getent user 'clickhouse-jdbc-bridge' > /dev/null 2>&1 ; then
+	    adduser --system --no-create-home \
+		--ingroup clickhouse-jdbc-bridge --disabled-password --shell /bin/false \
+		clickhouse-jdbc-bridge
+	fi
+        ;;
+
+    abort-upgrade)
+        ;;
+
+    *)
+        echo "preinst called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+
+
+exit 0

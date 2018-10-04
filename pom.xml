@@ -5,15 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ru.yandex.clickhouse</groupId>
-    <artifactId>jdbc.bridge</artifactId>
+    <artifactId>clickhouse-jdbc-bridge</artifactId>
     <version>1.0</version>
     <properties>
         <jetty.version>9.4.12.v20180830</jetty.version>
         <slf4j.version>1.7.5</slf4j.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <build>
         <plugins>
+            <!-- Mark as JRE 8 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -23,6 +26,7 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+            <!-- Point Main class in JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -36,6 +40,7 @@
                     </archive>
                 </configuration>
             </plugin>
+            <!-- Create jar with all the dependencies -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -55,6 +60,97 @@
                         </goals>
                         <configuration>
                             <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Create .deb package -->
+            <plugin>
+                <artifactId>jdeb</artifactId>
+                <groupId>org.vafer</groupId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jdeb</goal>
+                        </goals>
+                        <configuration>
+                            <deb>${project.build.directory}/${project.artifactId}.deb</deb>
+                            <verbose>true</verbose>
+                            <snapshotExpand>true</snapshotExpand>
+                            <!-- expand "SNAPSHOT" to what is in the "USER" env variable -->
+                            <snapshotEnv>USER</snapshotEnv>
+                            <verbose>true</verbose>
+                            <controlDir>${basedir}/src/debian/control</controlDir>
+                            <dataSet>
+
+                                <!-- The JAR itself -->
+                                <data>
+                                    <src>${project.build.directory}/${project.build.finalName}.jar</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/share/${project.artifactId}</prefix>
+                                        <user>clickhouse-jdbc-bridge</user>
+                                        <group>clickhouse-jdbc-bridge</group>
+                                        <filemode>644</filemode>
+                                    </mapper>
+                                </data>
+
+                                <!-- Link to a JAR, omitting version -->
+                                <data>
+                                    <type>link</type>
+                                    <symlink>true</symlink>
+                                    <linkName>/usr/share/${project.artifactId}/${project.artifactId}.jar</linkName>
+                                    <linkTarget>/usr/share/${project.artifactId}/${project.build.finalName}.jar</linkTarget>
+                                </data>
+
+                                <!-- Init scripts stuff -->
+                                <data>
+                                    <src>${basedir}/src/debian/init.d</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/etc/init.d</prefix>
+                                        <user>clickhouse-jdbc-bridge</user>
+                                        <group>clickhouse-jdbc-bridge</group>
+                                        <filemode>755</filemode>
+                                    </mapper>
+                                </data>
+
+                                <!-- Defaults -->
+                                <data>
+                                    <src>${basedir}/src/debian/etc</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/etc/${project.artifactId}</prefix>
+                                        <user>clickhouse-jdbc-bridge</user>
+                                        <group>clickhouse-jdbc-bridge</group>
+                                        <filemode>644</filemode>
+                                    </mapper>
+                                </data>
+
+                                <!-- Supplementary directories -->
+                                <data>
+                                    <type>template</type>
+                                    <paths>
+                                        <path>etc/${project.artifactId}</path>
+                                        <path>var/cache/${project.artifactId}</path>
+                                        <path>var/log/${project.artifactId}</path>
+                                        <path>var/run/${project.artifactId}</path>
+                                        <path>var/lib/${project.artifactId}</path>
+                                    </paths>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <user>clickhouse-jdbc-bridge</user>
+                                        <group>clickhouse-jdbc-bridge</group>
+                                        <filemode>755</filemode>
+                                    </mapper>
+                                </data>
+
+                            </dataSet>
                         </configuration>
                     </execution>
                 </executions>
@@ -121,6 +217,14 @@
             <version>1.3.2</version>
         </dependency>
 
+        <!-- Test stuff -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.5</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -154,14 +258,6 @@
             <version>3.23.1</version>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.5</version>
-            <scope>test</scope>
-        </dependency>
-
 
     </dependencies>
 </project>
