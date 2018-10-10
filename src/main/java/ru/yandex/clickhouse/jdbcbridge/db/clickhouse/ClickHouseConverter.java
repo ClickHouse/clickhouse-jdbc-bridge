@@ -36,7 +36,7 @@ public class ClickHouseConverter {
 
     static {
         Map<Integer, MappingInstruction> map = new HashMap<>();
-        map.put(TINYINT, new MappingInstruction<>(Int8, ResultSet::getInt, (i, s) -> s.writeUInt8(i)));
+        map.put(TINYINT, new MappingInstruction<>(Int8, ResultSet::getInt, (i, s) -> s.writeInt8(i)));
         map.put(SMALLINT, new MappingInstruction<>(Int16, ResultSet::getInt, (i, s) -> s.writeInt16(i)));
         map.put(INTEGER, new MappingInstruction<>(Int32, ResultSet::getInt, (i, s) -> s.writeInt32(i)));
         map.put(BIGINT, new MappingInstruction<>(Int64, ResultSet::getLong, (i, s) -> s.writeInt64(i)));

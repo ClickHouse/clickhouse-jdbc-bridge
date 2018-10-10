@@ -43,15 +43,16 @@ SELECT * FROM jdbc('datasource://mysql-localhost', 'schema', 'table')
  
 ### Data types notes
 Currently, bridge is able to map a limited subset of JDBC java.sql.Types into ClickHouse data types.
-All the types supports nullability. Native database unsigned types are not supported yet. E.g. they would be transformed to signed ClickHouse data types.
+All the types supports nullability.
+Native database unsigned types are not supported yet. E.g. they would be transformed to signed ClickHouse data types.
 Table of conversion:
 
 | JDBC data type | ClickHouse data type |
 |----------------|----------------------|
 | TINYINT        | Int8 |
 | SMALLINT       | Int16 |
-| INTEGER        | UInt32 |
-| BIGINT         | UInt64 |
+| INTEGER        | Int32 |
+| BIGINT         | Int64 |
 | FLOAT          | Float32 |
 | REAL           | Float32 |
 | DOUBLE         | Float64 |
@@ -60,6 +61,9 @@ Table of conversion:
 | DATE           | Date |
 | BIT            | UInt8 |
 | BOOLEAN        | UInt8 |
+| CHAR           | String |
+| VARCHAR        | String |
+| LONGVARCHAR    | String |
 
 ## Building and installing bridge
 Prerequisites:
