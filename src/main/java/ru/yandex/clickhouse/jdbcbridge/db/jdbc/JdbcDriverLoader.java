@@ -2,7 +2,6 @@ package ru.yandex.clickhouse.jdbcbridge.db.jdbc;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import sun.misc.Service;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -14,6 +13,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.ServiceLoader;
 
 /**
  * This class performs registration of drivers from list of JAR's in external directory
@@ -56,7 +56,7 @@ public class JdbcDriverLoader {
         for (File file : driverList) {
             log.info("Looking for driver in file {}", file);
             URLClassLoader ucl = new URLClassLoader(new URL[]{file.toURI().toURL()}, null);
-            Iterator<Driver> foundDrivers = Service.providers(Driver.class, ucl);
+            Iterator<Driver> foundDrivers = ServiceLoader.load(Driver.class, ucl).iterator();
             boolean found = false;
             while (foundDrivers.hasNext()) {
                 Driver jarDriver = foundDrivers.next();
