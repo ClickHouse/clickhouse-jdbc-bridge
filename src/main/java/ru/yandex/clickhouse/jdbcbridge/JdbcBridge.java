@@ -9,6 +9,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ErrorHandler;
@@ -38,6 +40,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -154,6 +157,13 @@ public class JdbcBridge implements Runnable {
         pool.setName("HTTP Handler");
         Server jettyServer = new Server(pool);
         ServerConnector connector = new ServerConnector(jettyServer);
+
+        // @todo a temporary solution for dealing with too long URI for some endpoints
+        HttpConfiguration httpConfiguration = new HttpConfiguration();
+        httpConfiguration.setRequestHeaderSize(24 * 1024);
+        HttpConnectionFactory factory = new HttpConnectionFactory(httpConfiguration);
+        connector.setConnectionFactories(Collections.singleton(factory));
+
         connector.setHost(address.getHostName());
         connector.setPort(address.getPort());
         jettyServer.setConnectors(new Connector[]{connector});
