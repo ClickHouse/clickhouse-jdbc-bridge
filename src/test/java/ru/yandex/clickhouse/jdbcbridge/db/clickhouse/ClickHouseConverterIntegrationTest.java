@@ -3,6 +3,7 @@ package ru.yandex.clickhouse.jdbcbridge.db.clickhouse;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.junit.After;
@@ -53,26 +54,38 @@ public class ClickHouseConverterIntegrationTest {
             "datasource.postgresql",
             "datasource.sqlite",
     };
-    private static Collection<Object[]> DATA_TYPES = new ArrayList<>();
+    private static Collection<ColumnSpec> DATA_TYPES = new ArrayList<>();
 
     static {
-        DB_UNSUPPORTED_TYPES.put("datasource.postgresql", Arrays.asList("TINYINT", "DOUBLE"));
+        DB_UNSUPPORTED_TYPES.put("datasource.postgresql", Arrays.asList("TINYINT", "DOUBLE", "NVARCHAR"));
         DB_UNSUPPORTED_TYPES.put("datasource.sqlite", Arrays.asList("BOOLEAN", "TIME", "DATE"));
     }
 
     static {
-        DATA_TYPES.add(new Object[]{"INTEGER", 10});
-        DATA_TYPES.add(new Object[]{"BOOLEAN", true});
-        DATA_TYPES.add(new Object[]{"TINYINT", 20});
-        DATA_TYPES.add(new Object[]{"SMALLINT", 30});
-        DATA_TYPES.add(new Object[]{"BIGINT", 1_000_000L});
-        DATA_TYPES.add(new Object[]{"FLOAT", 123.4567d});
-        DATA_TYPES.add(new Object[]{"DOUBLE", 789.0123d});
-        DATA_TYPES.add(new Object[]{"REAL", 100500.123d});
-        DATA_TYPES.add(new Object[]{"TIME", "'10:20:30'"});
-        DATA_TYPES.add(new Object[]{"DATE", "'2018-03-04'"});
-        DATA_TYPES.add(new Object[]{"TIMESTAMP", "'2018-03-04 05:06:07'"});
-        DATA_TYPES.add(new Object[]{"VARCHAR", "'VARCHAR_VALUE'", 64});
+        // scalar int
+        DATA_TYPES.add(new ColumnSpec("INTEGER", 10));
+        DATA_TYPES.add(new ColumnSpec("TINYINT", 20));
+        DATA_TYPES.add(new ColumnSpec("SMALLINT", 20));
+        DATA_TYPES.add(new ColumnSpec("BIGINT", 1_000_000L));
+
+        // floating point
+        DATA_TYPES.add(new ColumnSpec("FLOAT", 123.4567f));
+        DATA_TYPES.add(new ColumnSpec("DOUBLE", 789.0123d));
+        DATA_TYPES.add(new ColumnSpec("REAL", 100500.123d));
+
+        // time
+        DATA_TYPES.add(new ColumnSpec("TIME", "'10:20:30'"));
+        DATA_TYPES.add(new ColumnSpec("DATE", "'2018-03-04'"));
+        DATA_TYPES.add(new ColumnSpec("TIMESTAMP", "'2018-03-04 05:06:07'"));
+
+        // text
+        DATA_TYPES.add(new ColumnSpec("CHAR", "'v'").setColumnName("char_1"));
+        DATA_TYPES.add(new ColumnSpec("CHAR", "'val'", 5).setColumnName("char_5"));
+        DATA_TYPES.add(new ColumnSpec("VARCHAR", "'VARCHAR_VALUE'", 64));
+        DATA_TYPES.add(new ColumnSpec("NVARCHAR", "'NVARCHAR_VALUE'", 64));
+        DATA_TYPES.add(new ColumnSpec("NCHAR", "'NVARCHAR_VALUE'", 64));
+
+        DATA_TYPES.add(new ColumnSpec("BOOLEAN", true));
     }
 
     private final String uri;
@@ -80,7 +93,6 @@ public class ClickHouseConverterIntegrationTest {
     private final Collection<String> unsupportedTypes;
     private String quote;
     private Connection conn;
-
 
     public ClickHouseConverterIntegrationTest(String uri, Collection<String> unsupported) {
         this.uri = uri;
@@ -122,18 +134,18 @@ public class ClickHouseConverterIntegrationTest {
         List<String> fieldList = new ArrayList<>();
         List<String> valueList = new ArrayList<>();
 
-        for (Object[] fieldAndValue : DATA_TYPES) {
-            String type = fieldAndValue[0].toString();
+        for (ColumnSpec spec : DATA_TYPES) {
+            String type = spec.getTypename();
 
             if (unsupportedTypes.contains(type)) {
                 continue;
             }
 
-            String name = type.toLowerCase();
-            String value = fieldAndValue[1].toString();
+            String name = spec.getColumnName();
+            String value = spec.getValue().toString();
 
-            if (fieldAndValue.length == 3) {
-                type = type + "(" + fieldAndValue[2] + ")";
+            if (spec.getFieldLength() > 0) {
+                type = type + "(" + spec.getFieldLength() + ")";
             }
 
             formatProps.setProperty("name", name);
@@ -226,6 +238,39 @@ public class ClickHouseConverterIntegrationTest {
             } else if (process.exitValue() != 0) {
                 fail("clickhouse-local exited with non-zero code");
             }
+        }
+    }
+
+    private static class ColumnSpec {
+        @Getter
+        private final String typename;
+        @Getter
+        private final Object value;
+        @Getter
+        private int fieldLength = 0;
+
+        private String columnName;
+
+        private ColumnSpec(String typename, Object value) {
+            this.typename = typename;
+            this.value = value;
+        }
+
+        private ColumnSpec(String typename, Object value, int fieldLength) {
+            this(typename, value);
+            this.fieldLength = fieldLength;
+        }
+
+        public String getColumnName() {
+            if (null == columnName) {
+                return typename.toLowerCase();
+            }
+            return columnName;
+        }
+
+        public ColumnSpec setColumnName(String value) {
+            this.columnName = value;
+            return this;
         }
     }
 

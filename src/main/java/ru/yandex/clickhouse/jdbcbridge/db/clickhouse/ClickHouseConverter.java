@@ -9,6 +9,7 @@ import static java.sql.Types.DOUBLE;
 import static java.sql.Types.FLOAT;
 import static java.sql.Types.INTEGER;
 import static java.sql.Types.LONGVARCHAR;
+import static java.sql.Types.NVARCHAR;
 import static java.sql.Types.REAL;
 import static java.sql.Types.SMALLINT;
 import static java.sql.Types.TIME;
@@ -52,11 +53,11 @@ public class ClickHouseConverter {
         map.put(BIT, new MappingInstruction<>(UInt8, ResultSet::getBoolean, (i, s) -> s.writeUInt8(i)));
         map.put(BOOLEAN, new MappingInstruction<>(UInt8, ResultSet::getBoolean, (i, s) -> s.writeUInt8(i)));
 
-
         // @todo test
         map.put(CHAR, new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
         map.put(VARCHAR, new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
         map.put(LONGVARCHAR, new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
+        map.put(NVARCHAR, new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
 
         MAP = Collections.unmodifiableMap(map);
     }
