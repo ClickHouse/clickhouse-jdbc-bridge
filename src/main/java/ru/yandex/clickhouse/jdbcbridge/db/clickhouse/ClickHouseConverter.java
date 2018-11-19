@@ -16,7 +16,16 @@ import static java.sql.Types.TIME;
 import static java.sql.Types.TIMESTAMP;
 import static java.sql.Types.TINYINT;
 import static java.sql.Types.VARCHAR;
-import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.*;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Date;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.DateTime;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Float32;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Float64;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Int16;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Int32;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Int64;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.Int8;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.String;
+import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.UInt8;
 
 import ru.yandex.clickhouse.ClickHouseUtil;
 
@@ -25,7 +34,11 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This utility converts SQL datatypes to appropriate in ClickHouse
@@ -63,11 +76,11 @@ public class ClickHouseConverter {
     }
 
     public static ClickHouseDataType getBySQLType(int type) throws SQLException {
-        return getInstructionBySQLType(type).clickHouseDataType;
+        return getInstructionBySQLType(type).getClickHouseDataType();
     }
 
     public static ExtractorConverter<?> getSerializerBySQLType(int type) throws SQLException {
-        return getInstructionBySQLType(type).serializer;
+        return getInstructionBySQLType(type).getSerializer();
     }
 
 
@@ -93,6 +106,15 @@ public class ClickHouseConverter {
         return instruction;
     }
 
+    public static String getCLIStructure(ResultSetMetaData meta) throws SQLException {
+        List<String> list = new ArrayList<>();
+        for (int i = 1; i <= meta.getColumnCount(); i++) {
+            boolean nullable = ResultSetMetaData.columnNullable == meta.isNullable(i);
+            list.add(meta.getColumnName(i) + " " + getBySQLType(meta.getColumnType(i)).getName(nullable));
+        }
+        return java.lang.String.join(", ", list);
+    }
+
     /**
      * Retrieves the columns DDL in format, readable by ClickHouse
      */
@@ -110,15 +132,6 @@ public class ClickHouseConverter {
         return builder.toString();
     }
 
-    public static String getCLIStructure(ResultSetMetaData meta) throws SQLException {
-        List<String> list = new ArrayList<>();
-        for (int i = 1; i <= meta.getColumnCount(); i++) {
-            boolean nullable = ResultSetMetaData.columnNullable == meta.isNullable(i);
-            list.add(meta.getColumnName(i) + " " + getBySQLType(meta.getColumnType(i)).getName(nullable));
-        }
-        return java.lang.String.join(", ", list);
-    }
-
     private static class MappingInstruction<T> {
         private final ClickHouseDataType clickHouseDataType;
         private final ExtractorConverter<T> serializer;
@@ -126,6 +139,14 @@ public class ClickHouseConverter {
         public MappingInstruction(ClickHouseDataType type, FieldValueExtractor<T> extractor, FieldValueSerializer<T> serializer) {
             this.clickHouseDataType = type;
             this.serializer = new ExtractorConverter<>(extractor, serializer);
+        }
+
+        protected ClickHouseDataType getClickHouseDataType() {
+            return clickHouseDataType;
+        }
+
+        protected final ExtractorConverter<T> getSerializer() {
+            return serializer;
         }
     }
 }

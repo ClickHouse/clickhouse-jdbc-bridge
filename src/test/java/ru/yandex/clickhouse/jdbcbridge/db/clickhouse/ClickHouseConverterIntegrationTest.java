@@ -6,6 +6,16 @@ import static org.junit.Assume.assumeTrue;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.text.StrSubstitutor;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.jooq.CreateTableAsStep;
+import org.jooq.CreateTableConstraintStep;
+import org.jooq.DSLContext;
+import org.jooq.Record;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DSL;
+import org.jooq.impl.DefaultDSLContext;
+import org.jooq.impl.SQLDataType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,6 +63,8 @@ public class ClickHouseConverterIntegrationTest {
             // Example: "jdbc:postgresql://localhost:5432/test?user=root&password=root"
             "datasource.postgresql",
             "datasource.sqlite",
+            // Example: "jdbc:oracle:thin:@localhost:1521:xe"
+            "datasource.oracle"
     };
     private static Collection<ColumnSpec> DATA_TYPES = new ArrayList<>();
 
@@ -96,7 +108,7 @@ public class ClickHouseConverterIntegrationTest {
 
     public ClickHouseConverterIntegrationTest(String uri, Collection<String> unsupported) {
         this.uri = uri;
-        tableName = UUID.randomUUID().toString();
+        tableName = UUID.randomUUID().toString().substring(0,6);
         this.unsupportedTypes = unsupported;
     }
 
@@ -121,7 +133,11 @@ public class ClickHouseConverterIntegrationTest {
 
     @Before
     public void setUp() throws Exception {
-        conn = DriverManager.getConnection(uri);
+
+        DefaultDSLContext ctx = new DefaultDSLContext(SQLDialect.MYSQL_5_7);
+        CreateTableConstraintStep smth = DSL.createGlobalTemporaryTable(tableName).column("id", SQLDataType.INTEGER).constraint(DSL.constraint("id").primaryKey("id"));
+
+        conn = DriverManager.getConnection(uri, new Properties());
         quote = conn.getMetaData().getIdentifierQuoteString();
 
         Properties formatProps = new Properties();
@@ -129,6 +145,7 @@ public class ClickHouseConverterIntegrationTest {
         formatProps.setProperty("i", conn.getMetaData().getIdentifierQuoteString());
         formatProps.setProperty("table", tableName);
         String ddl = StrSubstitutor.replace(DLL_CREATE_TABLE, formatProps);
+        System.out.println(ddl);
         conn.createStatement().execute(ddl);
 
         List<String> fieldList = new ArrayList<>();
@@ -154,6 +171,7 @@ public class ClickHouseConverterIntegrationTest {
             formatProps.setProperty("nullability", "NOT NULL DEFAULT " + value);
 
             String addColumn = StrSubstitutor.replace(DLL_ADD_COLUMN, formatProps);
+            System.out.println(addColumn);
             conn.createStatement().execute(addColumn);
 
             // insert into this field later
@@ -191,7 +209,6 @@ public class ClickHouseConverterIntegrationTest {
                 .executeQuery("SELECT * FROM " + quote + tableName + quote + " WHERE 0 = 1")) {
             new ClickHouseConverter().getColumnsDDL(resultset.getMetaData());
         }
-
     }
 
     @Test
@@ -263,7 +280,7 @@ public class ClickHouseConverterIntegrationTest {
 
         public String getColumnName() {
             if (null == columnName) {
-                return typename.toLowerCase();
+                return typename.toLowerCase() + "_1";
             }
             return columnName;
         }
