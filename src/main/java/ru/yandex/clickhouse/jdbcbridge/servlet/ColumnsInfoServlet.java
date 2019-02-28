@@ -18,6 +18,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This servlet infer the schema of given table, and writes it back
@@ -37,7 +40,11 @@ public class ColumnsInfoServlet extends HttpServlet {
             String table = req.getParameter("table");
             String schema = req.getParameter("schema");
 
-            String tableAndSchema = StringUtil.isBlank(schema) ? table : schema + "." + table;
+            String quote = connection.getMetaData().getIdentifierQuoteString();
+            String tableAndSchema = Stream.of(table, schema)
+                    .filter(s -> !StringUtil.isBlank(s))
+                    .map(s -> quote + s + quote)
+                    .collect(Collectors.joining("."));
 
             String queryRewrite = "SELECT * FROM " + tableAndSchema + " WHERE 1 = 0";
             log.info("Inferring schema by query {}", queryRewrite);
