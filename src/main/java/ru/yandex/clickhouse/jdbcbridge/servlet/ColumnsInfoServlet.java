@@ -37,16 +37,16 @@ public class ColumnsInfoServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         try (Connection connection = manager.get(req.getParameter("connection_string")); Statement sth = connection.createStatement()) {
-            String table = req.getParameter("table");
             String schema = req.getParameter("schema");
+            String table = req.getParameter("table");
 
             String quote = connection.getMetaData().getIdentifierQuoteString();
-            String tableAndSchema = Stream.of(table, schema)
+            String schemaAndTable = Stream.of(schema, table)
                     .filter(s -> !StringUtil.isBlank(s))
                     .map(s -> quote + s + quote)
                     .collect(Collectors.joining("."));
 
-            String queryRewrite = "SELECT * FROM " + tableAndSchema + " WHERE 1 = 0";
+            String queryRewrite = "SELECT * FROM " + schemaAndTable + " WHERE 1 = 0";
             log.info("Inferring schema by query {}", queryRewrite);
 
             ResultSet resultset = sth.executeQuery(queryRewrite);
