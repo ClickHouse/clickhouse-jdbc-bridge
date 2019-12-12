@@ -75,10 +75,20 @@ public class BridgeConnectionManager {
 
         Connection conn = DriverManager.getConnection(uri);
 
-        // to avoid transactions
-        conn.setAutoCommit(true);
-        // to determine origin of the query
-        conn.setClientInfo("ClientUser", CLIENT_NAME);
+        try {
+            // to avoid transactions
+            conn.setAutoCommit(true);
+        } catch (SQLException err) {
+            log.error("Failed to set autocommit", err);
+        }
+
+        try {
+            // to determine origin of the query
+            conn.setClientInfo("ClientUser", CLIENT_NAME);
+        } catch (SQLException err) {
+            log.error("Failed to set client info", err);
+        }
+
 
         return conn;
     }
