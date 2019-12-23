@@ -158,5 +158,13 @@ find implementations of `java.sql.Driver` in each jar, and make it available for
 
 `--log-path` where to write logs, produced by logging facility 
 
+## Clickhouse to bringe port
+By default, `clickhouse-jdbc-bridge` uses `localhost:9019`. You can specify the host and port in `config.xml` like this:
 
+```xml
+<jdbc_bridge>
+    <host>127.0.0.1</host>
+    <port>9119</port>
+</jdbc_bridge>
+```
 
