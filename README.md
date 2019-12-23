@@ -34,6 +34,7 @@ You may create a file, containing aliases for particular datasource:
 # Format:
 # datasource.$alias=[jdbc:]$DSN
 datasource.mysql-localhost=mysql://localhost:3306/?user=root&password=root&useSSL=false
+datasource.mydb2t=jdbc:db2://db2serverip:446/databaseName:user=root;password=root;useSSL=false;
  ```
 E.g. each connection alias starts with `connection.` keyword, then goes alias value, then - connection string.
 When applied, you may use the following from ClickHouse:
