@@ -1,21 +1,6 @@
 package ru.yandex.clickhouse.jdbcbridge.db.clickhouse;
 
-import static java.sql.Types.BIGINT;
-import static java.sql.Types.BIT;
-import static java.sql.Types.BOOLEAN;
-import static java.sql.Types.CHAR;
-import static java.sql.Types.DATE;
-import static java.sql.Types.DOUBLE;
-import static java.sql.Types.FLOAT;
-import static java.sql.Types.INTEGER;
-import static java.sql.Types.LONGVARCHAR;
-import static java.sql.Types.NVARCHAR;
-import static java.sql.Types.REAL;
-import static java.sql.Types.SMALLINT;
-import static java.sql.Types.TIME;
-import static java.sql.Types.TIMESTAMP;
-import static java.sql.Types.TINYINT;
-import static java.sql.Types.VARCHAR;
+import static java.sql.Types.*;
 import static ru.yandex.clickhouse.jdbcbridge.db.clickhouse.ClickHouseDataType.*;
 
 import ru.yandex.clickhouse.ClickHouseUtil;
@@ -34,6 +19,10 @@ import java.util.*;
 public class ClickHouseConverter {
 
     private static final Map<Integer, MappingInstruction> MAP;
+
+    public static final int DECIMAL32 = -10001;
+    public static final int DECIMAL64 = -10002;
+    public static final int DECIMAL128 = -10003;
 
     static {
         Map<Integer, MappingInstruction> map = new HashMap<>();
@@ -62,16 +51,28 @@ public class ClickHouseConverter {
         MAP = Collections.unmodifiableMap(map);
     }
 
-    public static ClickHouseDataType getBySQLType(int type) throws SQLException {
-        return getInstructionBySQLType(type).clickHouseDataType;
+    public static ClickHouseDataType getBySQLType(int type, int precision, int scale) throws SQLException {
+        return getInstructionBySQLType(type, precision, scale).clickHouseDataType;
     }
 
-    public static ExtractorConverter<?> getSerializerBySQLType(int type) throws SQLException {
-        return getInstructionBySQLType(type).serializer;
+    public static ExtractorConverter<?> getSerializerBySQLType(int type, int precision, int scale) throws SQLException {
+        return getInstructionBySQLType(type, precision, scale).serializer;
     }
 
 
-    private static MappingInstruction<?> getInstructionBySQLType(int sqlType) throws SQLException {
+    private static MappingInstruction<?> getInstructionBySQLType(int sqlType, int precision, int scale) throws SQLException {
+
+        // for decimal types
+        if (sqlType == NUMERIC){
+            if (precision <=9 ){
+                return new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal32(i, scale));
+            }else if (precision <= 18){
+                return new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal64(i, scale));
+            }else {
+                return new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal128(i, scale));
+            }
+        }
+
         MappingInstruction<?> instruction = MAP.get(sqlType);
         if (null == instruction) {
             // try to infer name of constant
@@ -98,13 +99,18 @@ public class ClickHouseConverter {
      */
     public String getColumnsDDL(ResultSetMetaData meta) throws SQLException {
         StringBuilder builder = new StringBuilder("columns format version: 1\n");
+
         builder.append(meta.getColumnCount());
         builder.append(" columns:\n");
         for (int i = 1; i <= meta.getColumnCount(); i++) {
+            int precision = meta.getPrecision(i);
+            int type = meta.getColumnType(i);
+            int scale = meta.getScale(i);
+
             boolean nullable = ResultSetMetaData.columnNullable == meta.isNullable(i);
             builder.append(ClickHouseUtil.quoteIdentifier(meta.getColumnName(i)));
             builder.append(" ");
-            builder.append(getBySQLType(meta.getColumnType(i)).getName(nullable));
+            builder.append(getBySQLType(type, precision, scale).getName(nullable,meta.getPrecision(i), meta.getScale(i)));
             builder.append('\n');
         }
         return builder.toString();
@@ -113,8 +119,11 @@ public class ClickHouseConverter {
     public static String getCLIStructure(ResultSetMetaData meta) throws SQLException {
         List<String> list = new ArrayList<>();
         for (int i = 1; i <= meta.getColumnCount(); i++) {
+            int precision = meta.getPrecision(i);
+            int type = meta.getColumnType(i);
+            int scale = meta.getScale(i);
             boolean nullable = ResultSetMetaData.columnNullable == meta.isNullable(i);
-            list.add(meta.getColumnName(i) + " " + getBySQLType(meta.getColumnType(i)).getName(nullable));
+            list.add(meta.getColumnName(i) + " " + getBySQLType(type, precision, scale).getName(nullable, meta.getPrecision(i), meta.getScale(i)));
         }
         return java.lang.String.join(", ", list);
     }

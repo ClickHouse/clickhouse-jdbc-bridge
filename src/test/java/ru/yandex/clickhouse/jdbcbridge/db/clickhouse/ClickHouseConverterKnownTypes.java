@@ -43,6 +43,6 @@ public class ClickHouseConverterKnownTypes {
 
     @Test
     public void getBySQLType() throws Exception {
-        ClickHouseConverter.getBySQLType(expectedSQLType);
+        ClickHouseConverter.getBySQLType(expectedSQLType, 0,0);
     }
 }
