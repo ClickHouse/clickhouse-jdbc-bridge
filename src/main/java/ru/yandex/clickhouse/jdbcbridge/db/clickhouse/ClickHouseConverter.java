@@ -18,35 +18,84 @@ import java.util.*;
  */
 public class ClickHouseConverter {
 
-    private static final Map<Integer, MappingInstruction> MAP;
+    private static final Map<TypeWithScaleAndPrecision, MappingInstruction> MAP;
 
     public static final int DECIMAL32 = -10001;
     public static final int DECIMAL64 = -10002;
     public static final int DECIMAL128 = -10003;
 
+    static class TypeWithScaleAndPrecision{
+        int type;
+        Integer scale;
+        Integer precision;
+
+        public TypeWithScaleAndPrecision(int type, Integer scale, Integer precision) {
+            this.type = type;
+            this.scale = scale;
+            this.precision = precision;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TypeWithScaleAndPrecision that = (TypeWithScaleAndPrecision) o;
+            if (type == NUMERIC){
+            return type == that.type &&
+                    Objects.equals(scale, that.scale) &&
+                    Objects.equals(precision, that.precision);}
+            else{
+                return type == that.type;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            if (type == NUMERIC) {
+                return Objects.hash(type, scale, precision);
+            }else{
+                return Objects.hash(type);
+            }
+        }
+    }
+
     static {
-        Map<Integer, MappingInstruction> map = new HashMap<>();
-        map.put(TINYINT, new MappingInstruction<>(Int8, ResultSet::getInt, (i, s) -> s.writeInt8(i)));
-        map.put(SMALLINT, new MappingInstruction<>(Int16, ResultSet::getInt, (i, s) -> s.writeInt16(i)));
-        map.put(INTEGER, new MappingInstruction<>(Int32, ResultSet::getInt, (i, s) -> s.writeInt32(i)));
-        map.put(BIGINT, new MappingInstruction<>(Int64, ResultSet::getLong, (i, s) -> s.writeInt64(i)));
+        Map<TypeWithScaleAndPrecision, MappingInstruction> map = new HashMap<>();
+        map.put(new TypeWithScaleAndPrecision(TINYINT,null,null), new MappingInstruction<>(Int8, ResultSet::getInt, (i, s) -> s.writeInt8(i)));
+        map.put(new TypeWithScaleAndPrecision(SMALLINT,null,null), new MappingInstruction<>(Int16, ResultSet::getInt, (i, s) -> s.writeInt16(i)));
+        map.put(new TypeWithScaleAndPrecision(INTEGER,null,null), new MappingInstruction<>(Int32, ResultSet::getInt, (i, s) -> s.writeInt32(i)));
+        map.put(new TypeWithScaleAndPrecision(BIGINT,null,null), new MappingInstruction<>(Int64, ResultSet::getLong, (i, s) -> s.writeInt64(i)));
 
-        map.put(FLOAT, new MappingInstruction<>(Float32, ResultSet::getFloat, (i, s) -> s.writeFloat32(i)));
-        map.put(REAL, new MappingInstruction<>(Float32, ResultSet::getFloat, (i, s) -> s.writeFloat32(i)));
-        map.put(DOUBLE, new MappingInstruction<>(Float64, ResultSet::getFloat, (i, s) -> s.writeFloat64(i)));
+        map.put(new TypeWithScaleAndPrecision(FLOAT,null,null), new MappingInstruction<>(Float32, ResultSet::getFloat, (i, s) -> s.writeFloat32(i)));
+        map.put(new TypeWithScaleAndPrecision(REAL,null,null), new MappingInstruction<>(Float32, ResultSet::getFloat, (i, s) -> s.writeFloat32(i)));
+        map.put(new TypeWithScaleAndPrecision(DOUBLE,null,null), new MappingInstruction<>(Float64, ResultSet::getFloat, (i, s) -> s.writeFloat64(i)));
 
-        map.put(TIMESTAMP, new MappingInstruction<>(DateTime, ResultSet::getTimestamp, (i, s) -> s.writeDateTime(i)));
-        map.put(TIME, new MappingInstruction<>(DateTime, ResultSet::getTime, (i, s) -> s.writeDateTime(i)));
-        map.put(DATE, new MappingInstruction<>(Date, ResultSet::getDate, (i, s) -> s.writeDate(i)));
+        map.put(new TypeWithScaleAndPrecision(TIMESTAMP,null,null), new MappingInstruction<>(DateTime, ResultSet::getTimestamp, (i, s) -> s.writeDateTime(i)));
+        map.put(new TypeWithScaleAndPrecision(TIME,null,null), new MappingInstruction<>(DateTime, ResultSet::getTime, (i, s) -> s.writeDateTime(i)));
+        map.put(new TypeWithScaleAndPrecision(DATE,null,null), new MappingInstruction<>(Date, ResultSet::getDate, (i, s) -> s.writeDate(i)));
 
-        map.put(BIT, new MappingInstruction<>(UInt8, ResultSet::getBoolean, (i, s) -> s.writeUInt8(i)));
-        map.put(BOOLEAN, new MappingInstruction<>(UInt8, ResultSet::getBoolean, (i, s) -> s.writeUInt8(i)));
+        map.put(new TypeWithScaleAndPrecision(BIT,null,null), new MappingInstruction<>(UInt8, ResultSet::getBoolean, (i, s) -> s.writeUInt8(i)));
+        map.put(new TypeWithScaleAndPrecision(BOOLEAN,null,null), new MappingInstruction<>(UInt8, ResultSet::getBoolean, (i, s) -> s.writeUInt8(i)));
 
         // @todo test
-        map.put(CHAR, new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
-        map.put(VARCHAR, new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
-        map.put(LONGVARCHAR, new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
-        map.put(NVARCHAR, new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
+        map.put(new TypeWithScaleAndPrecision(CHAR,null,null), new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
+        map.put(new TypeWithScaleAndPrecision(VARCHAR,null,null), new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
+        map.put(new TypeWithScaleAndPrecision(LONGVARCHAR,null,null), new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
+        map.put(new TypeWithScaleAndPrecision(NVARCHAR,null,null), new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
+
+        for (int precision = 1 ; precision <= 38 ; precision++ ){
+            for (int scale = 0 ; scale <= precision ; scale++ ){
+                int finalScale = scale;
+                if (precision <=9 ){
+                    map.put(new TypeWithScaleAndPrecision(NUMERIC,scale,precision), new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal32(i, finalScale)));
+                }else if (precision <= 18){
+                    map.put(new TypeWithScaleAndPrecision(NUMERIC,scale,precision), new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal64(i, finalScale)));
+                }else{
+                    map.put(new TypeWithScaleAndPrecision(NUMERIC,scale,precision), new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal128(i, finalScale)));
+                }
+
+            }
+        }
 
         MAP = Collections.unmodifiableMap(map);
     }
@@ -62,18 +111,7 @@ public class ClickHouseConverter {
 
     private static MappingInstruction<?> getInstructionBySQLType(int sqlType, int precision, int scale) throws SQLException {
 
-        // for decimal types
-        if (sqlType == NUMERIC){
-            if (precision <=9 ){
-                return new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal32(i, scale));
-            }else if (precision <= 18){
-                return new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal64(i, scale));
-            }else {
-                return new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal128(i, scale));
-            }
-        }
-
-        MappingInstruction<?> instruction = MAP.get(sqlType);
+        MappingInstruction<?> instruction = MAP.get(new TypeWithScaleAndPrecision(sqlType,scale,precision));
         if (null == instruction) {
             // try to infer name of constant
             String typeName = "unknown";
