@@ -31,7 +31,9 @@ public class ClickHouseRowSerializer {
 
         ClickHouseRowSerializer serializer = new ClickHouseRowSerializer();
         for (int i = 1; i <= meta.getColumnCount(); i++) {
-            ExtractorConverter<?> ser = ClickHouseConverter.getSerializerBySQLType(meta.getColumnType(i));
+            int precision = meta.getPrecision(i);
+            int scale = meta.getScale(i);
+            ExtractorConverter<?> ser = ClickHouseConverter.getSerializerBySQLType(meta.getColumnType(i), precision, scale);
             boolean isNullable = meta.isNullable(i) == ResultSetMetaData.columnNullable;
             ClickHouseFieldSerializer<?> fieldSerializer = new ClickHouseFieldSerializer<>(isNullable, ser);
             serializer.add(fieldSerializer);
