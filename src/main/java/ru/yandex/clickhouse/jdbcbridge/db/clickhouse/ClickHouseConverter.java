@@ -23,6 +23,9 @@ public class ClickHouseConverter {
     public static final int DECIMAL32 = -10001;
     public static final int DECIMAL64 = -10002;
     public static final int DECIMAL128 = -10003;
+    public static final int DECIMAL32MAXPRECISION = 9;
+    public static final int DECIMAL64MAXPRECISION = 18;
+    public static final int DECIMAL128MAXPRECISION = 38;
 
     static class TypeWithScaleAndPrecision{
         int type;
@@ -83,12 +86,12 @@ public class ClickHouseConverter {
         map.put(new TypeWithScaleAndPrecision(LONGVARCHAR,null,null), new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
         map.put(new TypeWithScaleAndPrecision(NVARCHAR,null,null), new MappingInstruction<>(String, ResultSet::getString, (i, s) -> s.writeString(i)));
 
-        for (int precision = 1 ; precision <= 38 ; precision++ ){
+        for (int precision = 1 ; precision <= DECIMAL128MAXPRECISION ; precision++ ){
             for (int scale = 0 ; scale <= precision ; scale++ ){
                 int finalScale = scale;
-                if (precision <=9 ){
+                if (precision <=DECIMAL32MAXPRECISION ){
                     map.put(new TypeWithScaleAndPrecision(NUMERIC,scale,precision), new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal32(i, finalScale)));
-                }else if (precision <= 18){
+                }else if (precision <= DECIMAL64MAXPRECISION){
                     map.put(new TypeWithScaleAndPrecision(NUMERIC,scale,precision), new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal64(i, finalScale)));
                 }else{
                     map.put(new TypeWithScaleAndPrecision(NUMERIC,scale,precision), new MappingInstruction<>(Decimal, ResultSet::getBigDecimal, (i, s) -> s.writeDecimal128(i, finalScale)));

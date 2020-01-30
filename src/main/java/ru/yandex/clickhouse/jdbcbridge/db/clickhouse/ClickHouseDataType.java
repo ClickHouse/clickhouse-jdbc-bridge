@@ -6,35 +6,39 @@ package ru.yandex.clickhouse.jdbcbridge.db.clickhouse;
  */
 public enum ClickHouseDataType {
     // Unsigned
-    UInt8("UInt8"),
-    UInt16("UInt16"),
-    UInt32("UInt32"),
-    UInt64("UInt64"),
+    UInt8,
+    UInt16,
+    UInt32,
+    UInt64,
 
     // Signed
-    Int8("Int8"),
-    Int16("Int16"),
-    Int32("Int32"),
-    Int64("Int64"),
+    Int8,
+    Int16,
+    Int32,
+    Int64,
 
     // Floating point
-    Float32("Float32"),
-    Float64("Float64"),
+    Float32,
+    Float64,
 
     // Date time
-    DateTime("DateTime"),
-    Date("Date"),
+    DateTime,
+    Date,
 
-    Decimal("Decimal"),
+    Decimal,
 
     // Misc
-    String("String");
+    String;
 
     String typo;
 
     ClickHouseDataType(String string) {
         this.typo = string;
     }
+
+    ClickHouseDataType(){
+        this.typo = this.toString();
+    };
 
     public String getName(boolean isNullable, int precision, int scale) {
         String retval = this.typo;
