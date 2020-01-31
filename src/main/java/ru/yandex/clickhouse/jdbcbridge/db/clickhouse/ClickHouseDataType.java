@@ -25,11 +25,34 @@ public enum ClickHouseDataType {
     DateTime,
     Date,
 
+    Decimal,
+
     // Misc
     String;
 
-    public String getName(boolean isNullable) {
-        String retval = toString();
+    String typo;
+
+    ClickHouseDataType(String string) {
+        this.typo = string;
+    }
+
+    ClickHouseDataType(){
+        this.typo = this.toString();
+    };
+
+    public String getName(boolean isNullable, int precision, int scale) {
+        String retval = this.typo;
+        if (retval.equals("Decimal")){
+            if (precision <= 9){
+                retval = java.lang.String.format("Decimal32(%s)", scale);
+            }
+            else if (precision <= 18){
+                retval = java.lang.String.format("Decimal64(%s)", scale);
+            }
+            else {
+                retval = java.lang.String.format("Decimal128(%s)", scale);
+            }
+        }
         if (isNullable) {
             retval = "Nullable(" + retval + ")";
         }
