@@ -8,7 +8,7 @@
     <artifactId>clickhouse-jdbc-bridge</artifactId>
     <version>1.0.1</version>
     <properties>
-        <jetty.version>9.4.26.v20200117</jetty.version>
+        <jetty.version>9.4.27.v20200227</jetty.version>
         <slf4j.version>1.7.5</slf4j.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
