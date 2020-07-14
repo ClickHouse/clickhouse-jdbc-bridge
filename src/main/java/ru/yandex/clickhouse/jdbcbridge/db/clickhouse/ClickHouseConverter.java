@@ -72,6 +72,7 @@ public class ClickHouseConverter {
         map.put(new TypeWithScaleAndPrecision(FLOAT,null,null), new MappingInstruction<>(Float32, ResultSet::getFloat, (i, s) -> s.writeFloat32(i)));
         map.put(new TypeWithScaleAndPrecision(REAL,null,null), new MappingInstruction<>(Float32, ResultSet::getFloat, (i, s) -> s.writeFloat32(i)));
         map.put(new TypeWithScaleAndPrecision(DOUBLE,null,null), new MappingInstruction<>(Float64, ResultSet::getFloat, (i, s) -> s.writeFloat64(i)));
+        map.put(new TypeWithScaleAndPrecision(NUMERIC,null,null), new MappingInstruction<>(Decimal, ResultSet::getFloat, (i, s) -> s.writeFloat64(i)));
 
         map.put(new TypeWithScaleAndPrecision(TIMESTAMP,null,null), new MappingInstruction<>(DateTime, ResultSet::getTimestamp, (i, s) -> s.writeDateTime(i)));
         map.put(new TypeWithScaleAndPrecision(TIME,null,null), new MappingInstruction<>(DateTime, ResultSet::getTime, (i, s) -> s.writeDateTime(i)));
