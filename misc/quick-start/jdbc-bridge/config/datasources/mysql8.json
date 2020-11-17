@@ -1,0 +1,14 @@
+{
+  "mysql8": {
+    "driverUrls": [
+      "https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.21/mysql-connector-java-8.0.21.jar"
+    ],
+    "driverClassName": "com.mysql.cj.jdbc.Driver",
+    "jdbcUrl": "jdbc:mysql://db-mysql8/test?allowPublicKeyRetrieval=true&useSSL=false&useCompression=false&useOldAliasMetadataBehavior=true&allowMultiQueries=true",
+    "username": "root",
+    "password": "root",
+    "initializationFailTimeout": 0,
+    "minimumIdle": 0,
+    "maximumPoolSize": 10
+  }
+}

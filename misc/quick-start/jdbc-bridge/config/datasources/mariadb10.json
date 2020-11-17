@@ -1,0 +1,16 @@
+{
+  "mariadb10": {
+    "driverUrls": [
+      "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.0/mariadb-java-client-2.7.0.jar"
+    ],
+    "driverClassName": "org.mariadb.jdbc.Driver",
+    "jdbcUrl": "jdbc:mariadb://db-mariadb10/test?useSSL=false&useCompression=false&useOldAliasMetadataBehavior=true&allowMultiQueries=true",
+    "dataSource": {
+      "user": "root",
+      "password": "root"
+    },
+    "initializationFailTimeout": 0,
+    "minimumIdle": 0,
+    "maximumPoolSize": 10
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "$schema": "../../../../docker/config/datasource-schema.json",
+
+  "test-nds": {
+    "aliases": ["nds01", "nds001"]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "../query-schema.json",
+  "show-query-logs": {
+    "query": "scripts/show-query-logs.sql",
+    "columns": [
+      {
+        "name": "query_id",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "type",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "event_time",
+        "type": "DateTime64",
+        "nullable": false,
+        "scale": 3
+      },
+      {
+        "name": "query_start_time",
+        "type": "DateTime64",
+        "nullable": false,
+        "scale": 3
+      },
+      {
+        "name": "query",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "user",
+        "type": "String",
+        "nullable": false
+      }
+    ],
+    "parameters": {
+      "fetch_size": 100,
+      "max_rows": 100
+    }
+  }
+}

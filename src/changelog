@@ -1,0 +1,4 @@
+* Sun Oct 18 2020 Zhichun Wu <zhicwu@gmail.com>
+- refactor to make it more extensible along with new features like ScriptDataSource
+* Sun Jan 19 2020 Zhichun Wu <zhicwu@gmail.com>
+- re-write JDBC bridge for more features

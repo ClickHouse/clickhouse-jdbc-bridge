@@ -1,0 +1,17 @@
+{
+  "requestTimeout": 5000,
+  "queryTimeout": 30000,
+  "configScanPeriod": 5000,
+  "extensions": [
+    {
+      "class": "ru.yandex.clickhouse.jdbcbridge.impl.JdbcDataSource"
+    },
+    {
+      "class": "ru.yandex.clickhouse.jdbcbridge.impl.ConfigDataSource"
+    },
+    {
+      "libUrls": ["extensions/script-engines"],
+      "class": "ru.yandex.clickhouse.jdbcbridge.impl.ScriptDataSource"
+    }
+  ]
+}

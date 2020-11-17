@@ -1,0 +1,15 @@
+<yandex>
+    <listen_host>0.0.0.0</listen_host>
+    <mysql_port>3307</mysql_port>
+    <jdbc_bridge>
+        <host>jdbc-bridge</host>
+        <port>9019</port>
+    </jdbc_bridge>
+    <prometheus>
+        <endpoint>/metrics</endpoint>
+        <port>8001</port>
+        <metrics>true</metrics>
+        <events>true</events>
+        <asynchronous_metrics>true</asynchronous_metrics>
+    </prometheus>
+</yandex>
