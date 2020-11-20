@@ -1,0 +1,76 @@
+version: "2"
+
+# Only 'ch-server' and 'jdbc-bridge' are mandatory.
+# Feel free to remove any db-xxx to save memory
+services:
+  db-mariadb10:
+    image: mariadb:10
+    hostname: db-mariadb10
+    environment:
+      MYSQL_DATABASE: test
+      MYSQL_ROOT_PASSWORD: root
+    mem_limit: 512m
+    restart: always
+
+  db-postgres13:
+    image: postgres:13
+    hostname: db-postgres13
+    environment:
+      POSTGRES_DB: test
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: sa
+    mem_limit: 512m
+    restart: always
+
+  db-mysql5:
+    image: mysql:5
+    hostname: db-mysql5
+    environment:
+      MYSQL_DATABASE: test
+      MYSQL_ROOT_PASSWORD: root
+    mem_limit: 512m
+    restart: always
+
+  db-mysql8:
+    image: mysql:8
+    hostname: db-mysql8
+    environment:
+      MYSQL_DATABASE: test
+      MYSQL_ROOT_PASSWORD: root
+    mem_limit: 512m
+    restart: always
+
+  ch-server:
+    image: yandex/clickhouse-server
+    hostname: ch-server
+    volumes:
+      - ./ch-server/config:/etc/clickhouse-server/config.d
+      #- ./ch-server/data:/var/lib/clickhouse
+      #- ./ch-server/logs:/var/log/clickhouse
+    mem_limit: 512m
+    restart: always
+
+  jdbc-bridge:
+    image: yandex/clickhouse-jdbc-bridge
+    hostname: jdbc-bridge
+    # In general you don't need to define any environment variable
+    # Below are all default settings just for demonstration
+    environment:
+      CONFIG_DIR: config                  # configuration directory
+      HTTPD_CONFIG_FILE: httpd.json       # httpd configuration file
+      SERVER_CONFIG_FILE: server.json     # server configuration file
+      VERTX_CONFIG_FILE: vertx.json       # vertx configuration file
+      DATASOURCE_CONFIG_DIR: datasources  # named datasource directory
+      DRIVER_DIR: drivers                 # driver directory
+      EXTENSION_DIR: extensions           # extension directory
+      QUERY_CONFIG_DIR: queries           # named query directory
+      CUSTOM_DRIVER_LOADER: "true"        # whether use custom driver loader or not
+      JDBC_BRIDGE_JVM_OPTS:               # use CPU and memory allocated by container
+
+    # You may want to keep datasources, queries, SQL scripts, and maybe drivers in a git repo
+    volumes:
+      - ./jdbc-bridge/config:/app/config
+      - ./jdbc-bridge/drivers:/app/drivers
+      - ./jdbc-bridge/scripts:/app/scripts
+    mem_limit: 512m
+    restart: always

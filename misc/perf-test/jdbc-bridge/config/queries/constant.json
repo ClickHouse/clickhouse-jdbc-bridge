@@ -1,0 +1,12 @@
+{
+  "constant": {
+    "query": "scripts/constant.sql",
+    "columns": [
+      {
+        "name": "1",
+        "type": "Int32",
+        "nullable": false
+      }
+    ]
+  }
+}

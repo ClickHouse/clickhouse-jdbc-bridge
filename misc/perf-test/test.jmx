@@ -1,0 +1,652 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="JDBC Bridge Performance Test" enabled="true">
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="pool.size" elementType="Argument">
+            <stringProp name="Argument.name">pool.size</stringProp>
+            <stringProp name="Argument.value">15</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="concurrent.users" elementType="Argument">
+            <stringProp name="Argument.name">concurrent.users</stringProp>
+            <stringProp name="Argument.value">20</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="rampup.period" elementType="Argument">
+            <stringProp name="Argument.name">rampup.period</stringProp>
+            <stringProp name="Argument.value">1</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="loop.count" elementType="Argument">
+            <stringProp name="Argument.name">loop.count</stringProp>
+            <stringProp name="Argument.value">100</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="clickhouse.host" elementType="Argument">
+            <stringProp name="Argument.name">clickhouse.host</stringProp>
+            <stringProp name="Argument.value">ch.local.domain</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="clickhouse.port" elementType="Argument">
+            <stringProp name="Argument.name">clickhouse.port</stringProp>
+            <stringProp name="Argument.value">8123</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="clickhouse.mysql.port" elementType="Argument">
+            <stringProp name="Argument.name">clickhouse.mysql.port</stringProp>
+            <stringProp name="Argument.value">3307</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="clickhouse.native.port" elementType="Argument">
+            <stringProp name="Argument.name">clickhouse.native.port</stringProp>
+            <stringProp name="Argument.value">9000</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="mariadb.host" elementType="Argument">
+            <stringProp name="Argument.name">mariadb.host</stringProp>
+            <stringProp name="Argument.value">m.local.domain</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="mariadb.port" elementType="Argument">
+            <stringProp name="Argument.name">mariadb.port</stringProp>
+            <stringProp name="Argument.value">3306</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="test.case" elementType="Argument">
+            <stringProp name="Argument.name">test.case</stringProp>
+            <stringProp name="Argument.value">constant</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="test.scenario" elementType="Argument">
+            <stringProp name="Argument.name">test.scenario</stringProp>
+            <stringProp name="Argument.value">jdbc-bridge(native)</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="query.timeout" elementType="Argument">
+            <stringProp name="Argument.name">query.timeout</stringProp>
+            <stringProp name="Argument.value">30</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="connection.timeout" elementType="Argument">
+            <stringProp name="Argument.name">connection.timeout</stringProp>
+            <stringProp name="Argument.value">30000</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"></stringProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">${loop.count}</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${concurrent.users}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${rampup.period}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="ClickHouse(http) Connection Pool" enabled="true">
+          <boolProp name="autocommit">true</boolProp>
+          <stringProp name="checkQuery">select 1</stringProp>
+          <stringProp name="connectionAge">-1</stringProp>
+          <stringProp name="connectionProperties"></stringProp>
+          <stringProp name="dataSource">chPool</stringProp>
+          <stringProp name="dbUrl">jdbc:clickhouse://${clickhouse.host}:${clickhouse.port}/system?ssl=false&amp;compression=false</stringProp>
+          <stringProp name="driver">ru.yandex.clickhouse.ClickHouseDriver</stringProp>
+          <stringProp name="initQuery"></stringProp>
+          <boolProp name="keepAlive">true</boolProp>
+          <stringProp name="password"></stringProp>
+          <stringProp name="poolMax">${pool.size}</stringProp>
+          <boolProp name="preinit">false</boolProp>
+          <stringProp name="timeout">${connection.timeout}</stringProp>
+          <stringProp name="transactionIsolation">DEFAULT</stringProp>
+          <stringProp name="trimInterval">-1</stringProp>
+          <stringProp name="username">default</stringProp>
+          <stringProp name="TestPlan.comments">Via HTTP interface</stringProp>
+        </JDBCDataSource>
+        <hashTree/>
+        <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="ClickHouse(http_c4j) Connection Pool" enabled="true">
+          <boolProp name="autocommit">true</boolProp>
+          <stringProp name="checkQuery">select 1</stringProp>
+          <stringProp name="connectionAge">-1</stringProp>
+          <stringProp name="connectionProperties"></stringProp>
+          <stringProp name="dataSource">ch4jPool</stringProp>
+          <stringProp name="dbUrl">jdbc:clickhouse://${clickhouse.host}:${clickhouse.port}/system?ssl=false&amp;compression=false</stringProp>
+          <stringProp name="driver">cc.blynk.clickhouse.ClickHouseDriver</stringProp>
+          <stringProp name="initQuery"></stringProp>
+          <boolProp name="keepAlive">true</boolProp>
+          <stringProp name="password"></stringProp>
+          <stringProp name="poolMax">${pool.size}</stringProp>
+          <boolProp name="preinit">false</boolProp>
+          <stringProp name="timeout">${connection.timeout}</stringProp>
+          <stringProp name="transactionIsolation">DEFAULT</stringProp>
+          <stringProp name="trimInterval">-1</stringProp>
+          <stringProp name="username">default</stringProp>
+          <stringProp name="TestPlan.comments">Via HTTP interface(using ClickHouse4J driver)</stringProp>
+        </JDBCDataSource>
+        <hashTree/>
+        <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="ClickHouse(mysql) Connection Pool" enabled="true">
+          <boolProp name="autocommit">true</boolProp>
+          <stringProp name="checkQuery">select 1</stringProp>
+          <stringProp name="connectionAge">-1</stringProp>
+          <stringProp name="connectionProperties"></stringProp>
+          <stringProp name="dataSource">chmPool</stringProp>
+          <stringProp name="dbUrl">jdbc:mysql://${clickhouse.host}:${clickhouse.mysql.port}/system?useSSL=false&amp;useCompression=false&amp;serverTimezone=UTC</stringProp>
+          <stringProp name="driver">com.mysql.jdbc.Driver</stringProp>
+          <stringProp name="initQuery"></stringProp>
+          <boolProp name="keepAlive">true</boolProp>
+          <stringProp name="password"></stringProp>
+          <stringProp name="poolMax">${pool.size}</stringProp>
+          <boolProp name="preinit">false</boolProp>
+          <stringProp name="timeout">${connection.timeout}</stringProp>
+          <stringProp name="transactionIsolation">DEFAULT</stringProp>
+          <stringProp name="trimInterval">-1</stringProp>
+          <stringProp name="username">default</stringProp>
+          <stringProp name="TestPlan.comments">Via MySQL interface(using MariaDB JDBC driver instead)</stringProp>
+        </JDBCDataSource>
+        <hashTree/>
+        <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="ClickHouse(native) Connection Pool" enabled="true">
+          <boolProp name="autocommit">true</boolProp>
+          <stringProp name="checkQuery">select 1</stringProp>
+          <stringProp name="connectionAge">-1</stringProp>
+          <stringProp name="connectionProperties"></stringProp>
+          <stringProp name="dataSource">chnPool</stringProp>
+          <stringProp name="dbUrl">jdbc:clickhouse://${clickhouse.host}:${clickhouse.native.port}/system</stringProp>
+          <stringProp name="driver">com.github.housepower.jdbc.ClickHouseDriver</stringProp>
+          <stringProp name="initQuery"></stringProp>
+          <boolProp name="keepAlive">true</boolProp>
+          <stringProp name="password"></stringProp>
+          <stringProp name="poolMax">${pool.size}</stringProp>
+          <boolProp name="preinit">false</boolProp>
+          <stringProp name="timeout">${connection.timeout}</stringProp>
+          <stringProp name="transactionIsolation">DEFAULT</stringProp>
+          <stringProp name="trimInterval">-1</stringProp>
+          <stringProp name="username">default</stringProp>
+          <stringProp name="TestPlan.comments">Via native interface(using 3rd party JDBC driver)</stringProp>
+        </JDBCDataSource>
+        <hashTree/>
+        <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="MariaDB Connection Pool" enabled="true">
+          <boolProp name="autocommit">true</boolProp>
+          <stringProp name="checkQuery">select 1</stringProp>
+          <stringProp name="connectionAge">-1</stringProp>
+          <stringProp name="connectionProperties"></stringProp>
+          <stringProp name="dataSource">mdbPool</stringProp>
+          <stringProp name="dbUrl">jdbc:mariadb://${mariadb.host}:${mariadb.port}/test?useSSL=false&amp;useCompression=false</stringProp>
+          <stringProp name="driver">org.mariadb.jdbc.Driver</stringProp>
+          <stringProp name="initQuery"></stringProp>
+          <boolProp name="keepAlive">true</boolProp>
+          <stringProp name="password">root</stringProp>
+          <stringProp name="poolMax">${pool.size}</stringProp>
+          <boolProp name="preinit">false</boolProp>
+          <stringProp name="timeout">${connection.timeout}</stringProp>
+          <stringProp name="transactionIsolation">DEFAULT</stringProp>
+          <stringProp name="trimInterval">-1</stringProp>
+          <stringProp name="username">root</stringProp>
+        </JDBCDataSource>
+        <hashTree/>
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="Constant Query" enabled="true">
+          <stringProp name="TestPlan.comments">Query against a constant</stringProp>
+          <stringProp name="IfController.condition">${__jexl3(&quot;${test.case}&quot;== &quot;constant&quot;,)}</stringProp>
+          <boolProp name="IfController.evaluateAll">false</boolProp>
+          <boolProp name="IfController.useExpression">true</boolProp>
+        </IfController>
+        <hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(http)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;clickhouse(http)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Constant Query - ClickHouse(http)" enabled="true">
+              <stringProp name="dataSource">chPool</stringProp>
+              <stringProp name="query">select 1</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(http -&gt; jdbc-bridge)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;jdbc-bridge(http)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Constant Query - ClickHouse(http -&gt; jdbc-bridge)" enabled="true">
+              <stringProp name="dataSource">chPool</stringProp>
+              <stringProp name="query">select * from jdbc(&apos;mariadb&apos;, &apos;constant&apos;)</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(http_c4j)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;clickhouse(http_c4j)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Constant Query - ClickHouse(http_c4j)" enabled="true">
+              <stringProp name="dataSource">ch4jPool</stringProp>
+              <stringProp name="query">select 1</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(http_c4j -&gt; jdbc-bridge)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;jdbc-bridge(http_c4j)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Constant Query - ClickHouse(http_c4j -&gt; jdbc-bridge)" enabled="true">
+              <stringProp name="dataSource">ch4jPool</stringProp>
+              <stringProp name="query">select * from jdbc(&apos;mariadb&apos;, &apos;constant&apos;)</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(mysql)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;clickhouse(mysql)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Constant Query - ClickHouse(mysql)" enabled="true">
+              <stringProp name="dataSource">chmPool</stringProp>
+              <stringProp name="query">select 1</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(mysql -&gt; jdbc-bridge)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;jdbc-bridge(mysql)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Constant Query - ClickHouse(mysql -&gt; jdbc-bridge)" enabled="true">
+              <stringProp name="dataSource">chmPool</stringProp>
+              <stringProp name="query">select * from jdbc(&apos;mariadb&apos;, &apos;constant&apos;)</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(native)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;clickhouse(native)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Constant Query - ClickHouse(native)" enabled="true">
+              <stringProp name="dataSource">chnPool</stringProp>
+              <stringProp name="query">select 1</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(native -&gt; jdbc-bridge)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;jdbc-bridge(native)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Constant Query - ClickHouse(native -&gt; jdbc-bridge)" enabled="true">
+              <stringProp name="dataSource">chnPool</stringProp>
+              <stringProp name="query">select * from jdbc(&apos;mariadb&apos;, &apos;constant&apos;)</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If MariaDB" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;mariadb&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Constant Query - MariaDB" enabled="true">
+              <stringProp name="dataSource">mdbPool</stringProp>
+              <stringProp name="query">select 1</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="Small Table" enabled="true">
+          <stringProp name="TestPlan.comments">Query against a small table with a few columns and 10k rows</stringProp>
+          <stringProp name="IfController.condition">${__jexl3(&quot;${test.case}&quot;== &quot;small-table&quot;,)}</stringProp>
+          <boolProp name="IfController.evaluateAll">false</boolProp>
+          <boolProp name="IfController.useExpression">true</boolProp>
+        </IfController>
+        <hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(http)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;clickhouse(http)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Small Table - ClickHouse(http)" enabled="true">
+              <stringProp name="dataSource">chPool</stringProp>
+              <stringProp name="query">select * from 10k_rows</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(http -&gt; jdbc-bridge)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;jdbc-bridge(http)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Small Table - ClickHouse(http -&gt; jdbc-bridge)" enabled="true">
+              <stringProp name="dataSource">chPool</stringProp>
+              <stringProp name="query">select * from jdbc(&apos;mariadb&apos;, &apos;small-table&apos;)</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(http_c4j)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;clickhouse(http_c4j)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Small Table - ClickHouse(http_c4j)" enabled="true">
+              <stringProp name="dataSource">ch4jPool</stringProp>
+              <stringProp name="query">select * from 10k_rows</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(http_c4j -&gt; jdbc-bridge)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;jdbc-bridge(http_c4j)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Small Table - ClickHouse(http_c4j -&gt; jdbc-bridge)" enabled="true">
+              <stringProp name="dataSource">ch4jPool</stringProp>
+              <stringProp name="query">select * from jdbc(&apos;mariadb&apos;, &apos;small-table&apos;)</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(mysql)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;clickhouse(mysql)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Small Table - ClickHouse(mysql)" enabled="true">
+              <stringProp name="dataSource">chmPool</stringProp>
+              <stringProp name="query">select * from 10k_rows</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(mysql -&gt; jdbc-bridge)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;jdbc-bridge(mysql)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Small Table - ClickHouse(mysql -&gt; jdbc-bridge)" enabled="true">
+              <stringProp name="dataSource">chmPool</stringProp>
+              <stringProp name="query">select * from jdbc(&apos;mariadb&apos;, &apos;small-table&apos;)</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(native)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;clickhouse(native)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Small Table - ClickHouse(native)" enabled="true">
+              <stringProp name="dataSource">chnPool</stringProp>
+              <stringProp name="query">select * from 10k_rows</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If ClickHouse(native -&gt; jdbc-bridge)" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;jdbc-bridge(native)&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Small Table - ClickHouse(native -&gt; jdbc-bridge)" enabled="true">
+              <stringProp name="dataSource">chnPool</stringProp>
+              <stringProp name="query">select * from jdbc(&apos;mariadb&apos;, &apos;small-table&apos;)</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+          <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If MariaDB" enabled="true">
+            <stringProp name="IfController.condition">${__jexl3(&quot;${test.scenario}&quot;== &quot;mariadb&quot;,)}</stringProp>
+            <boolProp name="IfController.evaluateAll">false</boolProp>
+            <boolProp name="IfController.useExpression">true</boolProp>
+          </IfController>
+          <hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="Small Table - MariaDB" enabled="true">
+              <stringProp name="dataSource">mdbPool</stringProp>
+              <stringProp name="query">select * from 10k_rows</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="queryTimeout">${query.timeout}</stringProp>
+              <stringProp name="queryType">Select Statement</stringProp>
+              <stringProp name="resultSetHandler">Count Records</stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+            </JDBCSampler>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+      </hashTree>
+      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+        <boolProp name="ResultCollector.error_logging">true</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

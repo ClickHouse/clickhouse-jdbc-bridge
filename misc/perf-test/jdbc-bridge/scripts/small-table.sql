@@ -1,0 +1,1 @@
+select * from 10k_rows

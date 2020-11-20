@@ -1,0 +1,37 @@
+{
+  "show-query-logs": {
+    "query": "scripts/show-query-logs.sql",
+    "columns": [
+      {
+        "name": "query_id",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "type",
+        "type": "String",
+        "nullable": false
+      },
+      {
+        "name": "event_time",
+        "type": "DateTime",
+        "nullable": false
+      },
+      {
+        "name": "query_start_time",
+        "type": "DateTime",
+        "nullable": false
+      },
+      {
+        "name": "query",
+        "type": "String",
+        "nullable": true
+      },
+      {
+        "name": "user",
+        "type": "String",
+        "nullable": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "mysql5": {
+    "driverUrls": [
+      "https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.49/mysql-connector-java-5.1.49.jar"
+    ],
+    "driverClassName": "com.mysql.jdbc.Driver",
+    "jdbcUrl": "jdbc:mysql://db-mysql5/test?useSSL=false&useCompression=false&useOldAliasMetadataBehavior=true&allowMultiQueries=true",
+    "username": "root",
+    "password": "root",
+    "initializationFailTimeout": 0,
+    "minimumIdle": 0,
+    "maximumPoolSize": 10
+  }
+}

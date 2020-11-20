@@ -1,0 +1,62 @@
+clickhouse-jdbc-bridge
+Copyright 2019-2020, Zhichun Wu.
+
+This project includes software developed by Zhichun Wu.
+https://github.com/zhicwu
+
+Licensed under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at:
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+
+This project includes:
+  Apache Log4j under The Apache Software License, Version 2.0
+  Caffeine cache under Apache License, Version 2.0
+  Checker Qual under The MIT License
+  ClickHouse JDBC Bridge under Apache License, Version 2.0
+  dnsjava under BSD-2-Clause
+  error-prone annotations under Apache 2.0
+  HdrHistogram under Public Domain, per Creative Commons CC0 or BSD-2-Clause
+  HikariCP under The Apache Software License, Version 2.0
+  Jackson-annotations under The Apache Software License, Version 2.0
+  Jackson-core under The Apache Software License, Version 2.0
+  jackson-databind under The Apache Software License, Version 2.0
+  jcommander under Apache 2.0
+  LatencyUtils under Public Domain, per Creative Commons CC0
+  micrometer-core under The Apache Software License, Version 2.0
+  micrometer-registry-prometheus under The Apache Software License, Version 2.0
+  Netty/Buffer under Apache License, Version 2.0
+  Netty/Codec under Apache License, Version 2.0
+  Netty/Codec/DNS under Apache License, Version 2.0
+  Netty/Codec/HTTP under Apache License, Version 2.0
+  Netty/Codec/HTTP2 under Apache License, Version 2.0
+  Netty/Codec/Socks under Apache License, Version 2.0
+  Netty/Common under Apache License, Version 2.0
+  Netty/Handler under Apache License, Version 2.0
+  Netty/Handler/Proxy under Apache License, Version 2.0
+  Netty/Resolver under Apache License, Version 2.0
+  Netty/Resolver/DNS under Apache License, Version 2.0
+  Netty/Transport under Apache License, Version 2.0
+  Prometheus Java Simpleclient under The Apache Software License, Version 2.0
+  Prometheus Java Simpleclient Common under The Apache Software License, Version 2.0
+  SLF4J API Module under MIT License
+  SLF4J LOG4J-12 Binding under MIT License
+  SQLite JDBC under The Apache Software License, Version 2.0
+  testng under Apache 2.0
+  Vert.x Bridge Common under The Apache Software License, Version 2.0 or Eclipse Public License - v 1.0
+  Vert.x Core under The Apache Software License, Version 2.0 or Eclipse Public License - v 2.0
+  Vert.x metrics implementation for Micrometer.io under The Apache Software License, Version 2.0 or Eclipse Public License - v 1.0
+  vertx-auth-common under The Apache Software License, Version 2.0 or Eclipse Public License - v 1.0
+  vertx-config under Apache License, Version 2.0
+  vertx-web under The Apache Software License, Version 2.0 or Eclipse Public License - v 2.0
+  vertx-web-client under The Apache Software License, Version 2.0 or Eclipse Public License - v 1.0
+  vertx-web-common under The Apache Software License, Version 2.0 or Eclipse Public License - v 1.0
+

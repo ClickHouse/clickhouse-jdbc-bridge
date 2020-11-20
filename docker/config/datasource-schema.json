@@ -1,0 +1,415 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+
+  "definitions": {
+    "column": {
+      "description": "Column.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Column name.",
+          "type": "string"
+        },
+        "type": {
+          "description": "Data type.",
+          "type": "string",
+          "enum": [
+            "Boolean",
+            "Int8",
+            "Int16",
+            "Int32",
+            "Int64",
+            "Int128",
+            "Int256",
+            "UInt8",
+            "UInt16",
+            "UInt32",
+            "UInt64",
+            "UInt128",
+            "UInt256",
+            "Float32",
+            "Float64",
+            "Date",
+            "DateTime",
+            "DateTime64",
+            "Decimal",
+            "Decimal32",
+            "Decimal64",
+            "Decimal128",
+            "Decimal256",
+            "Enum",
+            "Enum8",
+            "Enum16",
+            "IPv4",
+            "IPv6",
+            "FixedString",
+            "String",
+            "UUID"
+          ]
+        },
+        "value": {
+          "default": "",
+          "description": "Constant value in string format.",
+          "type": "string"
+        },
+        "nullable": {
+          "default": true,
+          "description": "Whether the columns may contain null value or not.",
+          "type": "boolean"
+        },
+        "precision": {
+          "default": 0,
+          "description": "Precision of decimal value.",
+          "type": "integer"
+        },
+        "scale": {
+          "default": 0,
+          "description": "Scale of decimal value.",
+          "type": "integer"
+        }
+      }
+    },
+    "columns": {
+      "description": "List of columns.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/column"
+      },
+      "minItems": 1
+    },
+    "defaults": {
+      "description": "Default values.",
+      "type": "object",
+      "properties": {
+        "Int8": {
+          "default": 0,
+          "description": "Default value for Int8 columns.",
+          "type": "integer"
+        },
+        "Int16": {
+          "default": 0,
+          "description": "Default value for Int16 columns.",
+          "type": "integer"
+        },
+        "Int32": {
+          "default": 0,
+          "description": "Default value for Int32 columns.",
+          "type": "integer"
+        },
+        "Int64": {
+          "default": 0,
+          "description": "Default value for Int64 columns.",
+          "type": "integer"
+        },
+        "UInt8": {
+          "default": 0,
+          "description": "Default value for UInt8 columns.",
+          "type": "integer"
+        },
+        "UInt16": {
+          "default": 0,
+          "description": "Default value for UInt16 columns.",
+          "type": "integer"
+        },
+        "UInt32": {
+          "default": 0,
+          "description": "Default value for UInt32 columns.",
+          "type": "integer"
+        },
+        "UInt64": {
+          "default": 0,
+          "description": "Default value for UInt64 columns.",
+          "type": "integer"
+        },
+        "Float32": {
+          "default": 0.0,
+          "description": "Default value for Float32 columns.",
+          "type": "number"
+        },
+        "Float64": {
+          "default": 0.0,
+          "description": "Default value for Float64 columns.",
+          "type": "number"
+        },
+        "Decimal": {
+          "default": 0.0,
+          "description": "Default value for Decimal columns.",
+          "type": "number"
+        },
+        "Decimal32": {
+          "default": 0.0,
+          "description": "Default value for Decimal32 columns.",
+          "type": "number"
+        },
+        "Decimal64": {
+          "default": 0.0,
+          "description": "Default value for Decimal64 columns.",
+          "type": "number"
+        },
+        "Decimal128": {
+          "default": 0.0,
+          "description": "Default value for Decimal128 columns.",
+          "type": "number"
+        },
+        "Date": {
+          "default": 1,
+          "description": "Default value for Date columns.",
+          "type": "integer"
+        },
+        "DateTime": {
+          "default": 1,
+          "description": "Default value for DateTime columns.",
+          "type": "integer"
+        },
+        "DateTime64": {
+          "default": 1.0,
+          "description": "Default value for DateTime64 columns.",
+          "type": "number"
+        },
+        "String": {
+          "default": "",
+          "description": "Default value for String columns.",
+          "type": "string"
+        }
+      }
+    },
+    "parameters": {
+      "description": "Query parameters.",
+      "type": "object",
+      "properties": {
+        "fetch_size": {
+          "default": 1000,
+          "description": "JDBC fetch size, defaults to 1000.",
+          "type": "integer"
+        },
+        "max_rows": {
+          "default": 0,
+          "description": "Max rows to read from result sets, defaults to 0, meaning all.",
+          "type": "integer"
+        },
+        "null_as_default": {
+          "default": false,
+          "description": "Whether to replace null value to default value of corresponding type.",
+          "type": "boolean"
+        },
+        "offset": {
+          "default": 0,
+          "description": "Offset, or skip the first n rows, to start reading from result set.",
+          "type": "integer"
+        },
+        "position": {
+          "default": 0,
+          "description": "Absolute position of cursor to start reading from result set. 1 for first row and -1 for the last.",
+          "type": "integer"
+        },
+        "datasource_column": {
+          "default": false,
+          "description": "Whether to display datasource column in query result.",
+          "type": "boolean"
+        },
+        "custom_columns": {
+          "default": false,
+          "description": "Whether to display customized columns(defined in datasource configuration) in query results.",
+          "type": "boolean"
+        }
+      }
+    },
+    "datasource": {
+      "description": "Vendor specific datasource properties.",
+      "type": "object",
+      "properties": {
+        "user": {
+          "description": "",
+          "type": "string"
+        },
+        "password": {
+          "description": "",
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "required": ["user", "password"]
+    },
+    "hikaricp": {
+      "description": "HikariCP properties.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "jdbc"
+        },
+        "dataSource": {
+          "$ref": "#/definitions/datasource"
+        },
+        "dataSourceClassName": {
+          "description": "This is the name of the DataSource class provided by the JDBC driver.",
+          "type": "string"
+        },
+        "jdbcUrl": {
+          "description": "This property directs HikariCP to use \"DriverManager-based\" configuration.",
+          "type": "string"
+        },
+        "username": {
+          "description": "This property sets the default authentication username used when obtaining Connections from the underlying driver.",
+          "type": "string"
+        },
+        "password": {
+          "description": "This property sets the default authentication password used when obtaining Connections from the underlying driver.",
+          "type": "string"
+        },
+        "autoCommit": {
+          "default": true,
+          "description": "This property controls the default auto-commit behavior of connections returned from the pool.",
+          "type": "boolean"
+        },
+        "connectionTimeout": {
+          "default": 30000,
+          "description": "This property controls the maximum number of milliseconds that a client (that's you) will wait for a connection from the pool.",
+          "type": "integer"
+        },
+        "idleTimeout": {
+          "default": 600000,
+          "description": "This property controls the maximum amount of time that a connection is allowed to sit idle in the pool.",
+          "type": "integer"
+        },
+        "maxLifetime": {
+          "default": 1800000,
+          "description": "This property controls the maximum lifetime of a connection in the pool.",
+          "type": "integer"
+        },
+        "connectionTestQuery": {
+          "default": "select 1",
+          "description": "If your driver supports JDBC4 we strongly recommend not setting this property. This is for \"legacy\" drivers that do not support the JDBC4 Connection.isValid() API.",
+          "type": "string"
+        },
+        "minimumIdle": {
+          "description": "This property controls the minimum number of idle connections that HikariCP tries to maintain in the pool. Default: same as maximumPoolSize.",
+          "type": "integer"
+        },
+        "maximumPoolSize": {
+          "default": 10,
+          "description": "This property controls the maximum size that the pool is allowed to reach, including both idle and in-use connections.",
+          "type": "integer"
+        },
+        "poolName": {
+          "description": "This property represents a user-defined name for the connection pool and appears mainly in logging and JMX management consoles to identify pools and pool configurations. Default: auto-generated",
+          "type": "string"
+        },
+        "initializationFailTimeout": {
+          "default": 1,
+          "description": "This property controls whether the pool will \"fail fast\" if the pool cannot be seeded with an initial connection successfully.",
+          "type": "integer"
+        },
+        "isolateInternalQueries": {
+          "default": false,
+          "description": "This property determines whether HikariCP isolates internal pool queries, such as the connection alive test, in their own transaction.",
+          "type": "boolean"
+        },
+        "allowPoolSuspension": {
+          "default": false,
+          "description": "This property controls whether the pool can be suspended and resumed through JMX.",
+          "type": "boolean"
+        },
+        "readOnly": {
+          "default": false,
+          "description": "This property controls whether Connections obtained from the pool are in read-only mode by default.",
+          "type": "boolean"
+        },
+        "registerMbeans": {
+          "default": false,
+          "description": "This property controls whether or not JMX Management Beans (\"MBeans\") are registered or not.",
+          "type": "boolean"
+        },
+        "catalog": {
+          "description": "This property sets the default catalog for databases that support the concept of catalogs. Default: driver default",
+          "type": "string"
+        },
+        "schema": {
+          "description": "This property sets the default schema for databases that support the concept of schemas.",
+          "type": "string"
+        },
+        "connectionInitSql": {
+          "description": "This property sets a SQL statement that will be executed after every new connection creation before adding it to the pool.",
+          "type": "string"
+        },
+        "driverClassName": {
+          "description": "HikariCP will attempt to resolve a driver through the DriverManager based solely on the jdbcUrl, but for some older drivers the driverClassName must also be specified.",
+          "type": "string"
+        },
+        "transactionIsolation": {
+          "description": "This property controls the default transaction isolation level of connections returned from the pool.",
+          "type": "string",
+          "enum": [
+            "TRANSACTION_NONE",
+            "TRANSACTION_READ_COMMITTED",
+            "TRANSACTION_READ_UNCOMMITTED",
+            "TRANSACTION_REPEATABLE_READ",
+            "TRANSACTION_SERIALIZABLE"
+          ]
+        },
+        "validationTimeout": {
+          "default": 5000,
+          "description": "This property controls the maximum amount of time that a connection will be tested for aliveness. This value must be less than the connectionTimeout.",
+          "type": "integer"
+        },
+        "leakDetectionThreshold": {
+          "default": 0,
+          "description": "This property controls the amount of time that a connection can be out of the pool before a message is logged indicating a possible connection leak. Lowest acceptable value for enabling leak detection is 2000 (2 seconds).",
+          "type": "integer"
+        },
+        "columns": {
+          "$ref": "#/definitions/columns"
+        },
+        "defaults": {
+          "$ref": "#/definitions/defaults"
+        },
+        "parameters": {
+          "$ref": "#/definitions/parameters"
+        }
+      },
+      "anyOf": [
+        { "required": ["dataSource"] },
+        { "required": ["jdbcUrl", "username", "password"] }
+      ]
+    },
+    "general": {
+      "description": "Named datasource.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Type of the datasource, defaults to jdbc.",
+          "type": "string",
+          "examples": ["jdbc"]
+        },
+        "aliases": {
+          "description": "List of aliases for this datasource.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "driverUrls": {
+          "description": "List of URLs(or relative/absolute local paths) to find datasource driver.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "examples": [
+            [
+              "drivers/clickhouse-0.2.4",
+              "/usr/share/java/slf4j.jar",
+              "https://repo1.maven.org/maven2/net/jpountz/lz4/lz4/1.3.0/lz4-1.3.0.jar"
+            ]
+          ]
+        }
+      },
+      "anyOf": [{ "$ref": "#/definitions/hikaricp" }]
+    }
+  },
+
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/definitions/general"
+  }
+}

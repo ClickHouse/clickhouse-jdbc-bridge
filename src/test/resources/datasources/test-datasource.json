@@ -1,0 +1,213 @@
+{
+  "$schema": "../../../../docker/config/datasource-schema.json",
+
+  "test-datasource": {
+    "jdbcUrl": "jdbc:mysql://<host>:<port>/<database>?useCompression=true&useOldAliasMetadataBehavior=true",
+    "dataSource": {
+      "user": "<username>",
+      "password": "<password>"
+    },
+    "columns": [
+      {
+        "name": "c_bool",
+        "type": "Boolean",
+        "nullable": false,
+        "value": "1"
+      },
+      {
+        "name": "c_int8",
+        "type": "Int8",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_int16",
+        "type": "Int16",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_int32",
+        "type": "Int32",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_int64",
+        "type": "Int64",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_uint8",
+        "type": "UInt8",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_uint16",
+        "type": "UInt16",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_uint32",
+        "type": "UInt32",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_uint64",
+        "type": "UInt64",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_float32",
+        "type": "Float32",
+        "nullable": false,
+        "value": "2.0"
+      },
+      {
+        "name": "c_float64",
+        "type": "Float64",
+        "nullable": false,
+        "value": "2.0"
+      },
+      {
+        "name": "c_date",
+        "type": "Date",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_datetime",
+        "type": "DateTime",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_datetime64",
+        "type": "DateTime64",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_decimal",
+        "type": "Decimal",
+        "nullable": false,
+        "value": "2.0"
+      },
+      {
+        "name": "c_decimal32",
+        "type": "Decimal32",
+        "nullable": false,
+        "value": "2.0"
+      },
+      {
+        "name": "c_decimal64",
+        "type": "Decimal64",
+        "nullable": false,
+        "value": "2.0"
+      },
+      {
+        "name": "c_decimal128",
+        "type": "Decimal128",
+        "nullable": false,
+        "value": "2.0"
+      },
+      {
+        "name": "c_decimal256",
+        "type": "Decimal256",
+        "nullable": false,
+        "value": "2.0"
+      },
+      {
+        "name": "c_enum",
+        "type": "Enum",
+        "nullable": false,
+        "value": "2",
+        "options": {
+          "A": 1,
+          "B": 2
+        }
+      },
+      {
+        "name": "c_enum8",
+        "type": "Enum8",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_enum16",
+        "type": "Enum16",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_ipv4",
+        "type": "IPv4",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_ipv6",
+        "type": "IPv6",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_fixedstr",
+        "type": "FixedString",
+        "length": 3,
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_str",
+        "type": "String",
+        "nullable": false,
+        "value": "2"
+      },
+      {
+        "name": "c_uuid",
+        "type": "UUID",
+        "nullable": false,
+        "value": "2"
+      }
+    ],
+    "defaults": {
+      "Boolean": 0,
+      "Int8": 3,
+      "Int16": 3,
+      "Int32": 3,
+      "Int64": 3,
+      "Int128": 3,
+      "Int256": 3,
+      "UInt8": 3,
+      "UInt16": 3,
+      "UInt32": 3,
+      "UInt64": 3,
+      "UInt128": 3,
+      "UInt256": 3,
+      "Float32": 3.0,
+      "Float64": 3.0,
+      "Date": 3,
+      "DateTime": 3,
+      "DateTime64": 3.0,
+      "Decimal": 3.0,
+      "Decimal32": 3.0,
+      "Decimal64": 3.0,
+      "Decimal128": 3.0,
+      "Decimal256": 3.0,
+      "Enum": 3,
+      "Enum8": 3,
+      "Enum16": 3,
+      "IPv4": 3,
+      "IPv6": "3",
+      "FixedString": "3",
+      "String": "3",
+      "UUID": "3"
+    }
+  }
+}

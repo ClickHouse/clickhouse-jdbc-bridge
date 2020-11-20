@@ -1,8 +1,0 @@
-Package: [[name]]
-Version: [[version]]
-Section: misc
-Priority: low
-Architecture: all
-Description: [[description]]
-Maintainer: Alexandr Krasheninnikov <krash3@gmail.com>
-Depends: default-jre | openjdk-8-jre

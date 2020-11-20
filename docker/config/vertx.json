@@ -1,0 +1,7 @@
+{
+  "maxEventLoopExecuteTime": 15,
+  "maxEventLoopExecuteTimeUnit": "SECONDS",
+  "maxWorkerExecuteTime": 300,
+  "maxWorkerExecuteTimeUnit": "SECONDS",
+  "workerPoolSize": 20
+}

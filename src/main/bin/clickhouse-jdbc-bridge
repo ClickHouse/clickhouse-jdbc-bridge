@@ -1,0 +1,71 @@
+#!/bin/bash
+
+#
+# Copyright 2019-2020, Zhichun Wu
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+set -e
+
+[ "$TRACE" ] && set -x
+
+BASEDIR=$(dirname "$0")
+INIT_SCRIPT="/etc/clickhouse-jdbc-bridge/set-env.sh"
+JAVA_CMD="java"
+
+init_env() {
+    if [ -f $INIT_SCRIPT ]; then
+        echo "Executing [$INIT_SCRIPT] to set environment variables..."
+        . $INIT_SCRIPT
+    else
+        echo "[$INIT_SCRIPT] is not found, will use default environment variables"
+    fi
+
+    # check if we have JRE
+    if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ];  then
+        JAVA_CMD="$JAVA_HOME/bin/java"
+    elif ! type -p java > /dev/null; then
+        echo "ERROR: Java needs to be installed first"
+        exit 1
+    fi
+}
+
+start_server() {
+    # override below environment variables as needed in $INIT_SCRIPT
+    : ${APP_PACKAGE:="/usr/local/lib/java/clickhouse-jdbc-bridge.jar"}
+    : ${JVM_ARGS:="-Xmx512m"}
+    : ${WORK_DIRECTORY:=$(dirname "$INIT_SCRIPT")}
+
+    # kill server if it's running
+    kill -9 $(ps -ef | grep java | grep "$APP_PACKAGE" | awk '{print $2}') 2>/dev/null || true
+
+    if [ ! -f "$APP_PACKAGE" ]; then
+        echo "ERROR: ClickHouse JDBC Bridge could not start because [$APP_PACKAGE] is missing"
+        exit 1
+    fi
+
+    if [ ! -d "$WORK_DIRECTORY" ]; then
+        echo "WARN: Work directory [$WORK_DIRECTORY] does not exist"
+        WORK_DIRECTORY=$(dirname "$INIT_SCRIPT")
+    fi
+
+    echo "Work directory is set to [$WORK_DIRECTORY]"
+
+    java $JVM_ARGS -Dlog4j.configuration=file:///$WORK_DIRECTORY/log4j.properties \
+        -Duser.dir="$WORK_DIRECTORY" -jar "$APP_PACKAGE"
+}
+
+init_env
+
+start_server
