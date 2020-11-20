@@ -29,7 +29,7 @@
         <replacer-plugin.version>1.5.3</replacer-plugin.version>
         <license-plugin.version>2.11</license-plugin.version>
         <notice-plugin.version>1.1.0</notice-plugin.version>
-        <compiler-plugin.version>3.5.1</compiler-plugin.version>
+        <compiler-plugin.version>3.8.1</compiler-plugin.version>
         <source-plugin.version>3.0.0</source-plugin.version>
         <jar-plugin.version>3.2.0</jar-plugin.version>
         <javadoc-plugin.version>2.10.3</javadoc-plugin.version>
