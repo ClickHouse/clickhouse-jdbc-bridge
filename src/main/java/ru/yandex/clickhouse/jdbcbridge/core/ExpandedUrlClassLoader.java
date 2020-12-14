@@ -122,7 +122,9 @@ public class ExpandedUrlClassLoader extends URLClassLoader {
         }
 
         if (list.removeAll(negativeSet)) {
-            log.debug("Excluded URLs: {}", negativeSet);
+            if (log.isDebugEnabled()) {
+                log.debug("Excluded URLs: {}", negativeSet);
+            }
         }
 
         return list.toArray(new URL[list.size()]);

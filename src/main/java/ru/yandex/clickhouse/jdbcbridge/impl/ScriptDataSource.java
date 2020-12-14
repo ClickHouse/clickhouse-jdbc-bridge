@@ -33,13 +33,14 @@ import ru.yandex.clickhouse.jdbcbridge.core.ByteBuffer;
 import ru.yandex.clickhouse.jdbcbridge.core.DataAccessException;
 import ru.yandex.clickhouse.jdbcbridge.core.ColumnDefinition;
 import ru.yandex.clickhouse.jdbcbridge.core.TableDefinition;
-import ru.yandex.clickhouse.jdbcbridge.core.DataSourceManager;
 import ru.yandex.clickhouse.jdbcbridge.core.DataTableReader;
+import ru.yandex.clickhouse.jdbcbridge.core.DataTypeConverter;
 import ru.yandex.clickhouse.jdbcbridge.core.DefaultValues;
 import ru.yandex.clickhouse.jdbcbridge.core.Extension;
 import ru.yandex.clickhouse.jdbcbridge.core.ExtensionManager;
 import ru.yandex.clickhouse.jdbcbridge.core.NamedDataSource;
 import ru.yandex.clickhouse.jdbcbridge.core.QueryParameters;
+import ru.yandex.clickhouse.jdbcbridge.core.Repository;
 import ru.yandex.clickhouse.jdbcbridge.core.ResponseWriter;
 import ru.yandex.clickhouse.jdbcbridge.core.Utils;
 
@@ -60,11 +61,13 @@ public class ScriptDataSource extends NamedDataSource {
     public static final String FUNC_GET_RESULTS = "__results__";
 
     static class ScriptResultReader implements DataTableReader {
+        private final DataTypeConverter converter;
         private final Object[][] values;
 
         private int currentRow = 0;
 
-        protected ScriptResultReader(Object result, String... columnNames) {
+        protected ScriptResultReader(DataTypeConverter converter, Object result, String... columnNames) {
+            this.converter = Objects.requireNonNull(converter);
             values = Utils.toObjectArrays(result, columnNames);
         }
 
@@ -128,7 +131,7 @@ public class ScriptDataSource extends NamedDataSource {
                     buffer.writeDateTime(converter.as(Date.class, v), metadata.getTimeZone());
                     break;
                 case DateTime64:
-                    buffer.writeDateTime64(converter.as(Date.class, v), metadata.getTimeZone());
+                    buffer.writeDateTime64(converter.as(Date.class, v), metadata.getScale(), metadata.getTimeZone());
                     break;
                 case Decimal:
                     buffer.writeDecimal(converter.as(BigDecimal.class, v), metadata.getPrecision(),
@@ -158,7 +161,7 @@ public class ScriptDataSource extends NamedDataSource {
         ScriptDataSource.vars.putAll(manager.getScriptableObjects());
 
         Extension<NamedDataSource> thisExtension = manager.getExtension(ScriptDataSource.class);
-        manager.getDataSourceManager().registerType(EXTENSION_NAME, thisExtension);
+        manager.getRepositoryManager().getRepository(NamedDataSource.class).registerType(EXTENSION_NAME, thisExtension);
     }
 
     public static ScriptDataSource newInstance(Object... args) {
@@ -168,7 +171,7 @@ public class ScriptDataSource extends NamedDataSource {
         }
 
         String id = (String) args[0];
-        DataSourceManager manager = (DataSourceManager) Objects.requireNonNull(args[1]);
+        Repository<NamedDataSource> manager = (Repository<NamedDataSource>) Objects.requireNonNull(args[1]);
         JsonObject config = args.length > 2 ? (JsonObject) args[2] : null;
 
         return new ScriptDataSource(id, manager, config);
@@ -176,7 +179,7 @@ public class ScriptDataSource extends NamedDataSource {
 
     private final ScriptEngineManager scriptManager;
 
-    protected ScriptDataSource(String id, DataSourceManager manager, JsonObject config) {
+    protected ScriptDataSource(String id, Repository<NamedDataSource> manager, JsonObject config) {
         super(id, manager, config);
 
         ClassLoader loader = getDriverClassLoader();
@@ -218,7 +221,15 @@ public class ScriptDataSource extends NamedDataSource {
     protected TableDefinition guessColumns(ScriptEngine engine, Object result, QueryParameters params) {
         TableDefinition columns = TableDefinition.DEFAULT_RESULT_COLUMNS;
 
+        if (log.isDebugEnabled()) {
+            log.debug("Got result from script engine: [{}]", result == null ? null : result.getClass().getName());
+        }
+
         if (result == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Trying to infer types by calling function [{}] or reading variable with same name",
+                        FUNC_INFER_TYPES);
+            }
             try {
                 try {
                     Invocable i = (Invocable) engine;
@@ -231,12 +242,19 @@ public class ScriptDataSource extends NamedDataSource {
                 throw new IllegalStateException("Failed to execute given script", e);
             }
         } else if (result instanceof ResultSet) {
+            if (log.isDebugEnabled()) {
+                log.debug("Trying to infer types from JDBC ResultSet");
+            }
             try (JdbcDataSource jdbc = new JdbcDataSource(JdbcDataSource.EXTENSION_NAME, null, null)) {
                 jdbc.getColumnsFromResultSet((ResultSet) result, params);
             } catch (SQLException e) {
                 throw new DataAccessException(getId(), e);
             }
         } else {
+            if (log.isDebugEnabled()) {
+                log.debug("No clue on types so let's go with default");
+            }
+
             columns = new TableDefinition(new ColumnDefinition(Utils.DEFAULT_COLUMN_NAME, converter.from(result), true,
                     DEFAULT_LENGTH, DEFAULT_PRECISION, DEFAULT_SCALE));
         }
@@ -302,7 +320,7 @@ public class ScriptDataSource extends NamedDataSource {
                     names[i] = resultColumns[i].getName();
                 }
 
-                DataTableReader reader = new ScriptResultReader(result, names);
+                DataTableReader reader = new ScriptResultReader(converter, result, names);
                 reader.process(getId(), requestColumns, customColumns, resultColumns, defaultValues, getTimeZone(),
                         params, writer);
             }

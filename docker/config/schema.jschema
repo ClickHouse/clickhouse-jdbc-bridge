@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "column": {
+      "description": "Column.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Column name.",
+          "type": "string"
+        },
+        "type": {
+          "description": "Data type.",
+          "type": "string",
+          "enum": [
+            "Boolean",
+            "Int8",
+            "Int16",
+            "Int32",
+            "Int64",
+            "Int128",
+            "Int256",
+            "UInt8",
+            "UInt16",
+            "UInt32",
+            "UInt64",
+            "UInt128",
+            "UInt256",
+            "Float32",
+            "Float64",
+            "Date",
+            "DateTime",
+            "DateTime64",
+            "Decimal",
+            "Decimal32",
+            "Decimal64",
+            "Decimal128",
+            "Decimal256",
+            "Enum",
+            "Enum8",
+            "Enum16",
+            "IPv4",
+            "IPv6",
+            "FixedString",
+            "String",
+            "UUID"
+          ]
+        },
+        "value": {
+          "default": "",
+          "description": "Constant value in string format.",
+          "type": "string"
+        },
+        "nullable": {
+          "default": true,
+          "description": "Whether the columns may contain null value or not.",
+          "type": "boolean"
+        },
+        "precision": {
+          "default": 0,
+          "description": "Precision of decimal value.",
+          "type": "integer"
+        },
+        "scale": {
+          "default": 0,
+          "description": "Scale of decimal value.",
+          "type": "integer"
+        }
+      }
+    },
+    "columns": {
+      "description": "List of columns.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/column"
+      },
+      "minItems": 1
+    },
+    "schema": {
+      "description": "Named schema.",
+      "type": "object",
+      "properties": {
+        "columns": {
+          "$ref": "#/definitions/columns"
+        }
+      },
+      "required": [
+        "columns"
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/definitions/schema"
+  }
+}

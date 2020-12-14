@@ -41,8 +41,10 @@ public class ResponseWriter {
 
         this.response.setWriteQueueMaxSize(this.options.getMaxBlockSize());
 
-        log.debug("Start Time={}, Timeout={}, Max Block Size={}", this.startTime, this.timeout,
-                this.options.getMaxBlockSize());
+        if (log.isDebugEnabled()) {
+            log.debug("Start Time={}, Timeout={}, Max Block Size={}", this.startTime, this.timeout,
+                    this.options.getMaxBlockSize());
+        }
     }
 
     public StreamOptions getOptions() {

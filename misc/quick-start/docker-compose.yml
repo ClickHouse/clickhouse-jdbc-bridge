@@ -1,8 +1,20 @@
 version: "2"
 
 # Only 'ch-server' and 'jdbc-bridge' are mandatory.
-# Feel free to remove any db-xxx to save memory
+# You may remove any db-xxx to save memory.
 services:
+  db-elasticsearch:
+    image: amazon/opendistro-for-elasticsearch:1.11.0
+    hostname: db-elasticsearch
+    environment:
+      # admin/admin
+      # curl -XGET https://localhost:9200 -u admin:admin --insecure
+      # curl -XGET https://localhost:9200/_cat/nodes?v -u admin:admin --insecure
+      # curl -XGET https://localhost:9200/_cat/plugins?v -u admin:admin --insecure
+      discovery.type: single-node
+    mem_limit: 512m
+    restart: always
+
   db-mariadb10:
     image: mariadb:10
     hostname: db-mariadb10
@@ -41,7 +53,7 @@ services:
     restart: always
 
   ch-server:
-    image: yandex/clickhouse-server
+    image: yandex/clickhouse-server:20.8
     hostname: ch-server
     volumes:
       - ./ch-server/config:/etc/clickhouse-server/config.d
@@ -51,21 +63,21 @@ services:
     restart: always
 
   jdbc-bridge:
-    image: yandex/clickhouse-jdbc-bridge
+    image: yandex/clickhouse-jdbc-bridge:2.0
     hostname: jdbc-bridge
     # In general you don't need to define any environment variable
     # Below are all default settings just for demonstration
     environment:
-      CONFIG_DIR: config                  # configuration directory
-      HTTPD_CONFIG_FILE: httpd.json       # httpd configuration file
-      SERVER_CONFIG_FILE: server.json     # server configuration file
-      VERTX_CONFIG_FILE: vertx.json       # vertx configuration file
-      DATASOURCE_CONFIG_DIR: datasources  # named datasource directory
-      DRIVER_DIR: drivers                 # driver directory
-      EXTENSION_DIR: extensions           # extension directory
-      QUERY_CONFIG_DIR: queries           # named query directory
-      CUSTOM_DRIVER_LOADER: "true"        # whether use custom driver loader or not
-      JDBC_BRIDGE_JVM_OPTS:               # use CPU and memory allocated by container
+      CONFIG_DIR: config # configuration directory
+      HTTPD_CONFIG_FILE: httpd.json # httpd configuration file
+      SERVER_CONFIG_FILE: server.json # server configuration file
+      VERTX_CONFIG_FILE: vertx.json # vertx configuration file
+      DATASOURCE_CONFIG_DIR: datasources # named datasource directory
+      DRIVER_DIR: drivers # driver directory
+      EXTENSION_DIR: extensions # extension directory
+      QUERY_CONFIG_DIR: queries # named query directory
+      CUSTOM_DRIVER_LOADER: "true" # whether use custom driver loader or not
+      JDBC_BRIDGE_JVM_OPTS: # use CPU and memory allocated by container
 
     # You may want to keep datasources, queries, SQL scripts, and maybe drivers in a git repo
     volumes:

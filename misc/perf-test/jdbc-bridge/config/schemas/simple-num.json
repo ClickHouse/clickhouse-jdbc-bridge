@@ -1,7 +1,6 @@
 {
-  "$schema": "../../../../../docker/config/query.jschema",
-  "constant": {
-    "query": "scripts/constant.sql",
+  "$schema": "../../../../../docker/config/schema.jschema",
+  "simple-num": {
     "columns": [
       {
         "name": "1",

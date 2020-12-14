@@ -10,13 +10,12 @@ JDBC bridge for ClickHouse. It acts as a stateless proxy passing queries to exte
 
 ## Known Issues / Limitation
 
-**Caution: this is not ready for production use, as it's still under development and lack of testing.**
-
-* ClickHouse server should be patched or you may run into issues like `JDBC bridge is not running` and `Timeout: connect timed out`
-* Pushdown is not supported
+* Use the most recent LTS/stable version of ClickHouse
+  Note: you may need to patch ClickHouse if you're using older version release before July, 2020. Please refer to [this](https://github.com/ClickHouse/ClickHouse/pull/11690) for details.
+* Pushdown is not supported by design
 * Query may execute twice because of type inferring
-* Complex data types like Array and Tuple are not supported
-* Mutation is not fully supported - only insertion in simple cases
+* Complex data types like Array and Tuple are not supported - they'll be treated as String
+* Mutation is not fully supported by deisgn - only insertion in simple cases
 * Scripting is experimental
 
 
@@ -32,7 +31,22 @@ Below is a rough performance comparison to help you understand overhead caused b
 * Java CLI
 
     ```bash
+    # add named datasource
+    wget -P config/datasources https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/master/misc/quick-start/jdbc-bridge/config/datasources/ch-server.json
+    # start jdbc bridge, and then you can issue below query in ClickHouse for testing
+    # select * from jdbc('ch-server', 'select 1')
     java -jar clickhouse-jdbc-bridge-<version>.jar
+    ```
+
+    If you need adhoc datasource, which is disabled by default for security reason, you may try below:
+    ```bash
+    # download jdbc drivers and required libs if any
+    wget -P drivers https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.1/mariadb-java-client-2.7.1.jar
+    # start jdbc bridge, and you'll be able to run query like below in ClickHouse:
+    # select * from jdbc('jdbc:mariadb://localhost:3306/test?user=root&password=root', 'select 1')
+    java -Djdbc-bridge.driver.loader=false \
+        -cp `pwd`/drivers/mariadb-java-client-2.7.1.jar:`pwd`/clickhouse-jdbc-bridge-<version>.jar:. \
+        ru.yandex.clickhouse.jdbcbridge.JdbcBridgeVerticle
     ```
 
 * Docker CLI
@@ -212,7 +226,7 @@ Below is a rough performance comparison to help you understand overhead caused b
 
 * Monitoring
 
-    You can use [Prometheus](https://prometheus.io/) to monitor metrics exposed by JDBC brige.
+    You can use [Prometheus](https://prometheus.io/) to monitor metrics exposed by JDBC bridge.
     ```bash
     curl -v http://jdbc-bridge:9019/metrics
     ```
@@ -256,11 +270,11 @@ Below is a rough performance comparison to help you understand overhead caused b
 
 * Vert.x
 
-    If you're familiar with [Vert.x](https://vertx.io/). You can customize its configuration by changing `config/httpd.json` and `config/vertx.json`.
+    If you're familiar with [Vert.x](https://vertx.io/), you can customize its configuration by changing `config/httpd.json` and `config/vertx.json`.
 
 * Query Parameters
 
-    All supported query parameters can be found at [here](src/main/java/ru/yandex/clickhouse/jdbcbridge/core/QueryPamraters.java). `datasource_column=true` can be simplied as `datasource_column`, for example:
+    All supported query parameters can be found at [here](src/main/java/ru/yandex/clickhouse/jdbcbridge/core/QueryParameters.java). `datasource_column=true` can be simplied as `datasource_column`, for example:
     ```sql
     select * from jdbc('ch-server?datasource_column=true', 'select 1')
 
@@ -270,7 +284,7 @@ Below is a rough performance comparison to help you understand overhead caused b
 * Timeout
 
     Couple of timeout settings you should be aware of:
-    1. datasource timeout, for example: `max_execution_time` in MySQL and ClickHouse
+    1. datasource timeout, for example: `max_execution_time` in MySQL
     2. JDBC driver timeout, for example: `connectTimeout` and `socketTimeout` in [MySQL Connector/J](https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-configuration-properties.html)
     3. Vertx timeout - see `config/server.json` and `config/vertx.json`
     4. Client(ClickHouse JDBC driver) timeout - see timeout settings in ClickHouse JDBC driver
@@ -327,6 +341,7 @@ An extension for JDBC bridge is basically a Java class with 3 optional parts:
     ```
 
 3. Instantiation Method
+
     In order to create instance of your extension, in general you should define a static method like below so that JDBC bridge knows how(besides walking through all possible constructors):
     ```java
     public static MyExtension newInstance(Object... args) {

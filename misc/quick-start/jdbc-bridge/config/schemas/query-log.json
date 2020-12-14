@@ -1,7 +1,6 @@
 {
-  "$schema": "../../../../../docker/config/datasource.jschema",
-  "show-query-logs": {
-    "query": "scripts/show-query-logs.sql",
+  "$schema": "../../../../../docker/config/schema.jschema",
+  "query-log": {
     "columns": [
       {
         "name": "query_id",
