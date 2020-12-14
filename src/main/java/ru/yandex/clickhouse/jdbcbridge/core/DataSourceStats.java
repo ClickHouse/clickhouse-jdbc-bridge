@@ -23,7 +23,7 @@ import java.util.Objects;
  * 
  * @since 2.0
  */
-public class DataSourceStats {
+public class DataSourceStats implements UsageStats {
     private final String idOrAlias;
     private final int instance;
     private final boolean alias;

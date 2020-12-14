@@ -20,11 +20,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.SortedSet;
+import java.util.Set;
 import java.util.TimeZone;
-import java.util.TreeSet;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
@@ -43,18 +43,16 @@ import static ru.yandex.clickhouse.jdbcbridge.core.DataType.*;
  * 
  * @since 2.0
  */
-public class NamedDataSource implements Closeable {
+public class NamedDataSource extends ManagedEntity implements Closeable {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NamedDataSource.class);
 
     private static final String DATASOURCE_TYPE = "general";
-
-    protected static final String CONF_ID = "id";
+    private static final DataTypeConverter defaultConverter = Utils.loadService(DataTypeConverter.class);
 
     protected static final String CONF_CACHE = "cache";
     protected static final String CONF_SIZE = "size";
     protected static final String CONF_EXPIRATION = "expiration";
 
-    protected static final String CONF_ALIASES = "aliases";
     protected static final String CONF_COLUMNS = "columns";
     protected static final String CONF_DEFAULTS = "defaults";
     protected static final String CONF_DRIVER_URLS = "driverUrls";
@@ -72,8 +70,6 @@ public class NamedDataSource implements Closeable {
 
     protected static final String COLUMN_PREFIX = "col_";
 
-    protected static final DataTypeConverter converter = Utils.loadService(DataTypeConverter.class);
-
     // See all supported values defined in:
     // https://github.com/ClickHouse/ClickHouse/blob/master/src/Parsers/IdentifierQuotingStyle.h
     public static final String DEFAULT_QUOTE_IDENTIFIER = "`";
@@ -81,10 +77,15 @@ public class NamedDataSource implements Closeable {
     public static final String CONF_SCHEMA = "$schema";
     public static final String CONF_TYPE = "type";
     public static final String CONF_TIMEZONE = "timezone";
-    public static final String CONF_DATETIME = "datetime";
     public static final String CONF_QUERY_TIMEOUT = "queryTimeout";
     public static final String CONF_WRITE_TIMEOUT = "writeTimeout";
     public static final String CONF_SEALED = "sealed";
+    public static final String CONF_CONVERTER = "converter";
+    public static final String CONF_CLASS = "class";
+    public static final String CONF_MAPPINGS = "mappings";
+    public static final String CONF_JDBC_TYPE = "jdbcType";
+    public static final String CONF_NATIVE_TYPE = "nativeType";
+    public static final String CONF_TO_TYPE = "to";
 
     protected static final boolean USE_CUSTOM_DRIVER_LOADER = Boolean
             .valueOf(Utils.getConfiguration("true", "CUSTOM_DRIVER_LOADER", "jdbc-bridge.driver.loader"));
@@ -98,17 +99,9 @@ public class NamedDataSource implements Closeable {
 
     private final Cache<String, TableDefinition> columnsCache;
 
-    private final String id;
-    private final SortedSet<String> aliases;
-
-    private final Date createDateTime;
-
-    private final SortedSet<String> driverUrls;
+    private final Set<String> driverUrls;
     private final ClassLoader driverClassLoader;
 
-    private final String digest;
-
-    private final boolean dateTime;
     private final TimeZone timezone;
     private final int queryTimeout;
     private final int writeTimeout;
@@ -117,6 +110,8 @@ public class NamedDataSource implements Closeable {
     private final DefaultValues defaultValues;
     private final QueryParameters queryParameters;
 
+    protected final DataTypeConverter converter;
+
     public static NamedDataSource newInstance(Object... args) {
         if (Objects.requireNonNull(args).length < 2) {
             throw new IllegalArgumentException(
@@ -124,7 +119,7 @@ public class NamedDataSource implements Closeable {
         }
 
         String id = (String) args[0];
-        DataSourceManager manager = (DataSourceManager) Objects.requireNonNull(args[1]);
+        Repository<NamedDataSource> manager = (Repository<NamedDataSource>) Objects.requireNonNull(args[1]);
         JsonObject config = args.length > 2 ? (JsonObject) args[2] : null;
 
         return new NamedDataSource(id, manager, config);
@@ -144,10 +139,8 @@ public class NamedDataSource implements Closeable {
     }
 
     private void writeDebugResult(String schema, String originalQuery, String loadedQuery, QueryParameters parameters,
-            TableDefinition metaData, ResponseWriter writer) {
-        if (metaData == null) {
-            metaData = new TableDefinition();
-        }
+            ResponseWriter writer) {
+        TableDefinition metaData = TableDefinition.DEBUG_COLUMNS;
 
         ByteBuffer buffer = ByteBuffer.newInstance(loadedQuery.length() * 4);
 
@@ -183,20 +176,14 @@ public class NamedDataSource implements Closeable {
             ResponseWriter writer) {
     }
 
-    public NamedDataSource(String id, DataSourceManager manager, JsonObject config) {
-        if (Objects.requireNonNull(id).isEmpty()) {
+    public NamedDataSource(String id, Repository<NamedDataSource> repository, JsonObject config) {
+        super(Objects.requireNonNull(id), config);
+
+        if (id.isEmpty()) {
             throw new IllegalArgumentException("Non-empty datasource id required.");
         }
 
-        Objects.requireNonNull(manager);
-
-        this.id = id;
-        this.aliases = new TreeSet<>();
-
-        this.createDateTime = new Date();
-
-        this.driverUrls = new TreeSet<>();
-        this.digest = Utils.digest(config);
+        this.driverUrls = new LinkedHashSet<>();
 
         this.customColumns = new ArrayList<ColumnDefinition>();
 
@@ -204,17 +191,16 @@ public class NamedDataSource implements Closeable {
         int cacheExpireMinute = 5;
 
         if (config == null) {
-            this.dateTime = false;
             this.timezone = null;
             this.queryTimeout = -1;
             this.writeTimeout = -1;
             this.sealed = false;
             this.defaultValues = new DefaultValues();
             this.queryParameters = new QueryParameters();
+            this.converter = defaultConverter;
         } else {
-            this.dateTime = config.getBoolean(CONF_DATETIME, false);
-            String tz = config.getString(CONF_TIMEZONE);
-            this.timezone = tz == null ? null : TimeZone.getTimeZone(tz);
+            String str = config.getString(CONF_TIMEZONE);
+            this.timezone = str == null ? null : TimeZone.getTimeZone(str);
             this.queryTimeout = config.getInteger(CONF_QUERY_TIMEOUT, -1);
             this.writeTimeout = config.getInteger(CONF_WRITE_TIMEOUT, -1);
             this.sealed = config.getBoolean(CONF_SEALED, false);
@@ -238,6 +224,34 @@ public class NamedDataSource implements Closeable {
                 }
             }
 
+            DataTypeConverter customConverter = defaultConverter;
+            JsonObject obj = config.getJsonObject(CONF_CONVERTER);
+            if (obj != null) {
+                List<DataTypeMapping> mappings = new ArrayList<>();
+                array = obj.getJsonArray(CONF_MAPPINGS);
+                if (array != null) {
+                    for (Object m : array) {
+                        if (m instanceof JsonObject) {
+                            JsonObject jm = (JsonObject) m;
+                            mappings.add(new DataTypeMapping(jm.getString(CONF_JDBC_TYPE),
+                                    jm.getString(CONF_NATIVE_TYPE), jm.getString(CONF_TO_TYPE)));
+                        }
+                    }
+                }
+
+                str = obj.getString(CONF_CLASS);
+                if (str == null || str.isEmpty()) {
+                    str = defaultConverter.getClass().getName();
+                }
+
+                try {
+                    customConverter = (DataTypeConverter) Utils.loadExtension(driverUrls, str).newInstance(mappings);
+                } catch (Exception e) {
+                    log.warn("Failed to instantiate custom data type converter [{}] due to: {}", str, e.getMessage());
+                }
+            }
+            this.converter = customConverter;
+
             JsonObject cacheConfig = config.getJsonObject(CONF_CACHE);
             if (cacheConfig != null) {
                 for (Entry<String, Object> entry : cacheConfig) {
@@ -252,9 +266,9 @@ public class NamedDataSource implements Closeable {
             }
             array = config.getJsonArray(CONF_COLUMNS);
             if (array != null) {
-                for (Object obj : array) {
-                    if (obj instanceof JsonObject) {
-                        this.customColumns.add(ColumnDefinition.fromJson((JsonObject) obj));
+                for (Object o : array) {
+                    if (o instanceof JsonObject) {
+                        this.customColumns.add(ColumnDefinition.fromJson((JsonObject) o));
                     }
                 }
             }
@@ -291,28 +305,16 @@ public class NamedDataSource implements Closeable {
         return EMPTY_USAGE;
     }
 
-    public final String getId() {
-        return this.id;
-    }
-
-    public final SortedSet<String> getAliases() {
-        return Collections.unmodifiableSortedSet(this.aliases);
-    }
-
     public final Date getCreateDateTime() {
         return this.createDateTime;
     }
 
-    public final SortedSet<String> getDriverUrls() {
-        return Collections.unmodifiableSortedSet(this.driverUrls);
+    public final Set<String> getDriverUrls() {
+        return Collections.unmodifiableSet(this.driverUrls);
     }
 
     public final ClassLoader getDriverClassLoader() {
         return this.driverClassLoader;
-    }
-
-    public final boolean useDateTime() {
-        return this.dateTime;
     }
 
     public final TimeZone getTimeZone() {
@@ -343,7 +345,7 @@ public class NamedDataSource implements Closeable {
         JsonObject obj = new JsonObject();
 
         obj.put(CONF_ID, this.getId());
-        SortedSet<String> aliases = this.getAliases();
+        Set<String> aliases = this.getAliases();
         if (aliases.size() > 1) {
             JsonArray array = new JsonArray();
             for (String a : aliases) {
@@ -352,7 +354,7 @@ public class NamedDataSource implements Closeable {
             obj.put(CONF_ALIASES, array);
         }
 
-        SortedSet<String> driverUrls = this.getDriverUrls();
+        Set<String> driverUrls = this.getDriverUrls();
         if (driverUrls.size() > 1) {
             JsonArray array = new JsonArray();
             for (String a : driverUrls) {
@@ -361,7 +363,6 @@ public class NamedDataSource implements Closeable {
             obj.put(CONF_DRIVER_URLS, array);
         }
 
-        obj.put(CONF_DATETIME, this.useDateTime());
         if (this.getTimeZone() != null) {
             obj.put(CONF_TIMEZONE, this.getTimeZone().getID());
         }
@@ -382,7 +383,9 @@ public class NamedDataSource implements Closeable {
     }
 
     public final TableDefinition getResultColumns(String schema, String query, QueryParameters params) {
-        log.debug("Inferring columns: schema=[{}], query=[{}]", schema, query);
+        if (log.isDebugEnabled()) {
+            log.debug("Inferring columns: schema=[{}], query=[{}]", schema, query);
+        }
 
         final TableDefinition columns;
 
@@ -404,18 +407,6 @@ public class NamedDataSource implements Closeable {
         }
 
         return columns;
-    }
-
-    public final boolean isDifferentFrom(JsonObject newConfig) {
-        String newDigest = Utils.digest(newConfig == null ? null : newConfig.encode());
-        boolean isDifferent = this.digest == null || this.digest.length() == 0 || !this.digest.equals(newDigest);
-        if (isDifferent) {
-            log.info("Datasource configuration of [{}] is changed from [{}] to [{}]", this.id, digest, newDigest);
-        } else {
-            log.info("Datasource configuration of [{}] remains the same", this.id);
-        }
-
-        return isDifferent;
     }
 
     public final List<ColumnDefinition> getCustomColumns() {
@@ -485,6 +476,11 @@ public class NamedDataSource implements Closeable {
     }
 
     @Override
+    public UsageStats getUsage(String idOrAlias) {
+        return new DataSourceStats(idOrAlias, this);
+    }
+
+    @Override
     public void close() {
         log.info("Closing datasource[id={}, instance={}]", this.id, this);
     }
@@ -494,7 +490,7 @@ public class NamedDataSource implements Closeable {
         log.info("Executing query(schema=[{}]):\n{}", schema, loadedQuery);
 
         if (params.isDebug()) {
-            writeDebugResult(schema, originalQuery, loadedQuery, params, null, writer);
+            writeDebugResult(schema, originalQuery, loadedQuery, params, writer);
         } else {
             ColumnDefinition[] customColumns = this.customColumns
                     .toArray(new ColumnDefinition[this.customColumns.size()]);

@@ -1,4 +1,5 @@
 {
+  "$schema": "../../../../../docker/config/datasource.jschema",
   "mariadb10": {
     "driverUrls": [
       "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.0/mariadb-java-client-2.7.0.jar"

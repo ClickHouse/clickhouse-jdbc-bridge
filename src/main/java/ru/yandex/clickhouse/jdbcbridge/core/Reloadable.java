@@ -18,8 +18,8 @@ package ru.yandex.clickhouse.jdbcbridge.core;
 import io.vertx.core.json.JsonObject;
 
 /**
- * This interface defines the ability to load configuration automatically
- * whenever there's change detected.
+ * This interface defines the ability to load configuration automatically when
+ * there's change detected.
  * 
  * @since 2.0
  */

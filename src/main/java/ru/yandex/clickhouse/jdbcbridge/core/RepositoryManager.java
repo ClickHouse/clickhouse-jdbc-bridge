@@ -15,17 +15,27 @@
  */
 package ru.yandex.clickhouse.jdbcbridge.core;
 
+import java.util.List;
+
 /**
- * This interface defines how to manage named schemas.
+ * This interface defines a service for managing multiple repositories.
  * 
  * @since 2.0
  */
-public interface SchemaManager extends Reloadable {
+public interface RepositoryManager {
     /**
-     * Get named schema.
+     * Get repository capable of managing given type of entity.
      * 
-     * @param name name of the schema
-     * @return desired schema
+     * @param <T>   type of entity to be managed
+     * @param clazz class of entity
+     * @return repository capable of managing given type of entity
      */
-    NamedSchema get(String name);
+    <T extends ManagedEntity> Repository<T> getRepository(Class<T> clazz);
+
+    /**
+     * Update repository list using given repositories.
+     * 
+     * @param repos repositories
+     */
+    void update(List<Repository<?>> repos);
 }

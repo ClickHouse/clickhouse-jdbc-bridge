@@ -23,10 +23,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
@@ -594,7 +596,7 @@ public final class Utils {
         return loadExtension(null, className);
     }
 
-    public static Extension<?> loadExtension(List<String> libUrls, String className) {
+    public static Extension<?> loadExtension(Collection<String> libUrls, String className) {
         Extension<?> extension = null;
 
         final ClassLoader loader = new ExpandedUrlClassLoader(extClassLoader,

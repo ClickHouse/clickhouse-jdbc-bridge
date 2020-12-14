@@ -16,16 +16,11 @@
 package ru.yandex.clickhouse.jdbcbridge.core;
 
 /**
- * This interface defines how to manage named queries.
+ * This interface defines the ability to load configuration automatically when
+ * there's change detected.
  * 
  * @since 2.0
  */
-public interface QueryManager extends Reloadable {
-    /**
-     * Get named query.
-     * 
-     * @param name name of the query
-     * @return desired query
-     */
-    NamedQuery get(String name);
+public interface UsageStats {
+    String getName();
 }

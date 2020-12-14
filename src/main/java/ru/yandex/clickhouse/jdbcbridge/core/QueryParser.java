@@ -236,16 +236,16 @@ public class QueryParser {
         return table;
     }
 
-    public static String extractConnectionString(RoutingContext ctx, DataSourceManager resolver) {
+    public static String extractConnectionString(RoutingContext ctx, Repository<NamedDataSource> resolver) {
         HttpServerRequest req = Objects.requireNonNull(ctx).request();
         return Objects.requireNonNull(resolver).resolve(req.getParam(PARAM_CONNECTION_STRING));
     }
 
-    public static QueryParser fromRequest(RoutingContext ctx, DataSourceManager resolver) {
+    public static QueryParser fromRequest(RoutingContext ctx, Repository<NamedDataSource> resolver) {
         return fromRequest(ctx, resolver, false);
     }
 
-    public static QueryParser fromRequest(RoutingContext ctx, DataSourceManager resolver, boolean forWrite) {
+    public static QueryParser fromRequest(RoutingContext ctx, Repository<NamedDataSource> resolver, boolean forWrite) {
         HttpServerRequest req = Objects.requireNonNull(ctx).request();
 
         final QueryParser query;
