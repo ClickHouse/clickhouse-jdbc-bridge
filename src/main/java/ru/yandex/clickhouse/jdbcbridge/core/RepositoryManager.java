@@ -18,7 +18,8 @@ package ru.yandex.clickhouse.jdbcbridge.core;
 import java.util.List;
 
 /**
- * This interface defines a service for managing multiple repositories.
+ * This interface defines a service for managing entities like
+ * {@link NamedDataSource}, {@link NamedSchema}, and {@link NamedQuery}.
  * 
  * @since 2.0
  */

@@ -1,6 +1,5 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
   "definitions": {
     "column": {
       "description": "Column.",
@@ -118,7 +117,7 @@
         }
       }
     },
-    "query": {
+    "entity": {
       "description": "Named query.",
       "type": "object",
       "properties": {
@@ -131,6 +130,10 @@
             "scripts/query_some_table.sql"
           ]
         },
+        "schema": {
+          "description": "Named schema which overrides columns.",
+          "type": "string"
+        },
         "columns": {
           "$ref": "#/definitions/columns"
         },
@@ -138,12 +141,14 @@
           "$ref": "#/definitions/parameters"
         }
       },
-      "required": ["query", "columns"]
+      "required": [
+        "query",
+        "columns"
+      ]
     }
   },
-
   "type": "object",
   "additionalProperties": {
-    "$ref": "#/definitions/query"
+    "$ref": "#/definitions/entity"
   }
 }

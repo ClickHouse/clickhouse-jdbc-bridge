@@ -18,8 +18,8 @@ package ru.yandex.clickhouse.jdbcbridge.core;
 import java.util.List;
 
 /**
- * This interface defines a repository for managing {@link ManagedEntity}
- * like {@link NamedDataSource}, {@link NamedSchema}, and {@link NamedQuery}.
+ * This interface defines a repository for managing {@link ManagedEntity} like
+ * {@link NamedDataSource}, {@link NamedSchema}, and {@link NamedQuery}.
  * 
  * @since 2.0
  */
@@ -69,7 +69,7 @@ public interface Repository<T extends ManagedEntity> {
      * Put a named entity into the repository.
      * 
      * @param id     id of the entity, could be null
-     * @param object non-null entity to be added
+     * @param entity non-null entity to be added
      */
     void put(String id, T entity);
 

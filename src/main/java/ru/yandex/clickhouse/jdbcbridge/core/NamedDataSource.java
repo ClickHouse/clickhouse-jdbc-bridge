@@ -176,7 +176,7 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
             ResponseWriter writer) {
     }
 
-    public NamedDataSource(String id, Repository<NamedDataSource> repository, JsonObject config) {
+    public NamedDataSource(String id, Repository<? extends NamedDataSource> repository, JsonObject config) {
         super(Objects.requireNonNull(id), config);
 
         if (id.isEmpty()) {

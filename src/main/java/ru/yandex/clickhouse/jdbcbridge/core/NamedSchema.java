@@ -29,7 +29,7 @@ public class NamedSchema extends ManagedEntity {
 
     private final TableDefinition columns;
 
-    public NamedSchema(String id, Repository<NamedSchema> repo, JsonObject config) {
+    public NamedSchema(String id, Repository<? extends NamedSchema> repo, JsonObject config) {
         super(id, Objects.requireNonNull(config));
 
         this.columns = TableDefinition.fromJson(config.getJsonArray(CONF_COLUMNS));

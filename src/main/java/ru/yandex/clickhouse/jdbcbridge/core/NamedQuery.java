@@ -27,24 +27,31 @@ import io.vertx.core.json.JsonObject;
  */
 public class NamedQuery extends NamedSchema {
     private static final String CONF_QUERY = "query";
+    private static final String CONF_SCHEMA = "schema";
     private static final String CONF_PARAMETERS = "parameters";
 
     private final String query;
+    private final String schema;
 
     private final QueryParameters parameters;
 
-    public NamedQuery(String id, Repository<NamedSchema> repo, JsonObject config) {
+    public NamedQuery(String id, Repository<NamedQuery> repo, JsonObject config) {
         super(id, repo, config);
 
-        String namedQuery = config.getString(CONF_QUERY);
-        Objects.requireNonNull(namedQuery);
+        String str = config.getString(CONF_QUERY);
+        this.query = Objects.requireNonNull(str);
+        str = config.getString(CONF_SCHEMA);
+        this.schema = Objects.requireNonNull(str);
 
-        this.query = namedQuery;
         this.parameters = new QueryParameters(config.getJsonObject(CONF_PARAMETERS));
     }
 
     public String getQuery() {
         return this.query;
+    }
+
+    public String getSchema() {
+        return this.schema;
     }
 
     public TableDefinition getColumns(QueryParameters params) {

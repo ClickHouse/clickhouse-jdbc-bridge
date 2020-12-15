@@ -76,7 +76,7 @@
       },
       "minItems": 1
     },
-    "schema": {
+    "entity": {
       "description": "Named schema.",
       "type": "object",
       "properties": {
@@ -91,6 +91,6 @@
   },
   "type": "object",
   "additionalProperties": {
-    "$ref": "#/definitions/schema"
+    "$ref": "#/definitions/entity"
   }
 }

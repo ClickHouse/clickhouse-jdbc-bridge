@@ -357,9 +357,18 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
         NamedQuery namedQuery = getQueryRepository().get(rawQuery);
         // priority: name query -> named schema -> type inferring
         NamedSchema namedSchema = getSchemaRepository().get(parser.getNormalizedSchema());
-        TableDefinition tableDef = namedQuery != null && namedQuery.hasColumn() ? namedQuery.getColumns(params)
-                : (namedSchema != null ? namedSchema.getColumns()
-                        : ds.getResultColumns(parser.getSchema(), parser.getNormalizedQuery(), params));
+
+        TableDefinition tableDef;
+        if (namedQuery != null) {
+            if (namedSchema == null) {
+                namedSchema = getSchemaRepository().get(namedQuery.getSchema());
+            }
+
+            tableDef = namedQuery.getColumns(params);
+        } else {
+            tableDef = namedSchema != null ? namedSchema.getColumns()
+                    : ds.getResultColumns(parser.getSchema(), parser.getNormalizedQuery(), params);
+        }
 
         List<ColumnDefinition> additionalColumns = new ArrayList<ColumnDefinition>();
         if (params.showDatasourceColumn()) {
@@ -427,6 +436,9 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
                     log.debug("Found named query: [{}]", namedQuery);
                 }
 
+                if (namedSchema == null) {
+                    namedSchema = getSchemaRepository().get(namedQuery.getSchema());
+                }
                 // columns in request might just be a subset of defined list
                 // for example:
                 // - named query 'test' is: select a, b, c from table
@@ -518,6 +530,8 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
             NamedQuery namedQuery = getQueryRepository().get(normalizedQuery);
             // in case the "query" is a local file...
             normalizedQuery = ds.loadSavedQueryAsNeeded(normalizedQuery, params);
+
+            // TODO: use named schema as table name?
 
             String table = parser.getRawQuery();
             if (namedQuery != null) {

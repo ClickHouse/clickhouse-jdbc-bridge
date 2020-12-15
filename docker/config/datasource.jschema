@@ -501,7 +501,7 @@
         }
       ]
     },
-    "general": {
+    "entity": {
       "description": "Named datasource.",
       "type": "object",
       "properties": {
@@ -557,6 +557,6 @@
   },
   "type": "object",
   "additionalProperties": {
-    "$ref": "#/definitions/general"
+    "$ref": "#/definitions/entity"
   }
 }

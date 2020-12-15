@@ -25,14 +25,13 @@ import ru.yandex.clickhouse.jdbcbridge.core.Repository;
 import ru.yandex.clickhouse.jdbcbridge.core.RepositoryManager;
 
 /**
- * This interface defines a repository for managing {@link NamedDataSource},
- * {@link NamedSchema}, and {@link NamedQuery}.
+ * Default implementation of
+ * {@link ru.yandex.clickhouse.jdbcbridge.core.RepositoryManager}.
  * 
  * @since 2.0
  */
 public class DefaultRepositoryManager implements RepositoryManager {
-    private final List<Repository<? extends ManagedEntity>> repos = Collections
-            .synchronizedList(new ArrayList<>());
+    private final List<Repository<? extends ManagedEntity>> repos = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     public <T extends ManagedEntity> Repository<T> getRepository(Class<T> clazz) {

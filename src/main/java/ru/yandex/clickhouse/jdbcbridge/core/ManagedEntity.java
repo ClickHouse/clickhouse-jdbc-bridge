@@ -115,8 +115,8 @@ public abstract class ManagedEntity {
      * @return true if the given configuration is different from current; false
      *         otherwise
      */
-    public final boolean isDifferentFrom(JsonObject newConfig) {
-        return this.digest == null || this.digest.isEmpty() || !this.digest.equals(Utils.digest(newConfig));
+    public final boolean isDifferentFrom(JsonObject config) {
+        return this.digest == null || this.digest.isEmpty() || !this.digest.equals(Utils.digest(config));
     }
 
     public abstract UsageStats getUsage(String idOrAlias);
