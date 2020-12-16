@@ -139,7 +139,7 @@ public interface DataTypeConverter {
         return (T) result;
     }
 
-    DataType from(JDBCType jdbcType, boolean signed, boolean useDateTime);
+    DataType from(JDBCType jdbcType, String typeName, int precision, int scale, boolean signed);
 
     DataType from(Object javaObject);
 

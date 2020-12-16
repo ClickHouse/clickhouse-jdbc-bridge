@@ -18,8 +18,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# docker build --squash --build-arg revision=20.9.3 -f all-in-one.Dockerfile -t yandex/clickhouse-all-in-one:20.9.3 .
-ARG revision=20.9.3
+# docker build --squash --build-arg revision=20.8 -f all-in-one.Dockerfile -t yandex/clickhouse-all-in-one:20.8 .
+ARG revision=20.8
 
 #
 # Stage 1/2: Build

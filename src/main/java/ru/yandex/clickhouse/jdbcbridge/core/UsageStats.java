@@ -16,16 +16,11 @@
 package ru.yandex.clickhouse.jdbcbridge.core;
 
 /**
- * This interface defines how to manage named schemas.
+ * This interface defines the ability to load configuration automatically when
+ * there's change detected.
  * 
  * @since 2.0
  */
-public interface SchemaManager extends Reloadable {
-    /**
-     * Get named schema.
-     * 
-     * @param name name of the schema
-     * @return desired schema
-     */
-    NamedSchema get(String name);
+public interface UsageStats {
+    String getName();
 }

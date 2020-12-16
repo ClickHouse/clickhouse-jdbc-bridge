@@ -1,7 +1,6 @@
 {
-  "$schema": "../../../../../docker/config/query.jschema",
-  "small-table": {
-    "query": "scripts/small-table.sql",
+  "$schema": "../../../../../docker/config/schema.jschema",
+  "simple-row": {
     "columns": [
       { "name": "id", "type": "Int64", "nullable": false },
       { "name": "name", "type": "String", "nullable": false },

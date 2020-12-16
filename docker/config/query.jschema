@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "column": {
+      "description": "Column.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Column name.",
+          "type": "string"
+        },
+        "type": {
+          "description": "Data type.",
+          "type": "string",
+          "enum": [
+            "Boolean",
+            "Int8",
+            "Int16",
+            "Int32",
+            "Int64",
+            "Int128",
+            "Int256",
+            "UInt8",
+            "UInt16",
+            "UInt32",
+            "UInt64",
+            "UInt128",
+            "UInt256",
+            "Float32",
+            "Float64",
+            "Date",
+            "DateTime",
+            "DateTime64",
+            "Decimal",
+            "Decimal32",
+            "Decimal64",
+            "Decimal128",
+            "Decimal256",
+            "Enum",
+            "Enum8",
+            "Enum16",
+            "IPv4",
+            "IPv6",
+            "FixedString",
+            "String",
+            "UUID"
+          ]
+        },
+        "value": {
+          "default": "",
+          "description": "Constant value in string format.",
+          "type": "string"
+        },
+        "nullable": {
+          "default": true,
+          "description": "Whether the columns may contain null value or not.",
+          "type": "boolean"
+        },
+        "precision": {
+          "default": 0,
+          "description": "Precision of decimal value.",
+          "type": "integer"
+        },
+        "scale": {
+          "default": 0,
+          "description": "Scale of decimal value.",
+          "type": "integer"
+        }
+      }
+    },
+    "columns": {
+      "description": "List of columns.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/column"
+      },
+      "minItems": 1
+    },
+    "parameters": {
+      "description": "Query parameters.",
+      "type": "object",
+      "properties": {
+        "fetch_size": {
+          "default": 1000,
+          "description": "JDBC fetch size, defaults to 1000.",
+          "type": "integer"
+        },
+        "max_rows": {
+          "default": 0,
+          "description": "Max rows to read from result sets, defaults to 0, meaning all.",
+          "type": "integer"
+        },
+        "null_as_default": {
+          "default": false,
+          "description": "Whether to replace null value to default value of corresponding type.",
+          "type": "boolean"
+        },
+        "offset": {
+          "default": 0,
+          "description": "Offset, or skip the first n rows, to start reading from result set.",
+          "type": "integer"
+        },
+        "position": {
+          "default": 0,
+          "description": "Absolute position of cursor to start reading from result set. 1 for first row and -1 for the last.",
+          "type": "integer"
+        },
+        "datasource_column": {
+          "default": false,
+          "description": "Whether to display datasource column in query result.",
+          "type": "boolean"
+        },
+        "custom_columns": {
+          "default": false,
+          "description": "Whether to display customized columns(defined in datasource configuration) in query results.",
+          "type": "boolean"
+        }
+      }
+    },
+    "entity": {
+      "description": "Named query.",
+      "type": "object",
+      "properties": {
+        "query": {
+          "description": "The query.",
+          "type": "string",
+          "examples": [
+            "some_table",
+            "select * from some_table",
+            "scripts/query_some_table.sql"
+          ]
+        },
+        "schema": {
+          "description": "Named schema which overrides columns.",
+          "type": "string"
+        },
+        "columns": {
+          "$ref": "#/definitions/columns"
+        },
+        "parameters": {
+          "$ref": "#/definitions/parameters"
+        }
+      },
+      "required": [
+        "query",
+        "columns"
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/definitions/entity"
+  }
+}

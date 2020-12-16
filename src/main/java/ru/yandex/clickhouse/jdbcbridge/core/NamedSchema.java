@@ -24,26 +24,15 @@ import io.vertx.core.json.JsonObject;
  * 
  * @since 2.0
  */
-public class NamedSchema {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NamedSchema.class);
+public class NamedSchema extends ManagedEntity {
+    protected static final String CONF_COLUMNS = "columns";
 
-    private static final String CONF_COLUMNS = "columns";
-
-    private final String id;
-    private final String digest;
     private final TableDefinition columns;
 
-    public NamedSchema(String id, JsonObject config) {
-        Objects.requireNonNull(config);
-
-        this.id = id;
-        this.digest = Utils.digest(config);
+    public NamedSchema(String id, Repository<? extends NamedSchema> repo, JsonObject config) {
+        super(id, Objects.requireNonNull(config));
 
         this.columns = TableDefinition.fromJson(config.getJsonArray(CONF_COLUMNS));
-    }
-
-    public String getId() {
-        return this.id;
     }
 
     public boolean hasColumn() {
@@ -54,15 +43,8 @@ public class NamedSchema {
         return this.columns;
     }
 
-    public final boolean isDifferentFrom(JsonObject newConfig) {
-        String newDigest = Utils.digest(newConfig == null ? null : newConfig.encode());
-        boolean isDifferent = this.digest == null || this.digest.length() == 0 || !this.digest.equals(newDigest);
-        if (isDifferent) {
-            log.info("Schema configuration of [{}] is changed from [{}] to [{}]", this.id, digest, newDigest);
-        } else {
-            log.debug("Schema configuration of [{}] remains the same", this.id);
-        }
-
-        return isDifferent;
+    @Override
+    public UsageStats getUsage(String idOrAlias) {
+        return null;
     }
 }

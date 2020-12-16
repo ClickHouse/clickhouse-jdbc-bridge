@@ -192,7 +192,7 @@ public class TypedParameter<T> {
                 buffer.writeDateTime((Long) this.value, timezone);
                 break;
             case DateTime64:
-                buffer.writeDateTime64((Long) this.value, timezone);
+                buffer.writeDateTime64((Long) this.value, 0, this.chType.getScale(), timezone);
                 break;
             case UInt64:
                 buffer.writeUInt64((Long) this.value);

@@ -15,17 +15,28 @@
  */
 package ru.yandex.clickhouse.jdbcbridge.core;
 
+import java.util.List;
+
 /**
- * This interface defines how to manage named queries.
+ * This interface defines a service for managing entities like
+ * {@link NamedDataSource}, {@link NamedSchema}, and {@link NamedQuery}.
  * 
  * @since 2.0
  */
-public interface QueryManager extends Reloadable {
+public interface RepositoryManager {
     /**
-     * Get named query.
+     * Get repository capable of managing given type of entity.
      * 
-     * @param name name of the query
-     * @return desired query
+     * @param <T>   type of entity to be managed
+     * @param clazz class of entity
+     * @return repository capable of managing given type of entity
      */
-    NamedQuery get(String name);
+    <T extends ManagedEntity> Repository<T> getRepository(Class<T> clazz);
+
+    /**
+     * Update repository list using given repositories.
+     * 
+     * @param repos repositories
+     */
+    void update(List<Repository<?>> repos);
 }

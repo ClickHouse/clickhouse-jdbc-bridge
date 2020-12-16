@@ -17,39 +17,17 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+FROM adoptopenjdk/openjdk8-openj9:jre8u275-b01_openj9-0.23.0-ubuntu
 
-# docker build --squash --build-arg revision=2.0.0 -t yandex/clickhouse-jdbc-bridge .
-ARG revision=2.0.0-SNAPSHOT
-
-#
-# Stage 1/2: Build
-#
-FROM maven:3-openjdk-8 as builder
-
-ARG revision
-
-COPY LICENSE NOTICE pom.xml /app/
-COPY docker /app/docker/
-COPY misc /app/misc/
-COPY src /app/src/
-
-WORKDIR /app
-
-RUN mvn -Drevision=${revision} package
-
-
-#
-# Stage 2/2: Pack
-#
-FROM adoptopenjdk/openjdk8-openj9:jre8u265-b01_openj9-0.21.0-ubuntu
-
-ARG revision
+ARG revision=2.0.0
+ARG repository=ClickHouse/clickhouse-jdbc-bridge
 
 # Maintainer
 LABEL maintainer="zhicwu@gmail.com"
 
 # Environment variables
-ENV JDBC_BRIDGE_HOME=/app JDBC_BRIDGE_VERSION=${revision}
+ENV JDBC_BRIDGE_HOME=/app JDBC_BRIDGE_VERSION=${revision} \
+	JDBC_BRIDGE_REL_URL=https://github.com/${repository}/releases/download/v${revision}/
 
 # Labels
 LABEL app_name="ClickHouse JDBC Bridge" app_version="$JDBC_BRIDGE_VERSION"
@@ -59,10 +37,10 @@ RUN apt-get update \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated apache2-utils \
 		apt-transport-https curl htop iftop iptraf iputils-ping jq lsof net-tools tzdata wget \
 	&& apt-get clean \
+	&& wget -q -P $JDBC_BRIDGE_HOME $JDBC_BRIDGE_REL_URL/LICENSE $JDBC_BRIDGE_REL_URL/NOTICE \
+		$JDBC_BRIDGE_REL_URL/clickhouse-jdbc-bridge-${revision}.jar \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY --from=builder /app/LICENSE /app/NOTICE \
-	/app/target/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION.jar $JDBC_BRIDGE_HOME/
 COPY --chown=root:root docker/ $JDBC_BRIDGE_HOME
 
 RUN chmod +x $JDBC_BRIDGE_HOME/*.sh \
