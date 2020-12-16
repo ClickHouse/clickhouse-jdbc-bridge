@@ -1,5 +1,6 @@
 {
-  "show-query-logs": {
+  "$schema": "../schema.jschema",
+  "query-log": {
     "columns": [
       {
         "name": "query_id",

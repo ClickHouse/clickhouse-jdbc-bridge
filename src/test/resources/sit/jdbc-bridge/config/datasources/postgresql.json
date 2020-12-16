@@ -1,0 +1,14 @@
+{
+  "postgresql": {
+    "converter": {
+      "mappings": [{ "nativeType": "bool", "to": "String" }]
+    },
+    "driverClassName": "org.postgresql.Driver",
+    "jdbcUrl": "jdbc:postgresql://postgresql_server:5432/postgres",
+    "username": "sa",
+    "password": "sa",
+    "initializationFailTimeout": 0,
+    "minimumIdle": 0,
+    "maximumPoolSize": 5
+  }
+}

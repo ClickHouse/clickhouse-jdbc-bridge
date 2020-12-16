@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ import java.util.TimeZone;
  */
 public interface DataTableReader {
     /**
-     * Move cursor to next row. This should be called at least before read anything.
+     * Move cursor to next row. This should be called at least once before read
+     * anything.
      * 
      * @return {@code true} if there's more rows to read; {@code false} otherwise
      */
@@ -42,7 +43,7 @@ public interface DataTableReader {
     boolean isNull(int row, int column, ColumnDefinition metadata) throws DataAccessException;
 
     /**
-     * Read value from a cell and write into given byte buffer.
+     * Read value from a cell and write into given {@link ByteBuffer}.
      * 
      * @param row      zero-based row index
      * @param column   zero-based column index
@@ -74,6 +75,7 @@ public interface DataTableReader {
         Objects.requireNonNull(params);
         Objects.requireNonNull(writer);
 
+        // Map<String, Integer> colName2Index = new HashMap<>();
         // build column indices: 0 -> Request column index; 1 -> ResultSet column index
         int length = requestColumns.length;
         int[][] colIndices = new int[length][2];
@@ -128,7 +130,7 @@ public interface DataTableReader {
         }
 
         // now let's read rows
-        int rowCount = 0;
+        int rowCount = params.isMutation() ? 0 : this.skipRows(params);
         int batchSize = params.getBatchSize();
         if (batchSize <= 0) {
             batchSize = 1;
@@ -136,8 +138,10 @@ public interface DataTableReader {
         int estimatedBufferSize = length * 4 * batchSize;
 
         ByteBuffer buffer = ByteBuffer.newInstance(estimatedBufferSize, timezone);
+        boolean skipped = rowCount > 0;
+        while (skipped || nextRow()) {
+            skipped = false;
 
-        while (nextRow()) {
             for (int i = 0; i < length; i++) {
                 int[] indices = colIndices[i];
 
@@ -156,7 +160,6 @@ public interface DataTableReader {
 
                 if (column.isNullable()) {
                     // FIXME what if it's large object(e.g. blob, clob etc.)?
-                    // if (rs.getObject(index) == null || rs.wasNull()) {
                     if (isNull(rowCount, index, column)) {
                         if (params.nullAsDefault()) {
                             // column.writeValueTo(buffer);
@@ -183,5 +186,54 @@ public interface DataTableReader {
         if (rowCount % batchSize != 0) {
             writer.write(buffer);
         }
+    }
+
+    default int skipRows(QueryParameters parameters) {
+        int rowCount = 0;
+
+        if (parameters == null) {
+            return rowCount;
+        }
+
+        int position = parameters.getPosition();
+        // absolute position takes priority
+        if (position != 0) {
+            if (position < 0) {
+                throw new IllegalArgumentException("Only positive position is supported!");
+            }
+
+            // position of the first row is 1
+            for (int i = 0; i < position; i++) {
+                if (nextRow()) {
+                    rowCount++;
+                    continue;
+                } else {
+                    throw new IllegalStateException(
+                            "Not able to move cursor to row #" + position + "as we only got " + i);
+                }
+            }
+        } else { // now skip rows as needed
+            int offset = parameters.getOffset();
+
+            if (offset < 0) {
+                throw new IllegalArgumentException("Only positive offset is supported!");
+            } else if (offset != 0) {
+                int counter = offset;
+                while (nextRow()) {
+                    rowCount++;
+
+                    if (--offset <= 0) {
+                        break;
+                    }
+                }
+
+                if (offset != 0) {
+                    throw new IllegalStateException("Not able to move cursor to row #" + (counter + 1)
+                            + " as we only got " + (counter - offset));
+                }
+            }
+        }
+
+        return rowCount;
     }
 }

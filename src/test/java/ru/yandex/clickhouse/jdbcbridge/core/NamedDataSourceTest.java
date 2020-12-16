@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,32 +25,25 @@ import org.testng.annotations.Test;
 import io.vertx.core.json.JsonObject;
 
 public class NamedDataSourceTest {
-    static class DummyDataSourceManager implements DataSourceManager {
-        @Override
-        public String resolve(String uri) {
-            return uri;
+    static class TestRepository<T extends ManagedEntity> extends BaseRepository<T> {
+        private int counter = 0;
+
+        public TestRepository(Class<T> clazz) {
+            super(clazz);
         }
 
         @Override
-        public List<DataSourceStats> getDataSourceStats() {
-            return new ArrayList<>();
+        protected void atomicAdd(T entity) {
+            counter++;
         }
 
         @Override
-        public void reload(JsonObject config) {
+        protected void atomicRemove(T entity) {
+            counter--;
         }
 
-        @Override
-        public NamedDataSource get(String uri, boolean orCreate) {
-            return null;
-        }
-
-        @Override
-        public void registerType(String typeName, Extension<NamedDataSource> extension) {
-        }
-
-        @Override
-        public void put(String id, NamedDataSource ds) {
+        public int getCounter() {
+            return this.counter;
         }
     }
 
@@ -59,7 +52,7 @@ public class NamedDataSourceTest {
         String dataSourceId = "test-datasource";
         JsonObject config = Utils.loadJsonFromFile("src/test/resources/datasources/test-datasource.json");
 
-        NamedDataSource ds = new NamedDataSource(dataSourceId, new DummyDataSourceManager(),
+        NamedDataSource ds = new NamedDataSource(dataSourceId, new TestRepository<>(NamedDataSource.class),
                 config.getJsonObject(dataSourceId));
         assertEquals(ds.getId(), dataSourceId);
         for (ColumnDefinition col : ds.getCustomColumns()) {
@@ -110,7 +103,7 @@ public class NamedDataSourceTest {
         String dataSourceId = "test-datasource";
         JsonObject config = Utils.loadJsonFromFile("src/test/resources/datasources/test-datasource.json");
 
-        NamedDataSource ds = new NamedDataSource(dataSourceId, new DummyDataSourceManager(),
+        NamedDataSource ds = new NamedDataSource(dataSourceId, new TestRepository<>(NamedDataSource.class),
                 config.getJsonObject(dataSourceId));
         ds.getResultColumns("", "src/test/resources/simple.query", new QueryParameters());
         assertEquals(ds.getId(), dataSourceId);

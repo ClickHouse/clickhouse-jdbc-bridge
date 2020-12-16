@@ -1,5 +1,5 @@
 {
-  "$schema": "../datasource-schema.json",
+  "$schema": "../datasource.jschema",
   "ch-server": {
     "aliases": [
       "self"

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -38,9 +39,9 @@ import java.util.Set;
 public class ExpandedUrlClassLoader extends URLClassLoader {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ExpandedUrlClassLoader.class);
 
-    private static final String PROTOCOL_FILE = "file";
-    private static final String FILE_URL_PREFIX = PROTOCOL_FILE + ":///";
-    private static final String DRIVER_EXTENSION = ".jar";
+    static final String PROTOCOL_FILE = "file";
+    static final String FILE_URL_PREFIX = PROTOCOL_FILE + ":///";
+    static final String DRIVER_EXTENSION = ".jar";
 
     // not going to use OSGi and maven which are over-complex
     protected static URL[] expandURLs(String... urls) {
@@ -63,12 +64,15 @@ public class ExpandedUrlClassLoader extends URLClassLoader {
                 url = cache.add(s) ? new URL(s) : null;
             } catch (MalformedURLException e) {
                 // might be a local path?
-                if (cache.add(s = FILE_URL_PREFIX + Paths.get(s).normalize().toFile().getAbsolutePath())) {
-                    try {
-                        url = new URL(s);
-                    } catch (MalformedURLException exp) {
-                        log.warn("Skip malformed URL [{}]", s);
+                try {
+                    URL tmp = Paths.get(s).normalize().toFile().toURI().toURL();
+                    if (cache.add(s = tmp.toString())) {
+                        url = tmp;
                     }
+                } catch (InvalidPathException exp) {
+                    log.warn("Skip invalid path [{}]", s);
+                } catch (MalformedURLException exp) {
+                    log.warn("Skip malformed URL [{}]", s);
                 }
             }
 
@@ -90,11 +94,13 @@ public class ExpandedUrlClassLoader extends URLClassLoader {
                 }
 
                 if (path != null && Files.isDirectory(path)) {
-                    File dir = path.toFile();
-                    for (String file : dir.list()) {
+                    File dir = path.normalize().toFile();
+                    String[] files = dir.list();
+                    Arrays.sort(files);
+                    for (String file : files) {
                         if (file.endsWith(DRIVER_EXTENSION)) {
-                            file = new StringBuilder().append(FILE_URL_PREFIX).append(dir.getPath()).append('/')
-                                    .append(file).toString();
+                            file = new StringBuilder().append(FILE_URL_PREFIX).append(dir.getPath())
+                                    .append(File.separatorChar).append(file).toString();
 
                             if (isNegative) {
                                 try {
@@ -122,7 +128,9 @@ public class ExpandedUrlClassLoader extends URLClassLoader {
         }
 
         if (list.removeAll(negativeSet)) {
-            log.debug("Excluded URLs: {}", negativeSet);
+            if (log.isDebugEnabled()) {
+                log.debug("Excluded URLs: {}", negativeSet);
+            }
         }
 
         return list.toArray(new URL[list.size()]);

@@ -1,49 +1,66 @@
-# clickhouse-jdbc-bridge
+# ClickHouse JDBC Bridge
 
-JDBC bridge for ClickHouse. It acts as a stateless proxy passing queries to external datasources from ClickHouse. With this extension, you can run distributed query on ClickHouse across multiple datasources in real time.
+![Build](https://github.com/ClickHouse/clickhouse-jdbc-bridge/workflows/Build/badge.svg) ![Release](https://img.shields.io/github/v/release/ClickHouse/clickhouse-jdbc-bridge?include_prereleases)
+
+JDBC bridge for ClickHouse®. It acts as a stateless proxy passing queries from ClickHouse to external datasources. With this extension, you can run distributed query on ClickHouse across multiple datasources in real time, which in a way simplifies the process of building data pipelines for data warehousing, monitoring and integrity check etc.
 
 
 ## Overview
 
-![Overview](https://user-images.githubusercontent.com/4270380/97794387-39e33200-1c34-11eb-819f-3a0fd097f6be.png)
+![Overview](https://user-images.githubusercontent.com/4270380/103492828-a06d1200-4e68-11eb-9287-ef830f575d3e.png)
 
 
 ## Known Issues / Limitation
 
-**Caution: this is not ready for production use, as it's still under development and lack of testing.**
+* Connection issue like `jdbc-bridge is not running` or `connect timed out` - see [performance section](#performance) and [this issue](https://github.com/ClickHouse/ClickHouse/issues/9609) for details
 
-* ClickHouse server should be patched or you may run into issues like `JDBC bridge is not running` and `Timeout: connect timed out`
-* Pushdown is not supported
-* Query may execute twice because of type inferring
-* Complex data types like Array and Tuple are not supported
+* Complex data types like Array and Tuple are currently not supported - they're treated as String
+
+* Pushdown is not supported and query may execute twice because of type inferring
+
 * Mutation is not fully supported - only insertion in simple cases
+
 * Scripting is experimental
-
-
-## Performance
-
-Below is a rough performance comparison to help you understand overhead caused by JDBC bridge. MariaDB, ClickHouse and JDBC bridge are running on separated KVMs. [JMeter](https://jmeter.apache.org/) is used to simulate 20 concurrent users to issue same query multiple times(100 - 10,000) via various JDBC drivers after warm-up. You may refer [this](misc/perf-test) to setup test environment run tests by yourself.
-
-![Performance Comparison](https://user-images.githubusercontent.com/4270380/95696036-1861dc80-0c6c-11eb-9919-fa74c304daaf.png)
 
 
 ## Quick Start
 
-* Java CLI
+* Docker Compose
 
     ```bash
-    java -jar clickhouse-jdbc-bridge-<version>.jar
+    git clone https://github.com/ClickHouse/clickhouse-jdbc-bridge.git
+    cd clickhouse-jdbc-bridge/misc/quick-start
+    docker-compose up -d
+    ...
+    docker-compose ps
+
+               Name                         Command               State              Ports
+    --------------------------------------------------------------------------------------------------
+    quick-start_ch-server_1         /entrypoint.sh                   Up      8123/tcp, 9000/tcp, 9009/tcp
+    quick-start_db-mariadb10_1      docker-entrypoint.sh mysqld      Up      3306/tcp
+    quick-start_db-mysql5_1         docker-entrypoint.sh mysqld      Up      3306/tcp, 33060/tcp
+    quick-start_db-mysql8_1         docker-entrypoint.sh mysqld      Up      3306/tcp, 33060/tcp
+    quick-start_db-postgres13_1     docker-entrypoint.sh postgres    Up      5432/tcp
+    quick-start_jdbc-bridge_1       /sbin/my_init                    Up      9019/tcp
+
+    # issue below query, and you'll see "ch-server        1" returned
+    docker-compose run ch-server clickhouse-client --query="select * from jdbc('self?datasource_column', 'select 1')"
     ```
 
 * Docker CLI
 
-    It's simple to get started using all-in-one docker image:
+    It's easier to get started using all-in-one docker image:
     ```bash
+    # build all-in-one docker image
+    git clone https://github.com/ClickHouse/clickhouse-jdbc-bridge.git
+    cd clickhouse-jdbc-bridge
+    docker build -t my/clickhouse-all-in-one .
+
     # start container in background
-    docker run --rm -d --name ch-server yandex/clickhouse-all-in-one
+    docker run --rm -d --name ch-and-jdbc-bridge my/clickhouse-all-in-one
 
     # enter container to add datasource and issue query
-    docker exec -it ch-server bash
+    docker exec -it ch-and-jdbc-bridge bash
 
     cp /etc/clickhouse-jdbc-bridge/config/datasources/datasource.json.example \
         /etc/clickhouse-jdbc-bridge/config/datasources/ch-server.json
@@ -72,83 +89,74 @@ Below is a rough performance comparison to help you understand overhead caused b
         --query="select * from jdbc('self?datasource_column', 'select 1')"
     ```
 
-* Docker Compose
+* Java CLI
 
     ```bash
-    git clone https://github.com/ClickHouse/clickhouse-jdbc-bridge.git
-    cd clickhouse-jdbc-bridge/misc/quick-start
-    docker-compose up -d
-    ...
-    docker-compose ps
-
-               Name                         Command               State              Ports
-    --------------------------------------------------------------------------------------------------
-    quick-start_ch-server_1         /entrypoint.sh                   Up      8123/tcp, 9000/tcp, 9009/tcp
-    quick-start_db-mariadb10_1      docker-entrypoint.sh mysqld      Up      3306/tcp
-    quick-start_db-mysql5_1         docker-entrypoint.sh mysqld      Up      3306/tcp, 33060/tcp
-    quick-start_db-mysql8_1         docker-entrypoint.sh mysqld      Up      3306/tcp, 33060/tcp
-    quick-start_db-postgres13_1     docker-entrypoint.sh postgres    Up      5432/tcp
-    quick-start_jdbc-bridge_1       /sbin/my_init                    Up      9019/tcp
-
-    # issue below query, and you'll see "ch-server        1" returned
-    docker-compose run ch-server clickhouse-client --query="select * from jdbc('self?datasource_column', 'select 1')"
+    export JDBC_BRIDGE_VERSION=2.0.0
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION.jar
+    # add named datasource
+    wget -P config/datasources https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/master/misc/quick-start/jdbc-bridge/config/datasources/ch-server.json
+    # start jdbc bridge, and then issue below query in ClickHouse for testing
+    # select * from jdbc('ch-server', 'select 1')
+    java -jar clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION.jar
     ```
 
 
 ## Usage
 
+In most cases, you'll use [jdbc table function](https://clickhouse.tech/docs/en/sql-reference/table-functions/jdbc/) to query against external datasources:
+```sql
+select * from jdbc('<datasource>', '<schema>', '<query>')
+```
+`schema` is optional but others are mandatory. Please be aware that the `query` is in native format of the given `datasource`. For example, if the query is `select * from some_table limit 10`, it may work in MariaDB but not in PostgreSQL, as the latter one does not understand `limit`.
+
+Assuming you started a test environment using docker-compose, please refer to examples below to get familiar with JDBC bridge.
+
 * Data Source
+
     ```sql
     -- show datasources and usage
     select * from jdbc('', 'show datasources')
     -- access named datasource
     select * from jdbc('ch-server', 'select 1')
-    -- Besides named datasource, you can also use JDBC connection string.
-    -- However it's not recommended for security reason, and it does not work by default.
-    -- In order to use it, you'll have to explicitly set environment variable CUSTOM_DRIVER_LOADER
-    -- or Java system property jdbc-bridge.driver.loader to false
+    -- adhoc datasource is NOT recommended for security reason
     select *
     from jdbc('jdbc:clickhouse://localhost:8123/system?compress=false&ssl=false&user=default', 'select 1')
     ```
 
-* Adhoc Query
+* Schema
+
+    By default, any adhoc query passed to JDBC bridge will be executed twice. The first run is for type inferring, while the second for retrieving results. Although metadata will be cached(for up to 5 minutes by default), executing same query twice could be a problem - that's where schema comes into play.
     ```sql
+    -- inline schema
+    select * from jdbc('ch-server', 'num UInt8, str String', 'select 1 as num, ''2'' as str')
+    select * from jdbc('ch-server', 'num Nullable(Decimal(10,0)), Nullable(str FixedString(1)) DEFAULT ''x''', 'select 1 as num, ''2'' as str')
+    -- named schema
+    select * from jdbc('ch-server', 'query-log', 'show-query-logs')
+    ```
+
+* Query
+    ```sql
+    -- adhoc query
     select * from jdbc('ch-server', 'system', 'select * from query_log where user != ''default''')
-
     select * from jdbc('ch-server', 'select * from query_log where user != ''default''')
-
     select * from jdbc('ch-server', 'select * from system.query_log where user != ''default''')
-    ```
 
-* Table Query
-    ```sql
+    -- table query
     select * from jdbc('ch-server', 'system', 'query_log')
-
     select * from jdbc('ch-server', 'query_log')
-    ```
 
-* Saved Query
-    ```sql
+    -- saved query
     select * from jdbc('ch-server', 'scripts/show-query-logs.sql')
-    ```
 
-* Named Query
-    ```sql
+    -- named query
     select * from jdbc('ch-server', 'show-query-logs')
-    ```
 
-* Scripting
-    ```sql
+    -- scripting
     select * from jdbc('script', '[1,2,3]')
-
     select * from jdbc('script', 'js', '[1,2,3]')
-
     select * from jdbc('script', 'scripts/one-two-three.js')
     ```
-
-* Schema-based Query
-
-    **Not implemented yet :p**
 
 * Query Parameters
     ```sql
@@ -212,7 +220,7 @@ Below is a rough performance comparison to help you understand overhead caused b
 
 * Monitoring
 
-    You can use [Prometheus](https://prometheus.io/) to monitor metrics exposed by JDBC brige.
+    You can use [Prometheus](https://prometheus.io/) to monitor metrics exposed by JDBC bridge.
     ```bash
     curl -v http://jdbc-bridge:9019/metrics
     ```
@@ -240,15 +248,15 @@ Below is a rough performance comparison to help you understand overhead caused b
 
 * Named Data Source
 
-    By default, named datasource is defined in configuration file in JSON format under `config/datasources` directory. You may check examples at [misc/quick-start/jdbc-bridge/config/datasources](misc/quick-start/jdbc-bridge/config/datasources). If you use modern editors like VSCode, you may find it's helpful to use [JSON schema](docker/config/datasource-schema.json) for validation and auto-complete.
+    By default, named datasource is defined in configuration file in JSON format under `config/datasources` directory. You may check examples at [misc/quick-start/jdbc-bridge/config/datasources](misc/quick-start/jdbc-bridge/config/datasources). If you use modern editors like VSCode, you may find it's helpful to use [JSON schema](docker/config/datasource.jschema) for validation and smart autocomplete.
 
 * Saved Query
 
-    Saved queries are under `scripts` directory by default. For example: [show-query-logs.sql](docker/scripts/show-query-logs.sql).
+    Saved queries and scripts are under `scripts` directory by default. For example: [show-query-logs.sql](docker/scripts/show-query-logs.sql).
 
 * Named Query
 
-    Similar as named datasource, named queries are JSON configuration files under `config/queries`. You may refer to examples at [misc/quick-start/jdbc-bridge/config/datasources](misc/quick-start/jdbc-bridge/config/queries).
+    Similar as named datasource, named queries are JSON configuration files under `config/queries`. You may refer to examples at [misc/quick-start/jdbc-bridge/config/queries](misc/quick-start/jdbc-bridge/config/queries).
 
 * Logging
 
@@ -256,11 +264,11 @@ Below is a rough performance comparison to help you understand overhead caused b
 
 * Vert.x
 
-    If you're familiar with [Vert.x](https://vertx.io/). You can customize its configuration by changing `config/httpd.json` and `config/vertx.json`.
+    If you're familiar with [Vert.x](https://vertx.io/), you can customize its configuration by changing `config/httpd.json` and `config/vertx.json`.
 
 * Query Parameters
 
-    All supported query parameters can be found at [here](src/main/java/ru/yandex/clickhouse/jdbcbridge/core/QueryPamraters.java). `datasource_column=true` can be simplied as `datasource_column`, for example:
+    All supported query parameters can be found at [here](src/main/java/ru/yandex/clickhouse/jdbcbridge/core/QueryParameters.java). `datasource_column=true` can be simplied as `datasource_column`, for example:
     ```sql
     select * from jdbc('ch-server?datasource_column=true', 'select 1')
 
@@ -270,8 +278,8 @@ Below is a rough performance comparison to help you understand overhead caused b
 * Timeout
 
     Couple of timeout settings you should be aware of:
-    1. datasource timeout, for example: `max_execution_time` in MySQL and ClickHouse
-    2. JDBC driver timeout, for example: `connectTimeout` and `socketTimeout` in [MySQL Connector/J](https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-configuration-properties.html)
+    1. datasource timeout, for example: `max_execution_time` in MariaDB
+    2. JDBC driver timeout, for example: `connectTimeout` and `socketTimeout` in [MariaDB Connector/J](https://mariadb.com/kb/en/about-mariadb-connector-j/)
     3. Vertx timeout - see `config/server.json` and `config/vertx.json`
     4. Client(ClickHouse JDBC driver) timeout - see timeout settings in ClickHouse JDBC driver
 
@@ -290,18 +298,18 @@ You can use Maven to build ClickHouse JDBC bridge, for examples:
 git clone https://github.com/ClickHouse/clickhouse-jdbc-bridge.git
 cd clickhouse-jdbc-bridge
 # compile and run unit tests
-mvn clean test
+mvn -Prelease verify
 # release shaded jar, rpm and debian packages
-mvn -Prelease -Drevision=2.0.0 clean package
+mvn -Prelease -Drevision=2.0.0 package
 ```
 
 In order to build docker images:
 ```bash
 git clone https://github.com/ClickHouse/clickhouse-jdbc-bridge.git
 cd clickhouse-jdbc-bridge
-docker build --squash --build-arg revision=2.0.0 -t yandex/clickhouse-jdbc-bridge .
+docker build --squash --build-arg revision=2.0.0 -t my/clickhouse-jdbc-bridge .
 # or if you want to build the all-ine-one image
-docker build --squash --build-arg revision=20.9.3 -f all-in-one.Dockerfile -t yandex/clickhouse-all-in-one .
+docker build --squash --build-arg revision=20.9.3 -f all-in-one.Dockerfile -t my/clickhouse-all-in-one .
 ```
 
 ## Develop
@@ -327,6 +335,7 @@ An extension for JDBC bridge is basically a Java class with 3 optional parts:
     ```
 
 3. Instantiation Method
+
     In order to create instance of your extension, in general you should define a static method like below so that JDBC bridge knows how(besides walking through all possible constructors):
     ```java
     public static MyExtension newInstance(Object... args) {
@@ -352,6 +361,47 @@ Assume your extension class is `com.mycompany.MyExtension`, you can load it into
 Note: order of the extension matters. The first `NamedDataSource` extension will be set as default for all named datasources.
 
 
-## FAQ
+## Performance
 
-Coming soon
+Below is a rough performance comparison to help you understand overhead caused by JDBC bridge as well as its stability. MariaDB, ClickHouse, and JDBC bridge are running on separated KVMs. [ApacheBench(ab)](https://httpd.apache.org/docs/2.4/programs/ab.html) is used on another KVM to simulate 20 concurrent users to issue same query 100,000 times after warm-up. Please refer to [this](misc/perf-test) in order to setup test environment and run tests by yourself.
+
+
+Test Case | Time Spent(s) | Throughput(#/s) | Failed Requests | Min(ms) | Mean(ms) | Median(ms) | Max(ms)
+-- | -- | -- | -- | -- | -- | -- | --
+[clickhouse_ping](misc/perf-test/results/clickhouse_ping.txt) | 801.367 | 124.79 | 0 | 1 | 160 | 4 | 1,075
+[jdbc-bridge_ping](misc/perf-test/results/jdbc-bridge_ping.txt) | 804.017 | 124.38 | 0 | 1 | 161 | 10 | 3,066
+[clickhouse_url(clickhouse)](misc/perf-test/results/clickhouse_url(clickhouse).txt) | 801.448 | 124.77 | 3 | 3 | 160 | 8 | 1,077
+[clickhouse_url(jdbc-bridge)](misc/perf-test/results/clickhouse_url(jdbc-bridge).txt) | 811.299 | 123.26 | 446 | 3 | 162 | 10 | 3,066
+[clickhouse_constant-query](misc/perf-test/results/clickhouse_constant-query.txt) | 797.775 | 125.35 | 0 | 1 | 159 | 4 | 1,077
+[clickhouse_constant-query(mysql)](misc/perf-test/results/clickhouse_constant-query(mysql).txt) | 1,598.426 | 62.56 | 0 | 7 | 320 | 18 | 2,049
+[clickhouse_constant-query(remote)](misc/perf-test/results/clickhouse_constant-query(remote).txt) | 802.212 | 124.66 | 0 | 2 | 160 | 8 | 3,073
+[clickhouse_constant-query(url)](misc/perf-test/results/clickhouclickhouse_constant-query(url)se_ping.txt) | 801.686 | 124.74 | 0 | 3 | 160 | 11 | 1,123
+[clickhouse_constant-query(jdbc)](misc/perf-test/results/clickhouse_constant-query(jdbc).txt) | 925.087 | 108.10 | 5,813 | 14 | 185 | 75 | 4,091
+[clickhouse(patched)_constant-query(jdbc)](misc/perf-test/results/clickhouse(patched)_constant-query(jdbc).txt) | 833.892 | 119.92 | 1,577 | 10 | 167 | 51 | 3,109
+[clickhouse(patched)_constant-query(jdbc-dual)](misc/perf-test/results/clickhouse(patched)_constant-query(jdbc-dual).txt) | 846.403 | 118.15 | 3,021 | 8 | 169 | 50 | 3,054
+[clickhouse_10k-rows-query](misc/perf-test/results/clickhouse_10k-rows-query.txt) | 854.886 | 116.97 | 0 | 12 | 171 | 99 | 1,208
+[clickhouse_10k-rows-query(mysql)](misc/perf-test/results/clickhouse_10k-rows-query(mysql).txt) | 1,657.425 | 60.33 | 0 | 28 | 331 | 123 | 2,228
+[clickhouse_10k-rows-query(remote)](misc/perf-test/results/clickhouse_10k-rows-query(remote).txt) | 854.610 | 117.01 | 0 | 12 | 171 | 99 | 1,201
+[clickhouse_10k-rows-query(url)](misc/perf-test/results/clickhouse_10k-rows-query(url).txt) | 853.292 | 117.19 | 5 | 23 | 171 | 105 | 2,026
+[clickhouse_10k-rows-query(jdbc)](misc/perf-test/results/clickhouse_10k-rows-query(jdbc).txt) | 1,483.565 | 67.41 | 11,588 | 66 | 297 | 206 | 2,051
+[clickhouse(patched)_10k-rows-query(jdbc)](misc/perf-test/results/clickhouse(patched)_10k-rows-query(jdbc).txt) | 1,186.422 | 84.29 | 6,632 | 61 | 237 | 184 | 2,021
+[clickhouse(patched)_10k-rows-query(jdbc-dual)](misc/perf-test/results/clickhouse(patched)_10k-rows-query(jdbc-dual).txt) | 1,080.676 | 92.53 | 4,195 | 65 | 216 | 180 | 2,013
+
+Note: `clickhouse(patched)` is a patched version of ClickHouse server by disabling XDBC bridge health check. `jdbc-dual` on the other hand means dual instances of JDBC bridge managed by docker swarm on same KVM(due to limited resources ;).
+
+Test Case | (Decoded) URL
+-- | --
+clickhouse_ping | `http://ch-server:8123/ping`
+jdbc-bridge_ping | `http://jdbc-bridge:9019/ping`
+clickhouse_url(clickhouse) | `http://ch-server:8123/?query=select * from url('http://ch-server:8123/ping', CSV, 'results String')`
+clickhouse_url(jdbc-bridge) | `http://ch-server:8123/?query=select * from url('http://jdbc-bridge:9019/ping', CSV, 'results String')`
+clickhouse_constant-query | `http://ch-server:8123/?query=select 1`
+clickhouse_constant-query(mysql) | `http://ch-server:8123/?query=select * from mysql('mariadb:3306', 'test', 'constant', 'root', 'root')`
+clickhouse_constant-query(remote) | `select * from remote('ch-server:9000', system.constant, 'default', '')`
+clickhouse_constant-query(url) | `http://ch-server:8123/?query=select * from url('http://ch-server:8123/?query=select 1', CSV, 'results String')`
+clickhouse*_constant-query(jdbc*) | `http://ch-server:8123/?query=select * from jdbc('mariadb', 'constant')`
+clickhouse_10k-rows-query | `http://ch-server:8123/?query=select 1`
+clickhouse_10k-rows-query(mysql) | `http://ch-server:8123/?query=select * from mysql('mariadb:3306', 'test', '10k_rows', 'root', 'root')`
+clickhouse_10k-rows-query(remote) | `http://ch-server:8123/?query=select * from remote('ch-server:9000', system.10k_rows, 'default', '')`
+clickhouse_10k-rows-query(url) | `http://ch-server:8123/?query=select * from url('http://ch-server:8123/?query=select * from 10k_rows', CSV, 'results String')`
+clickhouse*_10k-rows-query(jdbc*) | `http://ch-server:8123/?query=select * from jdbc('mariadb', 'small-table')`

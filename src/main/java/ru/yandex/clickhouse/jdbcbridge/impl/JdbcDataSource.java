@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,13 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.Map.Entry;
 
 import ru.yandex.clickhouse.jdbcbridge.core.ResponseWriter;
 import ru.yandex.clickhouse.jdbcbridge.core.DataTableReader;
 import ru.yandex.clickhouse.jdbcbridge.core.Utils;
-import ru.yandex.clickhouse.jdbcbridge.core.DataSourceManager;
 import ru.yandex.clickhouse.jdbcbridge.core.ByteBuffer;
 import ru.yandex.clickhouse.jdbcbridge.core.DataAccessException;
 import ru.yandex.clickhouse.jdbcbridge.core.ColumnDefinition;
@@ -47,11 +47,14 @@ import ru.yandex.clickhouse.jdbcbridge.core.DefaultValues;
 import ru.yandex.clickhouse.jdbcbridge.core.Extension;
 import ru.yandex.clickhouse.jdbcbridge.core.ExtensionManager;
 import ru.yandex.clickhouse.jdbcbridge.core.QueryParameters;
+import ru.yandex.clickhouse.jdbcbridge.core.Repository;
+
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Meter.Id;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -60,8 +63,8 @@ public class JdbcDataSource extends NamedDataSource {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JdbcDataSource.class);
 
     private static final Set<String> PRIVATE_PROPS = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(CONF_SCHEMA, CONF_TYPE, CONF_DATETIME, CONF_TIMEZONE,
-                    CONF_CACHE, CONF_ALIASES, CONF_DRIVER_URLS, CONF_QUERY_TIMEOUT, CONF_WRITE_TIMEOUT, CONF_SEALED)));
+            .unmodifiableSet(new HashSet<>(Arrays.asList(CONF_SCHEMA, CONF_TYPE, CONF_TIMEZONE, CONF_CACHE,
+                    CONF_ALIASES, CONF_DRIVER_URLS, CONF_QUERY_TIMEOUT, CONF_WRITE_TIMEOUT, CONF_SEALED)));
 
     private static final Properties DEFAULT_DATASOURCE_PROPERTIES = new Properties();
 
@@ -72,7 +75,9 @@ public class JdbcDataSource extends NamedDataSource {
     private static final String PROP_CLIENT_NAME = "ClientUser";
     private static final String DEFAULT_CLIENT_NAME = "clickhouse-jdbc-bridge";
 
-    private static final String QUERY_TABLE_BEGIN = "SELECT * FROM ";
+    private static final String QUERY_STMT_SELECT = "SELECT ";
+    private static final String QUERY_STMT_FROM = " FROM ";
+    private static final String QUERY_TABLE_BEGIN = QUERY_STMT_SELECT + "*" + QUERY_STMT_FROM;
     private static final String QUERY_TABLE_END = " WHERE 1 = 0";
 
     private static final String CONF_DATASOURCE = "dataSource";
@@ -103,6 +108,35 @@ public class JdbcDataSource extends NamedDataSource {
         }
 
         @Override
+        public int skipRows(QueryParameters parameters) {
+            int rowCount = 0;
+
+            if (rs == null || parameters == null) {
+                return rowCount;
+            }
+
+            int position = parameters.getPosition();
+            int offset = parameters.getOffset();
+
+            // absolute position takes priority
+            if (position != 0 || (position = offset) < 0) {
+                try {
+                    rs.absolute(position);
+                    // many JDBC drivers didn't validate position
+                    // if you have only two rows in database, you can still use rs.position(100)...
+                    // FIXME inaccurate row count here
+                    rowCount = position;
+                } catch (SQLException e) {
+                    throw new IllegalStateException("Not able to move cursor to row #" + position, e);
+                }
+            } else if (offset != 0) {
+                DataTableReader.super.skipRows(parameters);
+            }
+
+            return rowCount;
+        }
+
+        @Override
         public boolean nextRow() {
             try {
                 return rs.next();
@@ -127,8 +161,28 @@ public class JdbcDataSource extends NamedDataSource {
             column++;
 
             try {
+                Object value = null;
                 switch (metadata.getType()) {
                     case Bool:
+                    case Enum:
+                    case Enum8:
+                        value = rs.getObject(column);
+                        if (value instanceof Integer) {
+                            int optionValue = (int) value;
+                            buffer.writeEnum8(metadata.requireValidOptionValue(optionValue));
+                        } else { // treat as String
+                            buffer.writeEnum8(metadata.getOptionValue(String.valueOf(value)));
+                        }
+                        break;
+                    case Enum16:
+                        value = rs.getObject(column);
+                        if (value instanceof Integer) {
+                            int optionValue = (int) value;
+                            buffer.writeEnum16(metadata.requireValidOptionValue(optionValue));
+                        } else { // treat as String
+                            buffer.writeEnum16(metadata.getOptionValue(String.valueOf(value)));
+                        }
+                        break;
                     case Int8:
                         buffer.writeInt8(rs.getInt(column));
                         break;
@@ -141,6 +195,12 @@ public class JdbcDataSource extends NamedDataSource {
                     case Int64:
                         buffer.writeInt64(rs.getLong(column));
                         break;
+                    case Int128:
+                        buffer.writeInt128(rs.getObject(column, java.math.BigInteger.class));
+                        break;
+                    case Int256:
+                        buffer.writeInt256(rs.getObject(column, java.math.BigInteger.class));
+                        break;
                     case UInt8:
                         buffer.writeUInt8(rs.getInt(column));
                         break;
@@ -152,6 +212,12 @@ public class JdbcDataSource extends NamedDataSource {
                         break;
                     case UInt64:
                         buffer.writeUInt64(rs.getLong(column));
+                        break;
+                    case UInt128:
+                        buffer.writeUInt128(rs.getObject(column, java.math.BigInteger.class));
+                        break;
+                    case UInt256:
+                        buffer.writeUInt256(rs.getObject(column, java.math.BigInteger.class));
                         break;
                     case Float32:
                         buffer.writeFloat32(rs.getFloat(column));
@@ -166,7 +232,7 @@ public class JdbcDataSource extends NamedDataSource {
                         buffer.writeDateTime(rs.getTimestamp(column), metadata.getTimeZone());
                         break;
                     case DateTime64:
-                        buffer.writeDateTime64(rs.getTimestamp(column), metadata.getTimeZone());
+                        buffer.writeDateTime64(rs.getTimestamp(column), metadata.getScale(), metadata.getTimeZone());
                         break;
                     case Decimal:
                         buffer.writeDecimal(rs.getBigDecimal(column), metadata.getPrecision(), metadata.getScale());
@@ -182,6 +248,9 @@ public class JdbcDataSource extends NamedDataSource {
                         break;
                     case Decimal256:
                         buffer.writeDecimal256(rs.getBigDecimal(column), metadata.getScale());
+                        break;
+                    case FixedStr:
+                        buffer.writeFixedString(rs.getString(column), metadata.getLength());
                         break;
                     case Str:
                     default:
@@ -210,7 +279,7 @@ public class JdbcDataSource extends NamedDataSource {
 
     public static void initialize(ExtensionManager manager) {
         Extension<NamedDataSource> thisExtension = manager.getExtension(JdbcDataSource.class);
-        manager.getDataSourceManager().registerType(EXTENSION_NAME, thisExtension);
+        manager.getRepositoryManager().getRepository(NamedDataSource.class).registerType(EXTENSION_NAME, thisExtension);
     }
 
     public static JdbcDataSource newInstance(Object... args) {
@@ -220,10 +289,13 @@ public class JdbcDataSource extends NamedDataSource {
         }
 
         String id = (String) args[0];
-        DataSourceManager manager = (DataSourceManager) Objects.requireNonNull(args[1]);
+        Repository<NamedDataSource> manager = (Repository<NamedDataSource>) Objects.requireNonNull(args[1]);
         JsonObject config = args.length > 2 ? (JsonObject) args[2] : null;
 
-        return new JdbcDataSource(id, manager, config);
+        JdbcDataSource ds = new JdbcDataSource(id, manager, config);
+        ds.validate();
+
+        return ds;
     }
 
     private final String jdbcUrl;
@@ -258,13 +330,36 @@ public class JdbcDataSource extends NamedDataSource {
             }
             err.append("VendorCode(").append(code).append(')').append(' ').append(exp.getMessage());
         } else {
-            err.append(t == null ? "Unknown error" : t.getMessage());
+            err.append(t == null ? "Unknown error: " : t.getMessage());
+        }
+
+        Throwable rootCause = t;
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+            rootCause = rootCause.getCause();
+        }
+        if (rootCause != t) {
+            err.append('\n').append("Root cause: ").append(rootCause.getMessage());
         }
 
         return err.toString();
     }
 
-    protected JdbcDataSource(String id, DataSourceManager resolver, JsonObject config) {
+    protected Driver findDriver(String url) {
+        ServiceLoader<Driver> loader = ServiceLoader.load(Driver.class, this.getDriverClassLoader());
+        for (Driver d : loader) {
+            try {
+                if (d.acceptsURL(url)) {
+                    return d;
+                }
+            } catch (SQLException e) {
+                log.warn("Error occured when testing driver [{}] due to [{}]", d, e.getMessage());
+            }
+        }
+
+        throw new IllegalStateException("Not able to find suitable driver for datasource: " + this.getId());
+    }
+
+    protected JdbcDataSource(String id, Repository<NamedDataSource> resolver, JsonObject config) {
         super(id, resolver, config);
 
         Properties props = new Properties();
@@ -316,10 +411,16 @@ public class JdbcDataSource extends NamedDataSource {
                 String driverClassName = props.getProperty(PROP_DRIVER_CLASS);
 
                 if (driverClassName == null || driverClassName.isEmpty()) {
-                    throw new IllegalArgumentException("Missing driverClassName in named datasource: " + id);
+                    String url = props.getProperty(CONF_JDBC_URL);
+                    if (url == null || url.isEmpty()) {
+                        throw new IllegalArgumentException(CONF_JDBC_URL + " was not specified!");
+                    }
+
+                    props.setProperty(PROP_DRIVER_CLASS, driverClassName = findDriver(url).getClass().getName());
                 }
 
-                // respect driver declared in datasource configuration
+                // in case there's any driver in classpath was loaded, which might not be the
+                // exact version we need
                 deregisterJdbcDriver(driverClassName);
 
                 Thread currentThread = Thread.currentThread();
@@ -333,9 +434,6 @@ public class JdbcDataSource extends NamedDataSource {
                     HikariConfig conf = new HikariConfig(props);
                     conf.setMetricRegistry(Utils.getDefaultMetricRegistry());
                     this.datasource = new HikariDataSource(conf);
-
-                    // in case the driver registered itself
-                    // deregisterJdbcDriver(driverClassName);
                 } finally {
                     currentThread.setContextClassLoader(currentContextClassLoader);
                 }
@@ -353,13 +451,14 @@ public class JdbcDataSource extends NamedDataSource {
         if (this.datasource != null) {
             conn = this.datasource.getConnection();
         } else {
-            // might not work when using custom class loader
-            conn = DriverManager.getConnection(this.jdbcUrl);
+            conn = findDriver(this.jdbcUrl).connect(this.jdbcUrl, new Properties());
+
+            this.initQuoteIdentifier(conn);
 
             try {
                 conn.setAutoCommit(true);
             } catch (Exception e) {
-                log.warn("Failed enable auto commit due to {}", e.getMessage());
+                log.warn("Failed to enable auto-commit due to {}", e.getMessage());
             }
         }
 
@@ -417,38 +516,6 @@ public class JdbcDataSource extends NamedDataSource {
         }
     }
 
-    protected final void skipRows(ResultSet rs, QueryParameters parameters) throws SQLException {
-        if (rs != null && parameters != null) {
-            int position = parameters.getPosition();
-            // absolute position takes priority
-            if (position != 0) {
-                log.trace("Move cursor position to row #{}...", position);
-                rs.absolute(position);
-                log.trace("Now resume reading...");
-            } else {
-                int offset = parameters.getOffset();
-
-                if (offset > 0) {
-                    log.trace("Skipping first {} rows...", offset);
-                    while (rs.next()) {
-                        if (--offset <= 0) {
-                            break;
-                        }
-                    }
-                    log.trace("Now resume reading the rest rows...");
-                }
-            }
-        }
-    }
-
-    protected final DataType convert(int jdbcType, boolean signed, boolean useDateTime) {
-        return convert(JDBCType.valueOf(jdbcType), signed, useDateTime);
-    }
-
-    protected DataType convert(JDBCType jdbcType, boolean signed, boolean useDateTime) {
-        return converter.from(jdbcType, signed, useDateTime || this.useDateTime());
-    }
-
     protected ResultSet getFirstQueryResult(Statement stmt, boolean hasResultSet) throws SQLException {
         ResultSet rs = null;
 
@@ -462,13 +529,20 @@ public class JdbcDataSource extends NamedDataSource {
     }
 
     protected String getColumnName(ResultSetMetaData meta, int columnIndex) throws SQLException {
-        String columnName;
+        String columnName = null;
 
+        boolean fallback = true;
         try {
             columnName = meta.getColumnLabel(columnIndex);
+            if (columnName == null || columnName.isEmpty()) {
+                fallback = false;
+                columnName = meta.getColumnName(columnIndex);
+            }
         } catch (RuntimeException e) {
             // in case get column label was not supported
-            columnName = meta.getColumnName(columnIndex);
+            if (fallback) {
+                columnName = meta.getColumnName(columnIndex);
+            }
         }
 
         if (columnName == null || columnName.isEmpty()) {
@@ -487,7 +561,7 @@ public class JdbcDataSource extends NamedDataSource {
             boolean isSigned = true;
             int nullability = ResultSetMetaData.columnNullable;
             int length = 0;
-            int precison = 0;
+            int precision = 0;
             int scale = 0;
 
             // Why try-catch? Try a not-fully implemented JDBC driver and you'll see...
@@ -507,7 +581,7 @@ public class JdbcDataSource extends NamedDataSource {
             }
 
             try {
-                precison = meta.getPrecision(i);
+                precision = meta.getPrecision(i);
             } catch (Exception e) {
             }
 
@@ -516,9 +590,13 @@ public class JdbcDataSource extends NamedDataSource {
             } catch (Exception e) {
             }
 
-            columns[i - 1] = new ColumnDefinition(getColumnName(meta, i),
-                    convert(meta.getColumnType(i), isSigned, params.useDateTime()),
-                    ResultSetMetaData.columnNoNulls != nullability, length, precison, scale);
+            String name = getColumnName(meta, i);
+            String typeName = meta.getColumnTypeName(i);
+            JDBCType jdbcType = JDBCType.valueOf(meta.getColumnType(i));
+            DataType type = converter.from(jdbcType, typeName, precision, scale, isSigned);
+
+            columns[i - 1] = new ColumnDefinition(name, type, ResultSetMetaData.columnNoNulls != nullability, length,
+                    precision, scale);
         }
 
         return columns;
@@ -532,7 +610,18 @@ public class JdbcDataSource extends NamedDataSource {
             stmt.setMaxRows(1);
             stmt.setFetchSize(1);
 
-            // could be just a table name
+            // in case it's a table query
+            if (!Utils.containsWhitespace(loadedQuery)) {
+                // let's generate a query based on given schema name, table name and column list
+                String quote = this.getQuoteIdentifier();
+                StringBuilder sb = new StringBuilder().append(QUERY_TABLE_BEGIN);
+                // add schema name if any
+                if (schema != null && !schema.isEmpty() && !Utils.containsWhitespace(schema)) {
+                    sb.append(quote).append(schema).append(quote).append('.');
+                }
+                loadedQuery = sb.append(quote).append(loadedQuery).append(quote).append(QUERY_TABLE_END).toString();
+            }
+
             if (loadedQuery != null && loadedQuery.indexOf(' ') == -1) {
                 StringBuilder sb = new StringBuilder().append(QUERY_TABLE_BEGIN);
                 String quote = this.getQuoteIdentifier();
@@ -558,11 +647,63 @@ public class JdbcDataSource extends NamedDataSource {
     }
 
     @Override
+    protected void writeMutationResult(String schema, String originalQuery, String loadedQuery, QueryParameters params,
+            ColumnDefinition[] requestColumns, ColumnDefinition[] customColumns, DefaultValues defaultValues,
+            ResponseWriter writer) {
+        try (Connection conn = getConnection(); Statement stmt = createStatement(conn, params)) {
+            setTimeout(stmt, this.getQueryTimeout(params.getTimeout()));
+
+            final ResultSet rs = getFirstQueryResult(stmt, stmt.execute(loadedQuery));
+
+            DataTableReader reader = new ResultSetReader(getId(), rs, params);
+            reader.process(getId(), requestColumns, customColumns, getColumnsFromResultSet(rs, params), defaultValues,
+                    getTimeZone(), params, writer);
+
+            /*
+             * if (stmt.execute(loadedQuery)) { // TODO multiple resultsets
+             * 
+             * } else if (columns.size() == 1 && columns.getColumn(0).getType() ==
+             * ClickHouseDataType.Int32) {
+             * writer.write(ClickHouseBuffer.newInstance(4).writeInt32(stmt.getUpdateCount()
+             * )); } else { throw new IllegalStateException(
+             * "Not able to handle query result due to incompatible columns: " + columns); }
+             */
+        } catch (SQLException e) {
+            throw new DataAccessException(getId(), buildErrorMessage(e), e);
+        } catch (DataAccessException e) {
+            Throwable cause = e.getCause();
+            throw new IllegalStateException(
+                    "Failed to query against [" + this.getId() + "] due to: " + buildErrorMessage(cause), cause);
+        }
+    }
+
+    @Override
     protected void writeQueryResult(String schema, String originalQuery, String loadedQuery, QueryParameters params,
             ColumnDefinition[] requestColumns, ColumnDefinition[] customColumns, DefaultValues defaultValues,
             ResponseWriter writer) {
-        // String queryId = params.dedupQuery() ? this.generateUniqueQueryId(query) :
-        // null;
+        // check if it's a table query
+        if (!Utils.containsWhitespace(loadedQuery)) {
+            // let's generate a query based on given schema name, table name and column list
+            String quote = this.getQuoteIdentifier();
+            StringBuilder sb = new StringBuilder();
+            sb.append(QUERY_STMT_SELECT);
+            if (requestColumns == null || requestColumns.length == 0) {
+                sb.append('*');
+            } else {
+                for (ColumnDefinition c : requestColumns) {
+                    sb.append(quote).append(c.getName()).append(quote).append(',');
+                }
+                sb.deleteCharAt(sb.length() - 1);
+            }
+            sb.append(QUERY_STMT_FROM);
+            // add schema name if any
+            if (schema != null && !schema.isEmpty() && !Utils.containsWhitespace(schema)) {
+                sb.append(quote).append(schema).append(quote).append('.');
+            }
+            // now table name
+            sb.append(quote).append(loadedQuery).append(quote);
+            loadedQuery = sb.toString();
+        }
 
         try (Connection conn = getConnection(); Statement stmt = createStatement(conn, params)) {
             setTimeout(stmt, this.getQueryTimeout(params.getTimeout()));
@@ -667,6 +808,36 @@ public class JdbcDataSource extends NamedDataSource {
         }
     }
 
+    protected final void initQuoteIdentifier(Connection conn) {
+        if (this.quoteIdentifier == null) {
+            synchronized (this) {
+                if (this.quoteIdentifier == null) {
+                    this.quoteIdentifier = DEFAULT_QUOTE_IDENTIFIER;
+
+                    String errorMsg = "Failed to get identifier quote string due to {}";
+                    String str = null;
+                    if (conn != null) {
+                        try {
+                            str = conn.getMetaData().getIdentifierQuoteString();
+                        } catch (Exception e) {
+                            log.warn(errorMsg, e.getMessage());
+                        }
+                    } else {
+                        try (Connection c = getConnection()) {
+                            str = c.getMetaData().getIdentifierQuoteString();
+                        } catch (Exception e) {
+                            log.warn(errorMsg, e.getMessage());
+                        }
+                    }
+
+                    if (str != null && !str.trim().isEmpty()) {
+                        this.quoteIdentifier = str;
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public final String getType() {
         return EXTENSION_NAME;
@@ -674,20 +845,7 @@ public class JdbcDataSource extends NamedDataSource {
 
     @Override
     public final String getQuoteIdentifier() {
-        if (this.quoteIdentifier == null) {
-            this.quoteIdentifier = DEFAULT_QUOTE_IDENTIFIER;
-
-            try (Connection conn = getConnection()) {
-                this.quoteIdentifier = conn.getMetaData().getIdentifierQuoteString().trim();
-            } catch (Exception e) {
-                log.warn("Failed to get identifier quote string", e);
-            }
-        }
-
-        if (this.quoteIdentifier.isEmpty()) {
-            log.warn("Identifier quote string cannot be empty string, had to change it to default");
-            this.quoteIdentifier = DEFAULT_QUOTE_IDENTIFIER;
-        }
+        this.initQuoteIdentifier(null);
 
         return this.quoteIdentifier;
     }
@@ -696,14 +854,17 @@ public class JdbcDataSource extends NamedDataSource {
     public String getPoolUsage() {
         JsonObject obj = new JsonObject();
 
-        for (Meter meter : Utils.getDefaultMetricRegistry().getMeters()) {
-            Id meterId = meter.getId();
-            String name = meterId.getName();
+        Object metricRegistry = Utils.getDefaultMetricRegistry();
+        if (metricRegistry instanceof MeterRegistry) {
+            for (Meter meter : ((MeterRegistry) metricRegistry).getMeters()) {
+                Id meterId = meter.getId();
+                String name = meterId.getName();
 
-            if (name != null && name.startsWith(USAGE_PREFIX) && this.getId().equals(meterId.getTag(USAGE_POOL))) {
-                name = name.substring(USAGE_PREFIX.length()).replace('.', '_');
-                for (Measurement m : meter.measure()) {
-                    obj.put(name + "_" + m.getStatistic().getTagValueRepresentation(), m.getValue());
+                if (name != null && name.startsWith(USAGE_PREFIX) && this.getId().equals(meterId.getTag(USAGE_POOL))) {
+                    name = name.substring(USAGE_PREFIX.length()).replace('.', '_');
+                    for (Measurement m : meter.measure()) {
+                        obj.put(name + "_" + m.getStatistic().getTagValueRepresentation(), m.getValue());
+                    }
                 }
             }
         }
@@ -765,11 +926,6 @@ public class JdbcDataSource extends NamedDataSource {
             throw new IllegalStateException(
                     "Failed to mutate in [" + this.getId() + "] due to: " + buildErrorMessage(e), e);
         }
-    }
-
-    @Override
-    public boolean undertandsSQL() {
-        return true;
     }
 
     @Override

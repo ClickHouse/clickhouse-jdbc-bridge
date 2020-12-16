@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import static org.testng.Assert.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.testng.annotations.Test;
 
@@ -86,8 +87,15 @@ public class ByteBufferTest {
         ByteBuffer buffer = ByteBuffer.newInstance(100);
 
         buffer.writeFixedString("A", 2);
-        assertEquals(buffer.buffer.getBytes(), new byte[] { (byte) 1, (byte) 65 });
-        // assertEquals(buffer.readString(), str);
+        assertEquals(buffer.buffer.getBytes(), new byte[] { (byte) 65, (byte) 0 });
+        buffer.writeFixedString("A", 1);
+        assertEquals(buffer.buffer.getBytes(), new byte[] { (byte) 65, (byte) 0, (byte) 65 });
+        assertThrows(IllegalArgumentException.class, new ThrowingRunnable() {
+            @Override
+            public void run() throws Throwable {
+                buffer.writeFixedString("AA", 1);
+            }
+        });
     }
 
     @Test(groups = { "unit" })
@@ -159,9 +167,9 @@ public class ByteBufferTest {
         buffer.writeDate(date1);
         buffer.writeDate(date2);
         buffer.writeDateTime(dt1);
-        buffer.writeDateTime(dt2);
-        buffer.writeDateTime64(xdt1);
-        buffer.writeDateTime64(xdt2);
+        buffer.writeDateTime(dt2, TimeZone.getTimeZone("UTC"));
+        buffer.writeDateTime64(xdt1, 3);
+        buffer.writeDateTime64(xdt2, 3);
 
         assertEquals(buffer.readNull(), true);
         assertEquals(buffer.readNull(), false);
@@ -199,7 +207,7 @@ public class ByteBufferTest {
         assertEquals(buffer.readDate(), date1);
         assertEquals(buffer.readDate(), date2);
         assertEquals(buffer.readDateTime(), dt1);
-        assertEquals(buffer.readDateTime(), dt2);
+        assertEquals(buffer.readDateTime(TimeZone.getTimeZone("UTC")), dt2);
         assertEquals(buffer.readDateTime64(), xdt1);
         assertEquals(buffer.readDateTime64(), xdt2);
     }

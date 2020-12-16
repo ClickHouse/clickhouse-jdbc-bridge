@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      major:
+        description: "Major version"
+        required: true
+        default: "2"
+      minor:
+        description: "Minor version"
+        required: false
+        default: "0"
+      patch:
+        description: "Patch"
+        required: false
+        default: "0"
+      organization:
+        description: "DockerHub organization"
+        required: false
+        default: "yandex"
+
+jobs:
+  pre-release:
+    name: "Pre Release"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+      - name: Install Java and Maven
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Release Maven package
+        uses: samuelmeuli/action-maven-publish@v1
+        with:
+          maven_profiles: release
+          maven_args: -Drevision=${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }} --batch-mode
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg_passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          nexus_username: ${{ secrets.SONATYPE_USER }}
+          nexus_password: ${{ secrets.SONATYPE_PASSWD }}
+      - name: Create Pre-release on Github
+        uses: "zhicwu/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "v${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }}"
+          prerelease: true
+          title: "Release v${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }}"
+          files: |
+            LICENSE
+            NOTICE
+            target/clickhouse*.jar
+            target/*.deb
+            target/**/*.rpm
+
+  publish:
+    name: "Build and Publish Docker Image"
+    runs-on: ubuntu-latest
+    needs: pre-release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWD }}
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          build-args: |
+            revision=${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }}
+            repository=${{ github.repository }}
+          tags: |
+            ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:latest
+            ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:${{ github.event.inputs.major }}
+            ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}
+            ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }}

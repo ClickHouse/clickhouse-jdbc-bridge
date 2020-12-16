@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 public class DnsResolverTest {
-    @Test(groups = { "sit" })
+    @Test(groups = { "unit" })
     public void testResolve() {
         String dns = "_sip._udp.sip.voice.google.com";
         assertNotNull(new DnsResolver().resolve(dns, true));
@@ -31,7 +31,7 @@ public class DnsResolverTest {
         assertNotNull(new DnsResolver().resolve(dns, false));
     }
 
-    @Test(groups = { "sit" })
+    @Test(groups = { "unit" })
     public void testApply() {
         String host = "_sip._udp.sip.voice.google.com";
         String port = "5060";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package ru.yandex.clickhouse.jdbcbridge.core;
 import io.vertx.core.json.JsonObject;
 
 /**
- * This interface defines the ability to load configuration automatically
- * whenever there's change detected.
+ * This interface defines the ability to load configuration automatically when
+ * there's change detected.
  * 
  * @since 2.0
  */
