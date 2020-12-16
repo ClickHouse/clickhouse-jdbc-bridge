@@ -1,4 +1,5 @@
 {
+  "$schema": "../../../../../docker/config/datasource.jschema",
   "ch-server": {
     "aliases": ["self"],
     "driverUrls": [

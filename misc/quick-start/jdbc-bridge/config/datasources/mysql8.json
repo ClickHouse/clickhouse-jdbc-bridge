@@ -1,4 +1,5 @@
 {
+  "$schema": "../../../../../docker/config/datasource.jschema",
   "mysql8": {
     "driverUrls": [
       "https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.21/mysql-connector-java-8.0.21.jar"

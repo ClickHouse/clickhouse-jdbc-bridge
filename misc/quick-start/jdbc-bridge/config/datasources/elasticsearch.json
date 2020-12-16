@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../../../docker/config/datasource.jschema",
+  "elasticsearch": {
+    "driverUrls": [
+      "https://repo1.maven.org/maven2/com/amazon/opendistroforelasticsearch/client/opendistro-sql-jdbc/1.11.0.0/opendistro-sql-jdbc-1.11.0.0.jar"
+    ],
+    "readOnly": true,
+    "connectionTestQuery": "",
+    "driverClassName": "com.amazon.opendistroforelasticsearch.jdbc.Driver",
+    "jdbcUrl": "jdbc:elasticsearch://elasticsearch:9200?useSSL=true&trustSelfSigned=true&hostnameVerification=false",
+    "username": "admin",
+    "password": "admin",
+    "initializationFailTimeout": 0,
+    "minimumIdle": 0,
+    "maximumPoolSize": 10
+  }
+}

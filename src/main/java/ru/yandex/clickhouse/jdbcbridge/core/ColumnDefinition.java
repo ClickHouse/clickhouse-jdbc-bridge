@@ -458,11 +458,17 @@ public class ColumnDefinition {
         int recommendedScale = DEFAULT_SCALE;
 
         switch (type) {
+            case DateTime64:
+                recommendedPrecision = precision < 0 ? DEFAULT_DATETIME64_PRECISION : precision;
+                recommendedScale = scale < 0 ? DEFAULT_DATETIME64_SCALE
+                        : (scale > MAX_DATETIME64_SCALE ? MAX_DATETIME64_SCALE : scale);
+                break;
             case Decimal:
                 recommendedPrecision = DEFAULT_DECIMAL_PRECISON;
                 recommendedPrecision = precision <= 0 ? recommendedPrecision
                         : (precision > MAX_PRECISON ? MAX_PRECISON : precision);
-                recommendedScale = DEFAULT_DECIMAL_SCALE;
+                recommendedScale = scale < 0 ? DEFAULT_DECIMAL_SCALE
+                        : (scale > recommendedPrecision ? recommendedPrecision : scale);
                 break;
             case Decimal32:
                 recommendedPrecision = DEFAULT_DECIMAL32_PRECISON;
@@ -487,8 +493,12 @@ public class ColumnDefinition {
 
         this.length = type == FixedStr ? (length <= 0 ? 1 : length) : type.getLength();
         this.precision = recommendedPrecision < type.getPrecision() ? recommendedPrecision : type.getPrecision();
-        this.scale = this.type == DataType.DateTime64 ? DEFAULT_DATETIME64_SCALE
-                : (scale <= 0 ? recommendedScale : (scale > this.precision ? this.precision : scale));
+        this.scale = scale <= 0 ? recommendedScale : (scale > this.precision ? this.precision : scale);
+        /*
+         * this.scale = this.type == DataType.DateTime64 ? DEFAULT_DATETIME64_SCALE :
+         * (scale <= 0 ? recommendedScale : (scale > this.precision ? this.precision :
+         * scale));
+         */
     }
 
     public String getName() {

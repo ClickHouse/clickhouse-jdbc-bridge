@@ -20,7 +20,6 @@ import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -47,7 +46,7 @@ public final class ByteBuffer {
     }
 
     public static ByteBuffer wrap(Buffer buffer) {
-        return wrap(buffer, null);
+        return wrap(buffer, TimeZone.getDefault());
     }
 
     public static ByteBuffer newInstance(int initialSizeHint, TimeZone timezone) {
@@ -55,7 +54,7 @@ public final class ByteBuffer {
     }
 
     public static ByteBuffer newInstance(int initialSizeHint) {
-        return newInstance(initialSizeHint, null);
+        return newInstance(initialSizeHint, TimeZone.getDefault());
     }
 
     public static Buffer asBuffer(String str) {
@@ -64,7 +63,7 @@ public final class ByteBuffer {
 
     private ByteBuffer(Buffer buffer, TimeZone timezone) {
         this.buffer = buffer != null ? buffer : Buffer.buffer();
-        this.timezone = timezone;
+        this.timezone = timezone == null ? TimeZone.getDefault() : timezone;
     }
 
     public int length() {
@@ -318,12 +317,15 @@ public final class ByteBuffer {
     }
 
     public ByteBuffer writeInt128(BigInteger value) {
+        byte empty = value.signum() == -1 ? (byte) 0xFF : 0x00;
         byte[] bytes = value.toByteArray();
         for (int i = bytes.length - 1; i >= 0; i--) {
             writeByte(bytes[i]);
         }
 
-        writeBytes(new byte[16 - bytes.length]);
+        for (int i = 16 - bytes.length; i > 0; i--) {
+            writeByte(empty);
+        }
 
         return this;
     }
@@ -338,12 +340,15 @@ public final class ByteBuffer {
     }
 
     public ByteBuffer writeInt256(BigInteger value) {
+        byte empty = value.signum() == -1 ? (byte) 0xFF : 0x00;
         byte[] bytes = value.toByteArray();
         for (int i = bytes.length - 1; i >= 0; i--) {
             writeByte(bytes[i]);
         }
 
-        writeBytes(new byte[32 - bytes.length]);
+        for (int i = 32 - bytes.length; i > 0; i--) {
+            writeByte(empty);
+        }
 
         return this;
     }
@@ -420,12 +425,15 @@ public final class ByteBuffer {
     }
 
     public BigDecimal readDecimal(int precision, int scale) {
-        return precision > 18 ? readDecimal128(scale) : (precision > 9 ? readDecimal64(scale) : readDecimal32(scale));
+        return precision > 38 ? readDecimal256(scale)
+                : (precision > 18 ? readDecimal128(scale)
+                        : (precision > 9 ? readDecimal64(scale) : readDecimal32(scale)));
     }
 
     public ByteBuffer writeDecimal(BigDecimal value, int precision, int scale) {
-        return precision > 18 ? writeDecimal128(value, scale)
-                : (precision > 9 ? writeDecimal64(value, scale) : writeDecimal32(value, scale));
+        return precision > 38 ? writeDecimal256(value, scale)
+                : (precision > 18 ? writeDecimal128(value, scale)
+                        : (precision > 9 ? writeDecimal64(value, scale) : writeDecimal32(value, scale)));
     }
 
     public BigDecimal readDecimal32(int scale) {
@@ -454,15 +462,7 @@ public final class ByteBuffer {
     }
 
     public ByteBuffer writeDecimal128(BigDecimal value, int scale) {
-        byte[] bytes = toBigInteger(value, scale).toByteArray();
-
-        for (int i = bytes.length - 1; i >= 0; i--) {
-            writeByte(bytes[i]);
-        }
-
-        writeBytes(new byte[16 - bytes.length]);
-
-        return this;
+        return writeInt128(toBigInteger(value, scale));
     }
 
     public BigDecimal readDecimal256(int scale) {
@@ -475,15 +475,7 @@ public final class ByteBuffer {
     }
 
     public ByteBuffer writeDecimal256(BigDecimal value, int scale) {
-        byte[] bytes = toBigInteger(value, scale).toByteArray();
-
-        for (int i = bytes.length - 1; i >= 0; i--) {
-            writeByte(bytes[i]);
-        }
-
-        writeBytes(new byte[32 - bytes.length]);
-
-        return this;
+        return writeInt256(toBigInteger(value, scale));
     }
 
     public Timestamp readDateTime() {
@@ -556,23 +548,44 @@ public final class ByteBuffer {
         return new Timestamp(time.longValue());
     }
 
-    public ByteBuffer writeDateTime64(Date value) {
-        return writeDateTime64(value, null);
+    public ByteBuffer writeDateTime64(Date value, int scale) {
+        return writeDateTime64(value, scale, null);
     }
 
-    public ByteBuffer writeDateTime64(Date value, TimeZone tz) {
-        return writeDateTime64(Objects.requireNonNull(value).getTime(), tz);
+    public ByteBuffer writeDateTime64(Timestamp value, int scale) {
+        return writeDateTime64(value, scale, null);
+    }
+
+    public ByteBuffer writeDateTime64(Date value, int scale, TimeZone tz) {
+        return writeDateTime64(Objects.requireNonNull(value).getTime(), 0, scale, tz);
+    }
+
+    public ByteBuffer writeDateTime64(Timestamp value, int scale, TimeZone tz) {
+        return writeDateTime64(Objects.requireNonNull(value).getTime(), value.getNanos(), scale, tz);
     }
 
     // ClickHouse's DateTime64 supports precision from 0 to 18, but JDBC only
     // supports 3(millisecond)
-    public ByteBuffer writeDateTime64(long time, TimeZone tz) {
+    public ByteBuffer writeDateTime64(long time, int nanos, int scale, TimeZone tz) {
         if ((tz = tz == null ? this.timezone : tz) != null) {
             time += tz.getOffset(time);
         }
 
         if (time <= 0L) { // 0000-00-00 00:00:00.000
-            time = 1L;
+            time = nanos > 0 ? nanos / 1000000 : 1L;
+        }
+
+        if (scale > 0) {
+            double normalizedTime = time;
+            if (nanos != 0) {
+                normalizedTime = time - nanos / 1000000 + nanos / 1000000.0;
+            }
+
+            if (scale < 3) {
+                time = BigDecimal.valueOf(normalizedTime).divide(BigDecimal.valueOf(10).pow(3 - scale)).longValue();
+            } else if (scale > 3) {
+                time = BigDecimal.valueOf(normalizedTime).multiply(BigDecimal.valueOf(10).pow(scale - 3)).longValue();
+            }
         }
 
         return this.writeUInt64(time);

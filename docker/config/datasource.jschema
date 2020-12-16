@@ -1,7 +1,88 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-
   "definitions": {
+    "chType": {
+      "description": "Data type.",
+      "type": "string",
+      "enum": [
+        "Boolean",
+        "Int8",
+        "Int16",
+        "Int32",
+        "Int64",
+        "Int128",
+        "Int256",
+        "UInt8",
+        "UInt16",
+        "UInt32",
+        "UInt64",
+        "UInt128",
+        "UInt256",
+        "Float32",
+        "Float64",
+        "Date",
+        "DateTime",
+        "DateTime64",
+        "Decimal",
+        "Decimal32",
+        "Decimal64",
+        "Decimal128",
+        "Decimal256",
+        "Enum",
+        "Enum8",
+        "Enum16",
+        "IPv4",
+        "IPv6",
+        "FixedString",
+        "String",
+        "UUID"
+      ]
+    },
+    "jdbcType": {
+      "description": "JDBC data type.",
+      "type": "string",
+      "enum": [
+        "BIT",
+        "TINYINT",
+        "SMALLINT",
+        "INTEGER",
+        "BIGINT",
+        "FLOAT",
+        "REAL",
+        "DOUBLE",
+        "NUMERIC",
+        "DECIMAL",
+        "CHAR",
+        "VARCHAR",
+        "LONGVARCHAR",
+        "DATE",
+        "TIME",
+        "TIMESTAMP",
+        "BINARY",
+        "VARBINARY",
+        "LONGVARBINARY",
+        "NULL",
+        "OTHER",
+        "JAVA_OBJECT",
+        "DISTINCT",
+        "STRUCT",
+        "ARRAY",
+        "BLOB",
+        "CLOB",
+        "REF",
+        "DATALINK",
+        "BOOLEAN",
+        "ROWID",
+        "NCHAR",
+        "NVARCHAR",
+        "LONGNVARCHAR",
+        "NCLOB",
+        "SQLXML",
+        "REF_CURSOR",
+        "TIME_WITH_TIMEZONE",
+        "TIMESTAMP_WITH_TIMEZONE"
+      ]
+    },
     "column": {
       "description": "Column.",
       "type": "object",
@@ -12,40 +93,7 @@
         },
         "type": {
           "description": "Data type.",
-          "type": "string",
-          "enum": [
-            "Boolean",
-            "Int8",
-            "Int16",
-            "Int32",
-            "Int64",
-            "Int128",
-            "Int256",
-            "UInt8",
-            "UInt16",
-            "UInt32",
-            "UInt64",
-            "UInt128",
-            "UInt256",
-            "Float32",
-            "Float64",
-            "Date",
-            "DateTime",
-            "DateTime64",
-            "Decimal",
-            "Decimal32",
-            "Decimal64",
-            "Decimal128",
-            "Decimal256",
-            "Enum",
-            "Enum8",
-            "Enum16",
-            "IPv4",
-            "IPv6",
-            "FixedString",
-            "String",
-            "UUID"
-          ]
+          "$ref": "#definitions/chType"
         },
         "value": {
           "default": "",
@@ -77,6 +125,59 @@
       },
       "minItems": 1
     },
+    "converter": {
+      "description": "Custom data type converter.",
+      "type": "object",
+      "properties": {
+        "class": {
+          "description": "Optional Java class name of the custom type converter.",
+          "type": "string"
+        },
+        "mappings": {
+          "description": "Optional list of mapping rules.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "jdbcType": {
+                "description": "JDBC type.",
+                "$ref": "#definitions/jdbcType"
+              },
+              "nativeType": {
+                "description": "Native type.",
+                "type": "string"
+              },
+              "toType": {
+                "description": "Corresponding data type in ClickHouse.",
+                "$ref": "#definitions/chType"
+              }
+            },
+            "anyOf": [
+              {
+                "required": [
+                  "jdbcType",
+                  "toType"
+                ]
+              },
+              {
+                "required": [
+                  "nativeType",
+                  "toType"
+                ]
+              },
+              {
+                "required": [
+                  "jdbcType",
+                  "nativeType",
+                  "toType"
+                ]
+              }
+            ]
+          },
+          "minItems": 1
+        }
+      }
+    },
     "defaults": {
       "description": "Default values.",
       "type": "object",
@@ -101,6 +202,16 @@
           "description": "Default value for Int64 columns.",
           "type": "integer"
         },
+        "Int128": {
+          "default": 0,
+          "description": "Default value for Int128 columns.",
+          "type": "number"
+        },
+        "Int256": {
+          "default": 0,
+          "description": "Default value for Int256 columns.",
+          "type": "number"
+        },
         "UInt8": {
           "default": 0,
           "description": "Default value for UInt8 columns.",
@@ -121,34 +232,49 @@
           "description": "Default value for UInt64 columns.",
           "type": "integer"
         },
+        "UInt128": {
+          "default": 0,
+          "description": "Default value for UInt128 columns.",
+          "type": "number"
+        },
+        "UInt256": {
+          "default": 0,
+          "description": "Default value for UInt256 columns.",
+          "type": "number"
+        },
         "Float32": {
-          "default": 0.0,
+          "default": 0,
           "description": "Default value for Float32 columns.",
           "type": "number"
         },
         "Float64": {
-          "default": 0.0,
+          "default": 0,
           "description": "Default value for Float64 columns.",
           "type": "number"
         },
         "Decimal": {
-          "default": 0.0,
+          "default": 0,
           "description": "Default value for Decimal columns.",
           "type": "number"
         },
         "Decimal32": {
-          "default": 0.0,
+          "default": 0,
           "description": "Default value for Decimal32 columns.",
           "type": "number"
         },
         "Decimal64": {
-          "default": 0.0,
+          "default": 0,
           "description": "Default value for Decimal64 columns.",
           "type": "number"
         },
         "Decimal128": {
-          "default": 0.0,
+          "default": 0,
           "description": "Default value for Decimal128 columns.",
+          "type": "number"
+        },
+        "Decimal256": {
+          "default": 0,
+          "description": "Default value for Decimal256 columns.",
           "type": "number"
         },
         "Date": {
@@ -162,7 +288,7 @@
           "type": "integer"
         },
         "DateTime64": {
-          "default": 1.0,
+          "default": 1,
           "description": "Default value for DateTime64 columns.",
           "type": "number"
         },
@@ -228,7 +354,10 @@
         }
       },
       "additionalProperties": true,
-      "required": ["user", "password"]
+      "required": [
+        "user",
+        "password"
+      ]
     },
     "hikaricp": {
       "description": "HikariCP properties.",
@@ -355,30 +484,33 @@
           "default": 0,
           "description": "This property controls the amount of time that a connection can be out of the pool before a message is logged indicating a possible connection leak. Lowest acceptable value for enabling leak detection is 2000 (2 seconds).",
           "type": "integer"
-        },
-        "columns": {
-          "$ref": "#/definitions/columns"
-        },
-        "defaults": {
-          "$ref": "#/definitions/defaults"
-        },
-        "parameters": {
-          "$ref": "#/definitions/parameters"
         }
       },
       "anyOf": [
-        { "required": ["dataSource"] },
-        { "required": ["jdbcUrl", "username", "password"] }
+        {
+          "required": [
+            "dataSource"
+          ]
+        },
+        {
+          "required": [
+            "jdbcUrl",
+            "username",
+            "password"
+          ]
+        }
       ]
     },
-    "general": {
+    "entity": {
       "description": "Named datasource.",
       "type": "object",
       "properties": {
         "type": {
           "description": "Type of the datasource, defaults to jdbc.",
           "type": "string",
-          "examples": ["jdbc"]
+          "examples": [
+            "jdbc"
+          ]
         },
         "aliases": {
           "description": "List of aliases for this datasource.",
@@ -402,14 +534,29 @@
               "https://repo1.maven.org/maven2/net/jpountz/lz4/lz4/1.3.0/lz4-1.3.0.jar"
             ]
           ]
+        },
+        "columns": {
+          "$ref": "#/definitions/columns"
+        },
+        "converter": {
+          "$ref": "#/definitions/converter"
+        },
+        "defaults": {
+          "$ref": "#/definitions/defaults"
+        },
+        "parameters": {
+          "$ref": "#/definitions/parameters"
         }
       },
-      "anyOf": [{ "$ref": "#/definitions/hikaricp" }]
+      "anyOf": [
+        {
+          "$ref": "#/definitions/hikaricp"
+        }
+      ]
     }
   },
-
   "type": "object",
   "additionalProperties": {
-    "$ref": "#/definitions/general"
+    "$ref": "#/definitions/entity"
   }
 }

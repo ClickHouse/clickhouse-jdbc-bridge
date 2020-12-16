@@ -20,6 +20,7 @@ import static org.testng.Assert.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.testng.annotations.Test;
 
@@ -159,9 +160,9 @@ public class ByteBufferTest {
         buffer.writeDate(date1);
         buffer.writeDate(date2);
         buffer.writeDateTime(dt1);
-        buffer.writeDateTime(dt2);
-        buffer.writeDateTime64(xdt1);
-        buffer.writeDateTime64(xdt2);
+        buffer.writeDateTime(dt2, TimeZone.getTimeZone("UTC"));
+        buffer.writeDateTime64(xdt1, 3);
+        buffer.writeDateTime64(xdt2, 3);
 
         assertEquals(buffer.readNull(), true);
         assertEquals(buffer.readNull(), false);
@@ -199,7 +200,7 @@ public class ByteBufferTest {
         assertEquals(buffer.readDate(), date1);
         assertEquals(buffer.readDate(), date2);
         assertEquals(buffer.readDateTime(), dt1);
-        assertEquals(buffer.readDateTime(), dt2);
+        assertEquals(buffer.readDateTime(TimeZone.getTimeZone("UTC")), dt2);
         assertEquals(buffer.readDateTime64(), xdt1);
         assertEquals(buffer.readDateTime64(), xdt2);
     }

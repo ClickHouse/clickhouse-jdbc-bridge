@@ -16,9 +16,12 @@
 package ru.yandex.clickhouse.jdbcbridge.impl;
 
 import java.sql.JDBCType;
+import java.util.ArrayList;
+import java.util.List;
 
 import ru.yandex.clickhouse.jdbcbridge.core.DataType;
 import ru.yandex.clickhouse.jdbcbridge.core.DataTypeConverter;
+import ru.yandex.clickhouse.jdbcbridge.core.DataTypeMapping;
 
 /**
  * This class is default implementation of DataTypeConvert.
@@ -28,14 +31,49 @@ import ru.yandex.clickhouse.jdbcbridge.core.DataTypeConverter;
 public class DefaultDataTypeConverter implements DataTypeConverter {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DataTypeConverter.class);
 
+    private final DataTypeMapping[] mappings;
+
+    public DefaultDataTypeConverter() {
+        this(null);
+    }
+
+    public DefaultDataTypeConverter(List<DataTypeMapping> mappings) {
+        if (mappings == null) {
+            this.mappings = new DataTypeMapping[0];
+        } else {
+            this.mappings = new DataTypeMapping[mappings.size()];
+            int index = 0;
+            for (DataTypeMapping m : mappings) {
+                this.mappings[index++] = m;
+            }
+        }
+    }
+
     @Override
-    public DataType from(JDBCType jdbcType, boolean signed, boolean useDateTime) {
+    public DataType from(JDBCType jdbcType, String typeName, int precision, int scale, boolean signed) {
+        for (int i = 0; i < mappings.length; i++) {
+            if (mappings[i].accept(jdbcType, typeName)) {
+                return mappings[i].getMappedType();
+            }
+        }
+
         DataType type = DataType.Str;
 
         switch (jdbcType) {
             case BIT:
-            case BOOLEAN:
-                type = DataType.UInt8;
+                if (precision > 128) {
+                    type = DataType.Int256;
+                } else if (precision > 64) {
+                    type = DataType.Int128;
+                } else if (precision > 32) {
+                    type = DataType.Int64;
+                } else if (precision > 16) {
+                    type = DataType.Int32;
+                } else if (precision > 8) {
+                    type = DataType.Int16;
+                } else {
+                    type = DataType.Int8;
+                }
                 break;
             case TINYINT:
                 type = signed ? DataType.Int8 : DataType.UInt8;
@@ -60,6 +98,9 @@ public class DefaultDataTypeConverter implements DataTypeConverter {
             case DECIMAL:
                 type = DataType.Decimal;
                 break;
+            case ARRAY:
+            case OTHER:
+            case BOOLEAN:
             case CHAR:
             case NCHAR:
             case VARCHAR:
@@ -70,13 +111,14 @@ public class DefaultDataTypeConverter implements DataTypeConverter {
                 type = DataType.Str;
                 break;
             case DATE:
-                type = DataType.Date;
+                type = DataType.Date; // precision should be 10
                 break;
             case TIME:
             case TIMESTAMP:
             case TIME_WITH_TIMEZONE:
             case TIMESTAMP_WITH_TIMEZONE:
-                type = useDateTime ? DataType.DateTime : DataType.DateTime64;
+                // type = useDateTime ? DataType.DateTime : DataType.DateTime64;
+                type = scale > 0 ? DataType.DateTime64 : DataType.DateTime;
                 break;
             default:
                 log.warn("Unsupported JDBC type [{}], which will be treated as [{}]", jdbcType.name(), type.name());

@@ -30,6 +30,8 @@ import java.nio.file.Paths;
 
 import org.testng.annotations.Test;
 
+import static ru.yandex.clickhouse.jdbcbridge.core.ExpandedUrlClassLoader.FILE_URL_PREFIX;
+
 public class ExpandedUrlClassLoaderTest {
     private static final String TMP_DIR_PREFIX = "jdbc-bridge-test_";
 
@@ -93,7 +95,7 @@ public class ExpandedUrlClassLoaderTest {
     @Test(groups = { "unit" })
     public void testExpandURLs() throws IOException {
         // invalid URLs
-        URL[] urls = ExpandedUrlClassLoader.expandURLs("a", "b", ".", "..", "", null, "/", "\\");
+        URL[] urls = ExpandedUrlClassLoader.expandURLs("a", "b", ".", "..", "", null, File.separator);
         assertNotNull(urls);
         assertEquals(urls.length, 5);
 
@@ -107,7 +109,7 @@ public class ExpandedUrlClassLoaderTest {
         assertEquals(urls.length, 3);
 
         // now, local paths
-        url1 = "file:///.";
+        url1 = FILE_URL_PREFIX + ".";
         urls = ExpandedUrlClassLoader.expandURLs(url1, null, url1);
         assertNotNull(urls);
         assertEquals(urls.length, 1);
@@ -116,20 +118,20 @@ public class ExpandedUrlClassLoaderTest {
         tmpDir.deleteOnExit();
 
         for (String file : new String[] { "a.jar", "b.jar" }) {
-            File tmpFile = new File(tmpDir.getPath() + "/" + file);
+            File tmpFile = new File(tmpDir.getPath() + File.separator + file);
             tmpFile.deleteOnExit();
             tmpFile.createNewFile();
         }
-        url1 = "file:///" + tmpDir.getPath();
-        url2 = "file:///" + tmpDir.getPath() + "/a.jar";
-        url3 = "file:///" + tmpDir.getPath() + "/non-exist.jar";
+        url1 = FILE_URL_PREFIX + tmpDir.getPath();
+        url2 = FILE_URL_PREFIX + tmpDir.getPath() + File.separator + "a.jar";
+        url3 = FILE_URL_PREFIX + tmpDir.getPath() + File.separator + "non-exist.jar";
         urls = ExpandedUrlClassLoader.expandURLs(url1, url2, url1, url3, url2);
         assertNotNull(urls);
         assertEquals(urls.length, 4);
 
-        url1 = "test/a";
-        url2 = "./test/a";
-        url3 = "file:///./test/a";
+        url1 = "test" + File.separator + "a";
+        url2 = "." + File.separator + "test" + File.separator + "a";
+        url3 = FILE_URL_PREFIX + "." + File.separator + "test" + File.separator + "a";
         urls = ExpandedUrlClassLoader.expandURLs(url1, url2, url3);
         assertNotNull(urls);
         assertEquals(urls.length, 2);
@@ -170,38 +172,43 @@ public class ExpandedUrlClassLoaderTest {
 
         for (String[] pair : new String[][] { new String[] { notRelated, "a.jar" },
                 new String[] { oldVersion, "b.jar" }, new String[] { newVersion, "c.jar" } }) {
-            downloadJar(pair[0], tmpDir.getPath() + "/" + pair[1]);
+            downloadJar(pair[0], tmpDir.getPath() + File.separator + pair[1]);
         }
 
-        testLoadClassAndMethod(null, new String[] { "file:///" + tmpDir.getPath() }, className, methodName, true,
+        testLoadClassAndMethod(null, new String[] { FILE_URL_PREFIX + tmpDir.getPath() }, className, methodName, true,
                 false);
         testLoadClassAndMethod(null, new String[] { tmpDir.getPath() }, className, methodName, true, false);
-        testLoadClassAndMethod(null,
-                new String[] { "file:///" + tmpDir.getPath() + "/c.jar", "file:///" + tmpDir.getPath() }, className,
-                methodName, true, true);
+        testLoadClassAndMethod(null, new String[] { FILE_URL_PREFIX + tmpDir.getPath() + File.separator + "c.jar",
+                FILE_URL_PREFIX + tmpDir.getPath() }, className, methodName, true, true);
 
         // try again using relative path
         String parentPath = "test-dir";
         Paths.get(parentPath).toFile().deleteOnExit();
 
-        String relativePath = parentPath + "/drivers";
+        String relativePath = parentPath + File.separator + "drivers";
 
         tmpDir = Paths.get(relativePath).toFile();
         tmpDir.deleteOnExit();
         tmpDir.mkdirs();
 
         for (String[] pair : new String[][] { new String[] { notRelated, "a.jar" },
-                new String[] { oldVersion, "b.jar" }, new String[] { newVersion, "../c.jar" } }) {
-            downloadJar(pair[0], tmpDir.getPath() + "/" + pair[1]);
+                new String[] { oldVersion, "b.jar" }, new String[] { newVersion, ".." + File.separator + "c.jar" } }) {
+            downloadJar(pair[0], tmpDir.getPath() + File.separator + pair[1]);
         }
 
         testLoadClassAndMethod(null, new String[] { relativePath }, className, methodName, true, false);
-        testLoadClassAndMethod(null, new String[] { "./" + relativePath }, className, methodName, true, false);
-        testLoadClassAndMethod(null, new String[] { relativePath + "/../drivers" }, className, methodName, true, false);
-        testLoadClassAndMethod(null, new String[] { "./" + relativePath + "/../drivers" }, className, methodName, true,
+        testLoadClassAndMethod(null, new String[] { "." + File.separator + relativePath }, className, methodName, true,
                 false);
-        testLoadClassAndMethod(null, new String[] { relativePath + "/../c.jar" }, className, methodName, true, true);
+        testLoadClassAndMethod(null, new String[] { relativePath + File.separator + ".." + File.separator + "drivers" },
+                className, methodName, true, false);
+        testLoadClassAndMethod(null,
+                new String[] {
+                        "." + File.separator + relativePath + File.separator + ".." + File.separator + "drivers" },
+                className, methodName, true, false);
+        testLoadClassAndMethod(null, new String[] { relativePath + File.separator + ".." + File.separator + "c.jar" },
+                className, methodName, true, true);
 
-        testLoadClassAndMethod(null, new String[] { "file:///./" + relativePath }, className, methodName, false, false);
+        testLoadClassAndMethod(null, new String[] { FILE_URL_PREFIX + "." + File.separator + relativePath }, className,
+                methodName, false, false);
     }
 }

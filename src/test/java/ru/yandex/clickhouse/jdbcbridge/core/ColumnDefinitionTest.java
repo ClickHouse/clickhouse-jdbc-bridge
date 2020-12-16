@@ -181,8 +181,8 @@ public class ColumnDefinitionTest {
         assertEquals(ColumnDefinition.fromString("d Nullable(DateTime('Asia/Chongqing'))").toString(),
                 "`d` Nullable(DateTime('Asia/Chongqing'))");
         assertEquals(ColumnDefinition.fromString("d Nullable(DateTime64(2, 'Asia/Chongqing')) DEFAULT 1").toString(),
-                ColumnDefinition.DEFAULT_VALUE_SUPPORT ? "`d` Nullable(DateTime64(3,'Asia/Chongqing')) DEFAULT 1"
-                        : "`d` Nullable(DateTime64(3,'Asia/Chongqing'))");
+                ColumnDefinition.DEFAULT_VALUE_SUPPORT ? "`d` Nullable(DateTime64(2,'Asia/Chongqing')) DEFAULT 1"
+                        : "`d` Nullable(DateTime64(2,'Asia/Chongqing'))");
 
         assertEquals(ColumnDefinition.fromString("d Nullable(Enum('A'=1, 'B'=2,'C'=3)) DEFAULT 2").toString(),
                 ColumnDefinition.DEFAULT_VALUE_SUPPORT ? "`d` Nullable(Enum('A'=1,'B'=2,'C'=3)) DEFAULT 2"

@@ -18,6 +18,7 @@ package ru.yandex.clickhouse.jdbcbridge.impl;
 import ru.yandex.clickhouse.jdbcbridge.core.ByteBuffer;
 import ru.yandex.clickhouse.jdbcbridge.core.ColumnDefinition;
 import ru.yandex.clickhouse.jdbcbridge.core.TableDefinition;
+import ru.yandex.clickhouse.jdbcbridge.core.UsageStats;
 import ru.yandex.clickhouse.jdbcbridge.core.NamedDataSource;
 import ru.yandex.clickhouse.jdbcbridge.core.DataType;
 import ru.yandex.clickhouse.jdbcbridge.core.DefaultValues;
@@ -27,8 +28,8 @@ import ru.yandex.clickhouse.jdbcbridge.core.ResponseWriter;
 import ru.yandex.clickhouse.jdbcbridge.core.Utils;
 import ru.yandex.clickhouse.jdbcbridge.core.DataSourceStats;
 import ru.yandex.clickhouse.jdbcbridge.core.DataTableReader;
-import ru.yandex.clickhouse.jdbcbridge.core.DataSourceManager;
 import ru.yandex.clickhouse.jdbcbridge.core.QueryParameters;
+import ru.yandex.clickhouse.jdbcbridge.core.Repository;
 
 import static ru.yandex.clickhouse.jdbcbridge.core.DataType.*;
 
@@ -80,12 +81,12 @@ public class ConfigDataSource extends NamedDataSource {
     }
 
     static class DataSourceStatReader implements DataTableReader {
-        private final Iterator<DataSourceStats> stats;
+        private final Iterator<UsageStats> stats;
 
         private DataSourceStats current = null;
 
-        protected DataSourceStatReader(Iterator<DataSourceStats> stats) {
-            this.stats = stats;
+        protected DataSourceStatReader(List<UsageStats> stats) {
+            this.stats = stats.iterator();
         }
 
         @Override
@@ -93,12 +94,15 @@ public class ConfigDataSource extends NamedDataSource {
             boolean hasNext = false;
 
             while (stats.hasNext()) {
-                current = stats.next();
-                if (current.getName().isEmpty()) { // skip this special datasource)
-                    continue;
-                } else {
+                UsageStats usage = stats.next();
+
+                // skip non-supported statistics and ConfigDataSource
+                if (usage instanceof DataSourceStats && !(current = (DataSourceStats) usage).getName().isEmpty()) {
                     hasNext = true;
                     break;
+                } else {
+                    log.warn("Discard unsupported usage statistics: {}", usage);
+                    continue;
                 }
             }
 
@@ -150,14 +154,14 @@ public class ConfigDataSource extends NamedDataSource {
     }
 
     public static void initialize(ExtensionManager manager) {
-        DataSourceManager dsManager = manager.getDataSourceManager();
+        Repository<NamedDataSource> dsRepo = manager.getRepositoryManager().getRepository(NamedDataSource.class);
 
         Extension<NamedDataSource> thisExtension = manager.getExtension(ConfigDataSource.class);
-        dsManager.registerType(EXTENSION_NAME, thisExtension);
-        dsManager.put(Utils.EMPTY_STRING, new ConfigDataSource(dsManager));
+        dsRepo.registerType(EXTENSION_NAME, thisExtension);
+        dsRepo.put(Utils.EMPTY_STRING, new ConfigDataSource(dsRepo));
     }
 
-    private final DataSourceManager dataSourceManager;
+    private final Repository<NamedDataSource> dataSourceRepo;
 
     protected ConfigQuery parse(String query) {
         ConfigQuery cq = new ConfigQuery();
@@ -182,10 +186,10 @@ public class ConfigDataSource extends NamedDataSource {
         return cq;
     }
 
-    protected ConfigDataSource(DataSourceManager dataSourceManager) {
-        super(EXTENSION_NAME, dataSourceManager, null);
+    protected ConfigDataSource(Repository<NamedDataSource> dataSourceRepo) {
+        super(EXTENSION_NAME, dataSourceRepo, null);
 
-        this.dataSourceManager = dataSourceManager;
+        this.dataSourceRepo = dataSourceRepo;
     }
 
     @Override
@@ -198,8 +202,8 @@ public class ConfigDataSource extends NamedDataSource {
             return;
         }
 
-        new DataSourceStatReader(dataSourceManager.getDataSourceStats().iterator()).process(getId(), requestColumns,
-                customColumns, DATASOURCE_CONFIG_COLUMNS.getColumns(), defaultValues, getTimeZone(), params, writer);
+        new DataSourceStatReader(dataSourceRepo.getUsageStats()).process(getId(), requestColumns, customColumns,
+                DATASOURCE_CONFIG_COLUMNS.getColumns(), defaultValues, getTimeZone(), params, writer);
     }
 
     @Override

@@ -21,67 +21,44 @@ import io.vertx.core.json.JsonObject;
 
 /**
  * This class defines a named query, which is composed of query, schema and
- * query parameter.
+ * parameters.
  * 
  * @since 2.0
  */
-public class NamedQuery {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NamedQuery.class);
-
+public class NamedQuery extends NamedSchema {
     private static final String CONF_QUERY = "query";
-    private static final String CONF_COLUMNS = "columns";
+    private static final String CONF_SCHEMA = "schema";
     private static final String CONF_PARAMETERS = "parameters";
 
-    private final String id;
-    private final String digest;
     private final String query;
-    private final TableDefinition columns;
+    private final String schema;
 
     private final QueryParameters parameters;
 
-    public NamedQuery(String id, JsonObject config) {
-        Objects.requireNonNull(config);
+    public NamedQuery(String id, Repository<NamedQuery> repo, JsonObject config) {
+        super(id, repo, config);
 
-        this.id = id;
-        this.digest = Utils.digest(config);
+        String str = config.getString(CONF_QUERY);
+        this.query = Objects.requireNonNull(str);
+        str = config.getString(CONF_SCHEMA);
+        this.schema = str == null ? Utils.EMPTY_STRING : str;
 
-        String namedQuery = config.getString(CONF_QUERY);
-        Objects.requireNonNull(namedQuery);
-
-        this.query = namedQuery;
-        this.columns = TableDefinition.fromJson(config.getJsonArray(CONF_COLUMNS));
         this.parameters = new QueryParameters(config.getJsonObject(CONF_PARAMETERS));
-    }
-
-    public String getId() {
-        return this.id;
     }
 
     public String getQuery() {
         return this.query;
     }
 
-    public boolean hasColumn() {
-        return this.columns != null && this.columns.hasColumn();
+    public String getSchema() {
+        return this.schema;
     }
 
     public TableDefinition getColumns(QueryParameters params) {
-        return this.columns;
+        return this.getColumns();
     }
 
     public QueryParameters getParameters() {
         return this.parameters;
-    }
-
-    public final boolean isDifferentFrom(JsonObject newConfig) {
-        String newDigest = Utils.digest(newConfig == null ? null : newConfig.encode());
-        boolean isDifferent = this.digest == null || this.digest.length() == 0 || !this.digest.equals(newDigest);
-        if (isDifferent) {
-            log.info("Query configuration of [{}] is changed from [{}] to [{}]", this.id, digest, newDigest);
-        } else {
-            log.debug("Query configuration of [{}] remains the same", this.id);
-        }
-
-        return isDifferent;
     }
 }
