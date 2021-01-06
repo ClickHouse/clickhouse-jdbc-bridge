@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,6 +141,10 @@ public class TypedParameter<T> {
         return this;
     }
 
+    public TypedParameter<T> merge(Object v) {
+        return merge(v == null ? (String) null : String.valueOf(v));
+    }
+
     public TypedParameter<T> merge(String v) {
         if (v != null) {
             if (this.type.isAssignableFrom(BigDecimal.class)) {
@@ -192,7 +196,7 @@ public class TypedParameter<T> {
                 buffer.writeDateTime((Long) this.value, timezone);
                 break;
             case DateTime64:
-                buffer.writeDateTime64((Long) this.value, timezone);
+                buffer.writeDateTime64((Long) this.value, 0, this.chType.getScale(), timezone);
                 break;
             case UInt64:
                 buffer.writeUInt64((Long) this.value);

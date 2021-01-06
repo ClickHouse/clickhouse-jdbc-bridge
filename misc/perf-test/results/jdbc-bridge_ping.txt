@@ -1,0 +1,43 @@
+This is ApacheBench, Version 2.3 <$Revision: 1430300 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking jdbc-bridge (be patient)
+
+
+Server Software:        
+Server Hostname:        jdbc-bridge
+Server Port:            9019
+
+Document Path:          /ping
+Document Length:        4 bytes
+
+Concurrency Level:      20
+Time taken for tests:   804.017 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Total transferred:      4200000 bytes
+HTML transferred:       400000 bytes
+Requests per second:    124.38 [#/sec] (mean)
+Time per request:       160.803 [ms] (mean)
+Time per request:       8.040 [ms] (mean, across all concurrent requests)
+Transfer rate:          5.10 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0  151 361.4      0    3063
+Processing:     1    9   2.8      9      48
+Waiting:        1    9   2.8      9      48
+Total:          1  161 361.1     10    3066
+
+Percentage of the requests served within a certain time (ms)
+  50%     10
+  66%     11
+  75%     11
+  80%     13
+  90%   1021
+  95%   1027
+  98%   1032
+  99%   1035
+ 100%   3066 (longest request)

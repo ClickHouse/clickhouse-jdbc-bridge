@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,10 @@ public final class Extension<T> {
     private final Method newMethod;
 
     public Extension(Class<? extends T> clazz) {
+        this(null, clazz);
+    }
+
+    public Extension(String name, Class<? extends T> clazz) {
         this.loader = Thread.currentThread().getContextClassLoader();
         this.extClass = Objects.requireNonNull(clazz);
 
@@ -55,23 +59,29 @@ public final class Extension<T> {
                 }
             }
         } catch (Exception e) {
-            log.trace("Extension [{}] does not have [{}] declared, use [{}] as its name instead", clazz, EXTENSION_NAME,
-                    extName);
+            if (log.isTraceEnabled()) {
+                log.trace("Extension [{}] does not have [{}] declared, use [{}] as its name instead", clazz,
+                        EXTENSION_NAME, extName);
+            }
         }
-        this.name = extName;
+        this.name = name == null ? extName : name;
 
         Method m = null;
         try {
             m = this.extClass.getDeclaredMethod(METHOD_INITIALIZE, ExtensionManager.class);
         } catch (Exception e) {
-            log.trace("Extension [{}] does not have static method for initialization.", clazz);
+            if (log.isTraceEnabled()) {
+                log.trace("Extension [{}] does not have static method for initialization.", clazz);
+            }
         }
         this.initMethod = m;
 
         try {
             m = this.extClass.getDeclaredMethod(METHOD_NEW_INSTANCE, Object[].class);
         } catch (Exception e) {
-            log.trace("Extension [{}] does not have static method for instantiation.", clazz);
+            if (log.isTraceEnabled()) {
+                log.trace("Extension [{}] does not have static method for instantiation.", clazz);
+            }
         }
         this.newMethod = m;
     }
@@ -94,6 +104,27 @@ public final class Extension<T> {
      */
     public Class<? extends T> getProviderClass() {
         return this.extClass;
+    }
+
+    /**
+     * Load a specific class.
+     * 
+     * @param className class name
+     * @return desired class
+     */
+    public Class<?> loadClass(String className) {
+        Class<?> clazz = null;
+
+        ClassLoader loader = this.loader == null ? getClass().getClassLoader() : this.loader;
+        try {
+            clazz = loader.loadClass(className);
+        } catch (ClassNotFoundException e) {
+            log.warn("Not able to load class: " + className);
+        } catch (Exception e) {
+            log.warn("Failed to load class: " + className, e);
+        }
+
+        return clazz;
     }
 
     /**
@@ -123,8 +154,9 @@ public final class Extension<T> {
      * 
      * @param args list of arguments for instantiation
      * @return new instance of the extension
-     * @throws UnsupportedOperationException if no static newInstance method and
-     *                                       suitable constructor for instantiation
+     * @throws UnsupportedOperationException if no static {@code newInstance} method
+     *                                       and suitable constructor for
+     *                                       instantiation
      * @throws IllegalArgumentException      if failed to create new instance using
      *                                       given arguments
      */

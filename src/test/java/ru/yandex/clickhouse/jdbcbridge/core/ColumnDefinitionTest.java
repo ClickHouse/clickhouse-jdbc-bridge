@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,8 +181,8 @@ public class ColumnDefinitionTest {
         assertEquals(ColumnDefinition.fromString("d Nullable(DateTime('Asia/Chongqing'))").toString(),
                 "`d` Nullable(DateTime('Asia/Chongqing'))");
         assertEquals(ColumnDefinition.fromString("d Nullable(DateTime64(2, 'Asia/Chongqing')) DEFAULT 1").toString(),
-                ColumnDefinition.DEFAULT_VALUE_SUPPORT ? "`d` Nullable(DateTime64(3,'Asia/Chongqing')) DEFAULT 1"
-                        : "`d` Nullable(DateTime64(3,'Asia/Chongqing'))");
+                ColumnDefinition.DEFAULT_VALUE_SUPPORT ? "`d` Nullable(DateTime64(2,'Asia/Chongqing')) DEFAULT 1"
+                        : "`d` Nullable(DateTime64(2,'Asia/Chongqing'))");
 
         assertEquals(ColumnDefinition.fromString("d Nullable(Enum('A'=1, 'B'=2,'C'=3)) DEFAULT 2").toString(),
                 ColumnDefinition.DEFAULT_VALUE_SUPPORT ? "`d` Nullable(Enum('A'=1,'B'=2,'C'=3)) DEFAULT 2"

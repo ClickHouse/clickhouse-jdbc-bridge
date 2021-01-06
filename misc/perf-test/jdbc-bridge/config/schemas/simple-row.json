@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../../../docker/config/schema.jschema",
+  "simple-row": {
+    "columns": [
+      { "name": "id", "type": "Int64", "nullable": false },
+      { "name": "name", "type": "String", "nullable": false },
+      {
+        "name": "datetime",
+        "type": "DateTime64",
+        "nullable": true,
+        "scale": 3
+      },
+      { "name": "num", "type": "Int32", "nullable": true },
+      { "name": "value", "type": "Float32", "nullable": true }
+    ]
+  }
+}

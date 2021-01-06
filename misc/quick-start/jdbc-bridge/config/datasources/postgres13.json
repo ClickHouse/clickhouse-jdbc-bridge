@@ -1,7 +1,11 @@
 {
+  "$schema": "../../../../../docker/config/datasource.jschema",
   "postgres13": {
+    "converter": {
+      "mappings": [{ "nativeType": "bool", "toType": "String" }]
+    },
     "driverUrls": [
-      "https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.16/postgresql-42.2.16.jar"
+      "https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.18/postgresql-42.2.18.jar"
     ],
     "driverClassName": "org.postgresql.Driver",
     "jdbcUrl": "jdbc:postgresql://db-postgres13/test",

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package ru.yandex.clickhouse.jdbcbridge.core;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.JDBCType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -99,6 +100,14 @@ public interface DataTypeConverter {
             } else {
                 result = Double.parseDouble(String.valueOf(value));
             }
+        } else if (BigInteger.class.equals(type)) {
+            if (value instanceof Boolean) {
+                result = (boolean) value ? BigInteger.ZERO : BigInteger.ONE;
+            } else if (value instanceof BigInteger) {
+                result = value;
+            } else {
+                result = new BigInteger(String.valueOf(value));
+            }
         } else if (BigDecimal.class.equals(type)) {
             if (value instanceof Boolean) {
                 result = (boolean) value ? BigDecimal.ZERO : BigDecimal.ONE;
@@ -139,7 +148,7 @@ public interface DataTypeConverter {
         return (T) result;
     }
 
-    DataType from(JDBCType jdbcType, boolean signed, boolean useDateTime);
+    DataType from(JDBCType jdbcType, String typeName, int precision, int scale, boolean signed);
 
     DataType from(Object javaObject);
 

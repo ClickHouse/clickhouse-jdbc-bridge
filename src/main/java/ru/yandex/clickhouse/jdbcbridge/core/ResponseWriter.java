@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,10 @@ public class ResponseWriter {
 
         this.response.setWriteQueueMaxSize(this.options.getMaxBlockSize());
 
-        log.debug("Start Time={}, Timeout={}, Max Block Size={}", this.startTime, this.timeout,
-                this.options.getMaxBlockSize());
+        if (log.isDebugEnabled()) {
+            log.debug("Start Time={}, Timeout={}, Max Block Size={}", this.startTime, this.timeout,
+                    this.options.getMaxBlockSize());
+        }
     }
 
     public StreamOptions getOptions() {

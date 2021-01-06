@@ -1,4 +1,5 @@
 {
+  "$schema": "../../../../../docker/config/datasource.jschema",
   "show-query-logs": {
     "query": "scripts/show-query-logs.sql",
     "columns": [

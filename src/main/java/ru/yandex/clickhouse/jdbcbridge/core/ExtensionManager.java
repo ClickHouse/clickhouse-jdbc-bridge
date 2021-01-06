@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,21 @@ import io.vertx.core.json.JsonObject;
  * @since 2.0
  */
 public interface ExtensionManager {
+    /**
+     * Get extension implemented by given class.
+     * 
+     * @param <T>   type of the extension
+     * @param clazz implementation class of the extension
+     * @return desired extension
+     */
     <T> Extension<T> getExtension(Class<? extends T> clazz);
 
-    DataSourceManager getDataSourceManager();
-
-    void setDataSourceManager(DataSourceManager manager);
-
-    QueryManager getQueryManager();
-
-    void setQueryManager(QueryManager manager);
-
-    SchemaManager getSchemaManager();
-
-    void setSchemaManager(SchemaManager manager);
+    /**
+     * Get repository manager.
+     * 
+     * @return repository manager
+     */
+    RepositoryManager getRepositoryManager();
 
     /**
      * Register a consumer to load configuration files(in JSON format) based on

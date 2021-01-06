@@ -1,6 +1,9 @@
 {
+  "$schema": "../../../../../docker/config/datasource.jschema",
   "mariadb": {
-    "driverUrls": ["/app/drivers/mariadb"],
+    "driverUrls": [
+      "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.0/mariadb-java-client-2.7.0.jar"
+    ],
     "driverClassName": "org.mariadb.jdbc.Driver",
     "jdbcUrl": "jdbc:mariadb://mariadb:3306/test?useSSL=false&useCompression=false",
     "dataSource": {
@@ -9,6 +12,9 @@
     },
     "initializationFailTimeout": 0,
     "minimumIdle": 0,
-    "maximumPoolSize": 15
+    "maximumPoolSize": 20,
+    "parameters": {
+      "fetch_size": 10000
+    }
   }
 }

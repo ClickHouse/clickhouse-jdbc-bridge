@@ -1,4 +1,5 @@
 {
+  "$schema": "../../../../../docker/config/query.jschema",
   "small-table": {
     "query": "scripts/small-table.sql",
     "columns": [

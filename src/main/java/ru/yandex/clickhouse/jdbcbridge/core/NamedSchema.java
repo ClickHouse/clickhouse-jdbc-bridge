@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,26 +24,31 @@ import io.vertx.core.json.JsonObject;
  * 
  * @since 2.0
  */
-public class NamedSchema {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NamedSchema.class);
+public class NamedSchema extends ManagedEntity {
+    protected static final String CONF_COLUMNS = "columns";
 
-    private static final String CONF_COLUMNS = "columns";
-
-    private final String id;
-    private final String digest;
     private final TableDefinition columns;
 
-    public NamedSchema(String id, JsonObject config) {
-        Objects.requireNonNull(config);
+    public static NamedSchema newInstance(Object... args) {
+        if (Objects.requireNonNull(args).length < 2) {
+            throw new IllegalArgumentException(
+                    "In order to create named schema, you need to specify at least ID and repository.");
+        }
 
-        this.id = id;
-        this.digest = Utils.digest(config);
+        String id = (String) args[0];
+        Repository<NamedSchema> manager = (Repository<NamedSchema>) Objects.requireNonNull(args[1]);
+        JsonObject config = args.length > 2 ? (JsonObject) args[2] : null;
 
-        this.columns = TableDefinition.fromJson(config.getJsonArray(CONF_COLUMNS));
+        NamedSchema schema = new NamedSchema(id, manager, config);
+        schema.validate();
+
+        return schema;
     }
 
-    public String getId() {
-        return this.id;
+    public NamedSchema(String id, Repository<? extends NamedSchema> repo, JsonObject config) {
+        super(id, Objects.requireNonNull(config));
+
+        this.columns = TableDefinition.fromJson(config.getJsonArray(CONF_COLUMNS));
     }
 
     public boolean hasColumn() {
@@ -54,15 +59,8 @@ public class NamedSchema {
         return this.columns;
     }
 
-    public final boolean isDifferentFrom(JsonObject newConfig) {
-        String newDigest = Utils.digest(newConfig == null ? null : newConfig.encode());
-        boolean isDifferent = this.digest == null || this.digest.length() == 0 || !this.digest.equals(newDigest);
-        if (isDifferent) {
-            log.info("Schema configuration of [{}] is changed from [{}] to [{}]", this.id, digest, newDigest);
-        } else {
-            log.debug("Schema configuration of [{}] remains the same", this.id);
-        }
-
-        return isDifferent;
+    @Override
+    public UsageStats getUsage(String idOrAlias) {
+        return null;
     }
 }

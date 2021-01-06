@@ -5,7 +5,7 @@ version: "3"
 #
 services:
   clickhouse:
-    image: yandex/clickhouse-server:20.9
+    image: yandex/clickhouse-server:20.8
     hostname: ch-server
     ports:
       - "3307:3307"
@@ -36,7 +36,7 @@ services:
       replicas: 1
       resources:
         reservations:
-          memory: 2048M
+          memory: 4196M
         limits:
           memory: 8192M
       placement:
@@ -87,12 +87,12 @@ services:
     command: >
       /bin/bash -cx '
         export TEST_CONF_URL="https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/develop/misc/perf-test/jdbc-bridge";
-        export DRIVER_URL="https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.0/mariadb-java-client-2.7.0.jar"
-        mkdir -p /app/config/{datasources,queries} /app/drivers/mariadb /app/scripts;
+        mkdir -p /app/config/{datasources,queries,schemas} /app/drivers/mariadb /app/scripts;
         curl -sSL -o /app/config/datasources/mariadb.json $$TEST_CONF_URL/config/datasources/mariadb.json;
         curl -sSL -o /app/config/queries/constant.json $$TEST_CONF_URL/config/queries/constant.json;
         curl -sSL -o /app/config/queries/small-table.json $$TEST_CONF_URL/config/queries/small-table.json;
-        curl -sSL -o /app/drivers/mariadb/mariadb-java-client.jar $$DRIVER_URL;
+        curl -sSL -o /app/config/schemas/simple-num.json $$TEST_CONF_URL/config/schemas/simple-num.json;
+        curl -sSL -o /app/config/schemas/simple-row.json $$TEST_CONF_URL/config/schemas/simple-row.json;
         curl -sSL -o /app/scripts/constant.sql $$TEST_CONF_URL/scripts/constant.sql;
         curl -sSL -o /app/scripts/small-table.sql $$TEST_CONF_URL/scripts/small-table.sql;
         ./docker-entrypoint.sh
@@ -102,12 +102,13 @@ services:
       JDBC_BRIDGE_JVM_OPTS: "-Dnashorn.args=--language=es6"
     deploy:
       mode: replicated
+      # docker service scale <jdbc-bridge-service>=2
       replicas: 1
       resources:
         reservations:
-          memory: 512M
-        limits:
           memory: 1024M
+        limits:
+          memory: 2048M
       placement:
         constraints:
           - node.labels.alias == perf-test3

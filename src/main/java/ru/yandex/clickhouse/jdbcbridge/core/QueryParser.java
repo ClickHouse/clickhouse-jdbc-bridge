@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class QueryParser {
         return this.table;
     }
 
-    public String getSchema() {
+    public String getRawSchema() {
         return this.schema;
     }
 
@@ -129,7 +129,8 @@ public class QueryParser {
 
     public String getNormalizedSchema() {
         if (this.normalizedSchema == null) {
-            this.normalizedSchema = Utils.applyVariables(this.schema, this.getQueryParameters().asVariables());
+            this.normalizedSchema = Utils.applyVariables(Utils.unescapeQuotes(this.schema),
+                    this.getQueryParameters().asVariables());
         }
 
         return this.normalizedSchema;
@@ -236,16 +237,16 @@ public class QueryParser {
         return table;
     }
 
-    public static String extractConnectionString(RoutingContext ctx, DataSourceManager resolver) {
+    public static String extractConnectionString(RoutingContext ctx, Repository<NamedDataSource> resolver) {
         HttpServerRequest req = Objects.requireNonNull(ctx).request();
         return Objects.requireNonNull(resolver).resolve(req.getParam(PARAM_CONNECTION_STRING));
     }
 
-    public static QueryParser fromRequest(RoutingContext ctx, DataSourceManager resolver) {
+    public static QueryParser fromRequest(RoutingContext ctx, Repository<NamedDataSource> resolver) {
         return fromRequest(ctx, resolver, false);
     }
 
-    public static QueryParser fromRequest(RoutingContext ctx, DataSourceManager resolver, boolean forWrite) {
+    public static QueryParser fromRequest(RoutingContext ctx, Repository<NamedDataSource> resolver, boolean forWrite) {
         HttpServerRequest req = Objects.requireNonNull(ctx).request();
 
         final QueryParser query;

@@ -1,0 +1,12 @@
+{
+  "$schema": "../../../../../docker/config/schema.jschema",
+  "simple-num": {
+    "columns": [
+      {
+        "name": "1",
+        "type": "UInt8",
+        "nullable": false
+      }
+    ]
+  }
+}

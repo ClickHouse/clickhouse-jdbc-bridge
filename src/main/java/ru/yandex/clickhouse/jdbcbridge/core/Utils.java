@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Stack;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -55,6 +57,9 @@ public final class Utils {
     private static final MeterRegistry defaultRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
     private static final String MSG_DIGEST_ALGORTITHM = "SHA-512";
+
+    private static final char[][] CLAUSE_CHARS = new char[][] { new char[] { '`', '`' }, new char[] { '\'', '\'' },
+            new char[] { '(', ')' } };
 
     public static final String VARIABLE_PREFIX = "{{";
     public static final String VARIABLE_SUFFIX = "}}";
@@ -567,7 +572,105 @@ public final class Utils {
         }
     }
 
-    public static final MeterRegistry getDefaultMetricRegistry() {
+    public static String unescapeQuotes(String str) {
+        if (str == null) {
+            return EMPTY_STRING;
+        }
+
+        int len = str.length();
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++) {
+            char ch = str.charAt(i);
+            if (i + 1 < len) {
+                char nextCh = str.charAt(i + 1);
+                if ((ch == '\\' || ch == '\'') && nextCh == '\'') {
+                    sb.append('\'');
+                    i++;
+                    continue;
+                }
+            }
+
+            sb.append(ch);
+        }
+
+        return sb.toString();
+    }
+
+    public static boolean containsWhitespace(String str) {
+        boolean result = false;
+
+        if (str != null) {
+            for (int i = 0; i < str.length(); i++) {
+                char ch = str.charAt(i);
+                if (Character.isWhitespace(ch)) {
+                    result = true;
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static int indexOfKeywordIgnoreCase(String statement, String keyword) {
+        return indexOfKeyword(statement, keyword, true);
+    }
+
+    public static int indexOfKeyword(String statement, String keyword, boolean caseInsensitive) {
+        if (statement == null || keyword == null) {
+            return -1;
+        }
+
+        int index = -1;
+
+        char[][] chars = CLAUSE_CHARS;
+        Stack<Character> stack = new Stack<>();
+
+        char lastChar = '\0';
+        for (int i = 0, len = statement.length(), wnd = keyword.length(); i + wnd <= len; i++) {
+            char actual = statement.charAt(i);
+            for (int k = 0; k < chars.length; k++) {
+                char[] chs = chars[k];
+
+                if (actual == lastChar && stack.size() > 0) {
+                    stack.pop();
+                    lastChar = stack.size() > 0 ? stack.lastElement() : '\0';
+                    break;
+                } else if (actual == chs[0]) {
+                    stack.push(lastChar = chs[1]);
+                    break;
+                }
+            }
+
+            if (stack.size() > 0) {
+                continue;
+            }
+
+            boolean matched = true;
+            for (int j = 0; j < wnd; j++) {
+                actual = statement.charAt(i + j);
+                char expected = keyword.charAt(j);
+
+                if (actual != expected) {
+                    if (caseInsensitive && Character.toUpperCase(actual) == Character.toUpperCase(expected)) {
+                        continue;
+                    } else {
+                        matched = false;
+                        break;
+                    }
+                }
+            }
+
+            if (matched) {
+                index = i;
+                break;
+            }
+        }
+
+        return index;
+    }
+
+    public static final Object getDefaultMetricRegistry() {
         return defaultRegistry;
     }
 
@@ -594,7 +697,7 @@ public final class Utils {
         return loadExtension(null, className);
     }
 
-    public static Extension<?> loadExtension(List<String> libUrls, String className) {
+    public static Extension<?> loadExtension(Collection<String> libUrls, String className) {
         Extension<?> extension = null;
 
         final ClassLoader loader = new ExpandedUrlClassLoader(extClassLoader,

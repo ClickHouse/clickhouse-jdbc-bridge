@@ -1,0 +1,43 @@
+This is ApacheBench, Version 2.3 <$Revision: 1430300 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking ch-server (be patient)
+
+
+Server Software:        
+Server Hostname:        ch-server
+Server Port:            8123
+
+Document Path:          /?query=select%20%2A%20from%20mysql%28%27mariadb%3A3306%27%2C%20%27test%27%2C%20%2710k_rows%27%2C%20%27root%27%2C%20%27root%27%29
+Document Length:        575631 bytes
+
+Concurrency Level:      20
+Time taken for tests:   1657.425 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Total transferred:      57605300000 bytes
+HTML transferred:       57563100000 bytes
+Requests per second:    60.33 [#/sec] (mean)
+Time per request:       331.485 [ms] (mean)
+Time per request:       16.574 [ms] (mean, across all concurrent requests)
+Transfer rate:          33941.32 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    1   1.0      1      13
+Processing:    27  330 458.5    121    2227
+Waiting:       20  305 461.8     93    2169
+Total:         28  331 458.3    123    2228
+
+Percentage of the requests served within a certain time (ms)
+  50%    123
+  66%    173
+  75%    218
+  80%   1043
+  90%   1072
+  95%   1101
+  98%   2055
+  99%   2070
+ 100%   2228 (longest request)

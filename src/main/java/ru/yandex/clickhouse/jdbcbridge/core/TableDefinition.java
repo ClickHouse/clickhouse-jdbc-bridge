@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@ package ru.yandex.clickhouse.jdbcbridge.core;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EmptyStackException;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Stack;
 
 import javax.script.Bindings;
 
@@ -54,7 +56,10 @@ public class TableDefinition {
             new ColumnDefinition("parameters", DataType.Str, true, DEFAULT_LENGTH, DEFAULT_PRECISION, DEFAULT_SCALE));
 
     public static final TableDefinition MUTATION_COLUMNS = new TableDefinition(
+            // datasource type: jdbc, config, script etc.
             new ColumnDefinition("type", DataType.Str, true, DEFAULT_LENGTH, DEFAULT_PRECISION, DEFAULT_SCALE),
+            // operation: read or write
+            new ColumnDefinition("operation", DataType.Str, true, DEFAULT_LENGTH, DEFAULT_PRECISION, DEFAULT_SCALE),
             new ColumnDefinition("rows", DataType.UInt64, false, DEFAULT_LENGTH, DEFAULT_PRECISION, DEFAULT_SCALE));
 
     private static final String COLUMN_HEADER = "columns format version: ";
@@ -85,10 +90,7 @@ public class TableDefinition {
 
         for (int i = 0; i < columns.length; i++) {
             ColumnDefinition column = columns[i];
-            this.columns[i] = new ColumnDefinition(
-                    column.getName() == ColumnDefinition.DEFAULT_NAME ? Integer.toString(i + 1) : column.getName(),
-                    column.getType(), column.isNullable(), column.getLength(), column.getPrecision(),
-                    column.getScale());
+            this.columns[i] = new ColumnDefinition(column);
         }
     }
 
@@ -259,7 +261,9 @@ public class TableDefinition {
         int version = DEFAULT_VERSION;
         ColumnDefinition[] columns = new ColumnDefinition[0];
 
-        if (columnsInfo != null && columnsInfo.startsWith(COLUMN_HEADER)) {
+        if (columnsInfo == null) {
+            // nothing to do
+        } else if (columnsInfo.startsWith(COLUMN_HEADER)) {
             List<String> lines = Utils.splitByChar(columnsInfo, '\n');
             columns = new ColumnDefinition[lines.size() - 2];
 
@@ -293,6 +297,73 @@ public class TableDefinition {
             } catch (Exception e) {
                 throw new IllegalArgumentException(new StringBuilder().append("failed to parse line #")
                         .append(index + 1).append(":\n").append(currentLine).toString(), e);
+            }
+        } else {
+            Stack<Character> stack = new Stack<>();
+            char lastChar = '\0';
+            StringBuilder sb = new StringBuilder();
+            List<String> splittedColumns = new ArrayList<String>();
+            for (int i = 0, len = columnsInfo.length(); i < len; i++) {
+                char ch = columnsInfo.charAt(i);
+                switch (ch) {
+                    case '\\':
+                        if (i + 1 < len) {
+                            sb.append(columnsInfo.charAt(++i));
+                        }
+                        break;
+                    case '\'':
+                        i = i + 1 < len && columnsInfo.charAt(i + 1) == '\'' ? i + 1 : i;
+                        sb.append(ch);
+                        if (lastChar != ch) {
+                            lastChar = stack.push(ch);
+                        } else {
+                            try {
+                                stack.pop();
+                                lastChar = stack.size() > 0 ? stack.lastElement() : '\0';
+                            } catch (EmptyStackException e) {
+                                throw new IllegalArgumentException(new StringBuilder()
+                                        .append("failed to parse given schema at position #").append(i + 1)
+                                        .append(" around character [").append(ch).append(']').toString(), e);
+                            }
+                        }
+                        break;
+                    case '(':
+                        sb.append(lastChar = stack.push(ch));
+                        break;
+                    case ')':
+                        sb.append(ch);
+                        if (lastChar == '(') {
+                            try {
+                                stack.pop();
+                            } catch (EmptyStackException e) {
+                                throw new IllegalArgumentException(new StringBuilder()
+                                        .append("failed to parse given schema at position #").append(i + 1)
+                                        .append(" around character [").append(ch).append(']').toString(), e);
+                            }
+                        }
+                        break;
+                    case ',':
+                        if (stack.isEmpty()) {
+                            splittedColumns.add(sb.toString());
+                            sb.setLength(0);
+                        } else {
+                            sb.append(ch);
+                        }
+                        break;
+                    default:
+                        sb.append(ch);
+                        break;
+                }
+            }
+
+            if (sb.length() > 0) {
+                splittedColumns.add(sb.toString());
+            }
+
+            int index = 0;
+            columns = new ColumnDefinition[splittedColumns.size()];
+            for (String c : splittedColumns) {
+                columns[index++] = ColumnDefinition.fromString(c);
             }
         }
 

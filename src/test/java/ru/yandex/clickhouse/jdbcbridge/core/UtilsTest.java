@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,48 @@ public class UtilsTest {
                 }
             }
         }
+    }
+
+    @Test(groups = { "unit" })
+    public void testIndexOfKeyword() {
+        assertEquals(Utils.indexOfKeyword("a UInt32 Default", null, true), -1);
+        assertEquals(Utils.indexOfKeyword("a UInt32 Default", null, false), -1);
+        assertEquals(Utils.indexOfKeyword(null, "keyword", true), -1);
+        assertEquals(Utils.indexOfKeyword(null, "keyword", false), -1);
+        assertEquals(Utils.indexOfKeyword(null, null, true), -1);
+        assertEquals(Utils.indexOfKeyword(null, null, false), -1);
+
+        assertEquals(Utils.indexOfKeyword("a UInt32 default", "default", true), 9);
+        assertEquals(Utils.indexOfKeyword("a UInt32 Default", "default", false), -1);
+        assertEquals(Utils.indexOfKeyword("a UInt32 Default", "default", true), 9);
+        assertEquals(Utils.indexOfKeyword("a UInt32 Default", "default ", true), -1);
+
+        assertEquals(Utils.indexOfKeyword("`default_field` UInt32", "default", true), -1);
+        assertEquals(Utils.indexOfKeyword("`default_field` UInt32", "default", false), -1);
+
+        assertEquals(Utils.indexOfKeyword("`default_field` Enum(1='default', 2='non-default')", "default", true), -1);
+        assertEquals(Utils.indexOfKeyword("`default_field` Enum(1='default', 2='non-default')", "default", false), -1);
+
+        assertEquals(
+                Utils.indexOfKeyword("`default_field` Enum(1='default', 2='non-default') Default 1", "default", true),
+                51);
+        assertEquals(
+                Utils.indexOfKeyword("`default_field` Enum(1='default', 2='non-default') Default 1", "default", false),
+                -1);
+    }
+
+    @Test(groups = { "unit" })
+    public void testUnescapeQuotes() {
+        assertEquals(Utils.unescapeQuotes(null), "");
+        assertEquals(Utils.unescapeQuotes(""), "");
+        assertEquals(Utils.unescapeQuotes("'"), "'");
+        assertEquals(Utils.unescapeQuotes("\\"), "\\");
+        assertEquals(Utils.unescapeQuotes("''"), "'");
+        assertEquals(Utils.unescapeQuotes("\\'"), "'");
+        assertEquals(Utils.unescapeQuotes("\\\\"), "\\\\");
+
+        assertEquals(Utils.unescapeQuotes("a''\\b''c'"), "a'\\b'c'");
+        assertEquals(Utils.unescapeQuotes("a\\'b\\'c\\"), "a'b'c\\");
     }
 
     @Test(groups = { "unit" })
