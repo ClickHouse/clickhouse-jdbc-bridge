@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package ru.yandex.clickhouse.jdbcbridge.core;
 
 import java.io.Closeable;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,7 +31,8 @@ import io.vertx.core.json.JsonObject;
 import static ru.yandex.clickhouse.jdbcbridge.core.Utils.EMPTY_STRING;
 
 /**
- * Base class for implementing a repository managing entities by ID and type.
+ * Base class for implementing a repository managing entities by ID and
+ * optionally (registered) entity type.
  * 
  * @since 2.0
  */
@@ -107,7 +107,8 @@ public abstract class BaseRepository<T extends ManagedEntity> implements Reposit
     }
 
     /**
-     * Atomic remove operation. For example, delete the entity from database.
+     * Atomic remove operation. For example, delete the entity from a database
+     * table.
      * 
      * @param entity entity
      */

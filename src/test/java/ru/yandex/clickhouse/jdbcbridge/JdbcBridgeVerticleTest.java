@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,53 @@ package ru.yandex.clickhouse.jdbcbridge;
 
 import static org.testng.Assert.*;
 
+import java.time.Duration;
 import java.util.List;
 
+import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import io.vertx.core.Vertx;
 import ru.yandex.clickhouse.jdbcbridge.core.BaseRepository;
 import ru.yandex.clickhouse.jdbcbridge.core.ManagedEntity;
 import ru.yandex.clickhouse.jdbcbridge.core.Extension;
 import ru.yandex.clickhouse.jdbcbridge.core.ExtensionManager;
-import ru.yandex.clickhouse.jdbcbridge.core.NamedDataSource;
-import ru.yandex.clickhouse.jdbcbridge.core.NamedQuery;
-import ru.yandex.clickhouse.jdbcbridge.core.NamedSchema;
-import ru.yandex.clickhouse.jdbcbridge.core.Repository;
 import ru.yandex.clickhouse.jdbcbridge.core.Utils;
-import ru.yandex.clickhouse.jdbcbridge.impl.JsonFileRepository;
+
+import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class JdbcBridgeVerticleTest {
-    private Vertx vertx;
+    // containers for SIT(sytem integration test)
+    private static final Network sharedNetwork = Network.newNetwork();
+    // https://github.com/testcontainers/testcontainers-java/blob/master/modules/postgresql/src/main/java/org/testcontainers/containers/PostgreSQLContainer.java
+    private static final GenericContainer<?> pgServer = new GenericContainer<>("postgres:11.10-alpine")
+            .withNetwork(sharedNetwork).withNetworkAliases("postgresql_server").withEnv("POSTGRES_DB", "test")
+            .withEnv("POSTGRES_USER", "sa").withEnv("POSTGRES_PASSWORD", "sa")
+            .waitingFor(new LogMessageWaitStrategy().withRegEx(".*database system is ready to accept connections.*\\s")
+                    .withTimes(2).withStartupTimeout(Duration.of(60, SECONDS)));
+    // https://github.com/testcontainers/testcontainers-java/blob/master/modules/mariadb/src/main/java/org/testcontainers/containers/MariaDBContainer.java
+    private static final GenericContainer<?> mdServer = new GenericContainer<>("mariadb:10.5")
+            .withNetwork(sharedNetwork).withNetworkAliases("mariadb_server").withEnv("MYSQL_DATABASE", "test")
+            .withEnv("MYSQL_ROOT_PASSWORD", "root").withStartupAttempts(3)
+            .waitingFor(new LogMessageWaitStrategy().withRegEx(".*mysqld: ready for connections.*").withTimes(2)
+                    .withStartupTimeout(Duration.of(60, SECONDS)));
+
+    private static final GenericContainer<?> jbServer = new GenericContainer<>("yandex/clickhouse-jdbc-bridge")
+            .withNetwork(sharedNetwork).withNetworkAliases("jdbc_bridge_server")
+            .withFileSystemBind("target", "/build", BindMode.READ_WRITE)
+            .withWorkingDirectory("/build/test-classes/sit/jdbc-bridge")
+            .withCommand("bash", "-c", "java -jar /build/clickhouse-jdbc-bridge*.jar")
+            .waitingFor(Wait.forHttp("/ping").forStatusCode(200).withStartupTimeout(Duration.of(60, SECONDS)));
+    private static final GenericContainer<?> chServer = new GenericContainer<>("yandex/clickhouse-server:20.8")
+            .withNetwork(sharedNetwork).withNetworkAliases("clickhouse_server")
+            .withClasspathResourceMapping("sit/ch-server/jdbc-bridge.xml",
+                    "/etc/clickhouse-server/config.d/jdbc-bridge.xml", BindMode.READ_ONLY)
+            .waitingFor(Wait.forHttp("/ping").forStatusCode(200).withStartupTimeout(Duration.of(60, SECONDS)));
 
     public static class TestRepository<T extends ManagedEntity> extends BaseRepository<T> {
         public TestRepository(ExtensionManager manager, Class<T> clazz) {
@@ -44,39 +71,20 @@ public class JdbcBridgeVerticleTest {
         }
     }
 
-    @BeforeSuite(groups = { "unit" })
+    @BeforeSuite(groups = { "sit" })
     public void beforeSuite() {
-        vertx = Vertx.vertx();
+        pgServer.start();
+        mdServer.start();
+        chServer.start();
+        jbServer.start();
     }
 
-    @AfterSuite(groups = { "unit" })
+    @AfterSuite(groups = { "sit" })
     public void afterSuite() {
-        if (vertx != null) {
-            vertx.close();
-        }
-    }
-
-    @Test(groups = { "unit" })
-    public void testLoadRepositories() {
-        JdbcBridgeVerticle main = new JdbcBridgeVerticle();
-        vertx.deployVerticle(main);
-        List<Repository<?>> repos = main.loadRepositories(null);
-        assertNotNull(repos);
-        assertEquals(repos.size(), 3);
-        assertEquals(repos.get(0).getClass(), JsonFileRepository.class);
-        assertEquals(repos.get(0).getEntityClass(), NamedDataSource.class);
-        assertEquals(repos.get(1).getClass(), JsonFileRepository.class);
-        assertEquals(repos.get(1).getEntityClass(), NamedSchema.class);
-        assertEquals(repos.get(2).getClass(), JsonFileRepository.class);
-        assertEquals(repos.get(2).getEntityClass(), NamedQuery.class);
-
-        repos = main.loadRepositories(Utils.loadJsonFromFile("src/test/resources/server.json"));
-        assertNotNull(repos);
-        assertEquals(repos.size(), 2);
-        assertEquals(repos.get(0).getClass(), JsonFileRepository.class);
-        assertEquals(repos.get(0).getEntityClass(), NamedDataSource.class);
-        assertEquals(repos.get(1).getClass(), TestRepository.class);
-        assertEquals(repos.get(1).getEntityClass(), NamedSchema.class);
+        pgServer.stop();
+        mdServer.stop();
+        chServer.stop();
+        jbServer.stop();
     }
 
     @Test(groups = { "unit" })

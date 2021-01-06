@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package ru.yandex.clickhouse.jdbcbridge.impl;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.JDBCType;
-import java.util.ArrayList;
 import java.util.List;
 
 import ru.yandex.clickhouse.jdbcbridge.core.DataType;
@@ -142,10 +143,14 @@ public class DefaultDataTypeConverter implements DataTypeConverter {
             type = DataType.Int32;
         } else if (javaObject instanceof Long) {
             type = DataType.Int64;
+        } else if (javaObject instanceof BigInteger) {
+            type = DataType.Int256;
         } else if (javaObject instanceof Float) {
             type = DataType.Float32;
         } else if (javaObject instanceof Double) {
             type = DataType.Float64;
+        } else if (javaObject instanceof BigDecimal) {
+            type = DataType.Decimal256;
         } else {
             type = DataType.Str;
         }

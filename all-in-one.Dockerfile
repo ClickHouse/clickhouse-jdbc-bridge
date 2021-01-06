@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020, Zhichun Wu
+# Copyright (C) 2019-2021, Zhichun Wu
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -37,7 +37,7 @@ WORKDIR /app
 
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends dpkg fakeroot rpm \
-	&& mvn -Prelease -Drevision=${revision} package
+	&& mvn -Prelease -DskipTests -Drevision=${revision} package
 
 
 #
@@ -62,13 +62,13 @@ RUN apt-get update \
 		https://repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30.jar \
 		https://repo1.maven.org/maven2/ru/yandex/clickhouse/clickhouse-jdbc/0.2.4/clickhouse-jdbc-0.2.4-shaded.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/mariadb \
-		https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.0/mariadb-java-client-2.7.0.jar \
+		https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.1/mariadb-java-client-2.7.1.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/mysql5 \
 		https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.49/mysql-connector-java-5.1.49.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/mysql8 \
 		https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.21/mysql-connector-java-8.0.21.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/postgres \
-		https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.17/postgresql-42.2.17.jar \
+		https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.18/postgresql-42.2.18.jar \
 	&& sed -i -e 's|\(^[[:space:]]*\)\(exec.*clickhouse-server.*$\)|\1exec clickhouse-jdbc-bridge\&\n\1\2|' /entrypoint.sh \
 	&& echo '{\n\
   "$schema": "../datasource-schema.json",\n\

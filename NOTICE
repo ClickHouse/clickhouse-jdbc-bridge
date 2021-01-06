@@ -1,5 +1,5 @@
 clickhouse-jdbc-bridge
-Copyright 2019-2020, Zhichun Wu.
+Copyright 2019-2021, Zhichun Wu.
 
 This project includes software developed by Zhichun Wu.
 https://github.com/zhicwu
@@ -18,18 +18,26 @@ specific language governing permissions and limitations
 under the License.
 
 This project includes:
+  Apache Commons Compress under Apache License, Version 2.0
   Apache Log4j under The Apache Software License, Version 2.0
   Caffeine cache under Apache License, Version 2.0
   Checker Qual under The MIT License
   ClickHouse JDBC Bridge under Apache License, Version 2.0
   dnsjava under BSD-2-Clause
+  docker-java-api under The Apache Software License, Version 2.0
+  docker-java-transport under The Apache Software License, Version 2.0
+  docker-java-transport-zerodep under The Apache Software License, Version 2.0
+  Duct Tape under MIT
   error-prone annotations under Apache 2.0
+  Hamcrest Core under New BSD License
   HdrHistogram under Public Domain, per Creative Commons CC0 or BSD-2-Clause
   HikariCP under The Apache Software License, Version 2.0
   Jackson-annotations under The Apache Software License, Version 2.0
   Jackson-core under The Apache Software License, Version 2.0
   jackson-databind under The Apache Software License, Version 2.0
+  Java Native Access under LGPL, version 2.1 or Apache License v2.0
   jcommander under Apache 2.0
+  JUnit under Eclipse Public License 1.0
   LatencyUtils under Public Domain, per Creative Commons CC0
   micrometer-core under The Apache Software License, Version 2.0
   micrometer-registry-prometheus under The Apache Software License, Version 2.0
@@ -49,7 +57,7 @@ This project includes:
   Prometheus Java Simpleclient Common under The Apache Software License, Version 2.0
   SLF4J API Module under MIT License
   SLF4J LOG4J-12 Binding under MIT License
-  SQLite JDBC under The Apache Software License, Version 2.0
+  Testcontainers Core under MIT
   testng under Apache 2.0
   Vert.x Bridge Common under The Apache Software License, Version 2.0 or Eclipse Public License - v 1.0
   Vert.x Core under The Apache Software License, Version 2.0 or Eclipse Public License - v 2.0
@@ -59,4 +67,5 @@ This project includes:
   vertx-web under The Apache Software License, Version 2.0 or Eclipse Public License - v 2.0
   vertx-web-client under The Apache Software License, Version 2.0 or Eclipse Public License - v 1.0
   vertx-web-common under The Apache Software License, Version 2.0 or Eclipse Public License - v 1.0
+  Visible Assertions under MIT
 

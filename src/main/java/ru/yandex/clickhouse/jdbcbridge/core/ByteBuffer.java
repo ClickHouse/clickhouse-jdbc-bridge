@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,9 @@ import io.vertx.core.buffer.Buffer;
 import static ru.yandex.clickhouse.jdbcbridge.core.Utils.*;
 
 /**
- * Wrapper class of Vertx Buffer representing a sequence of zero or more bytes.
- * It provides convinient methods to read / write value of various data types.
+ * Wrapper class of Vertx {@link io.vertx.core.buffer.Buffer} representing a
+ * sequence of zero or more bytes. It provides convinient methods to read /
+ * write value of various data types.
  * 
  * @since 2.0
  */
@@ -633,11 +634,10 @@ public final class ByteBuffer {
         byte[] src = value.getBytes(charset == null ? StandardCharsets.UTF_8 : charset);
         Utils.checkArgument(src, length);
 
-        // let ClickHouse to append zeros
-        // byte[] bytes = new byte[length];
-        // System.arraycopy(src, 0, bytes, 0, src.length);
+        byte[] bytes = new byte[length];
+        System.arraycopy(src, 0, bytes, 0, src.length);
 
-        return writeString(value);
+        return writeBytes(bytes);
     }
 
     public String readString() {

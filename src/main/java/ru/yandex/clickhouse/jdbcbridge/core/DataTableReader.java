@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package ru.yandex.clickhouse.jdbcbridge.core;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
 
@@ -27,7 +25,8 @@ import java.util.TimeZone;
  */
 public interface DataTableReader {
     /**
-     * Move cursor to next row. This should be called at least before read anything.
+     * Move cursor to next row. This should be called at least once before read
+     * anything.
      * 
      * @return {@code true} if there's more rows to read; {@code false} otherwise
      */
@@ -44,7 +43,7 @@ public interface DataTableReader {
     boolean isNull(int row, int column, ColumnDefinition metadata) throws DataAccessException;
 
     /**
-     * Read value from a cell and write into given byte buffer.
+     * Read value from a cell and write into given {@link ByteBuffer}.
      * 
      * @param row      zero-based row index
      * @param column   zero-based column index
@@ -161,7 +160,6 @@ public interface DataTableReader {
 
                 if (column.isNullable()) {
                     // FIXME what if it's large object(e.g. blob, clob etc.)?
-                    // if (rs.getObject(index) == null || rs.wasNull()) {
                     if (isNull(rowCount, index, column)) {
                         if (params.nullAsDefault()) {
                             // column.writeValueTo(buffer);

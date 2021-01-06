@@ -1,3 +1,6 @@
+DROP VIEW IF EXISTS test.constant;
+CREATE VIEW test.constant AS SELECT 1;
+
 DROP TABLE IF EXISTS `10k_rows`;
 CREATE TABLE `10k_rows` 
 (
