@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class DnsResolver {
     private final Cache<String, Record[]> dnsCache = Caffeine.newBuilder().maximumSize(100)
             .expireAfterAccess(5, TimeUnit.MINUTES).build();
 
-    protected SRVRecord resolve(String srvDns, boolean basedOnWeight) {
+    public SRVRecord resolve(String srvDns, boolean basedOnWeight) {
         Record[] records = null;
 
         try {

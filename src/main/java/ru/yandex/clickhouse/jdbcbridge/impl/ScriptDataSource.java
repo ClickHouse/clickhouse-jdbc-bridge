@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package ru.yandex.clickhouse.jdbcbridge.impl;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
@@ -94,6 +95,35 @@ public class ScriptDataSource extends NamedDataSource {
 
             switch (metadata.getType()) {
                 case Bool:
+                case Enum:
+                case Enum8:
+                    try {
+                        v = converter.as(Integer.class, v);
+                    } catch (NumberFormatException e) {
+                        // pass
+                    }
+
+                    if (v instanceof Integer) {
+                        int optionValue = (int) v;
+                        buffer.writeEnum8(metadata.requireValidOptionValue(optionValue));
+                    } else { // treat as String
+                        buffer.writeEnum8(metadata.getOptionValue(String.valueOf(v)));
+                    }
+                    break;
+                case Enum16:
+                    try {
+                        v = converter.as(Integer.class, v);
+                    } catch (NumberFormatException e) {
+                        // pass
+                    }
+
+                    if (v instanceof Integer) {
+                        int optionValue = (int) v;
+                        buffer.writeEnum16(metadata.requireValidOptionValue(optionValue));
+                    } else { // treat as String
+                        buffer.writeEnum16(metadata.getOptionValue(String.valueOf(v)));
+                    }
+                    break;
                 case Int8:
                     buffer.writeInt8(converter.as(Byte.class, v));
                     break;
@@ -106,6 +136,12 @@ public class ScriptDataSource extends NamedDataSource {
                 case Int64:
                     buffer.writeInt64(converter.as(Long.class, v));
                     break;
+                case Int128:
+                    buffer.writeInt128(converter.as(BigInteger.class, v));
+                    break;
+                case Int256:
+                    buffer.writeInt256(converter.as(BigInteger.class, v));
+                    break;
                 case UInt8:
                     buffer.writeUInt8(converter.as(Integer.class, v));
                     break;
@@ -117,6 +153,12 @@ public class ScriptDataSource extends NamedDataSource {
                     break;
                 case UInt64:
                     buffer.writeUInt64(converter.as(Long.class, v));
+                    break;
+                case UInt128:
+                    buffer.writeUInt128(converter.as(BigInteger.class, v));
+                    break;
+                case UInt256:
+                    buffer.writeUInt256(converter.as(BigInteger.class, v));
                     break;
                 case Float32:
                     buffer.writeFloat32(converter.as(Float.class, v));
@@ -174,7 +216,10 @@ public class ScriptDataSource extends NamedDataSource {
         Repository<NamedDataSource> manager = (Repository<NamedDataSource>) Objects.requireNonNull(args[1]);
         JsonObject config = args.length > 2 ? (JsonObject) args[2] : null;
 
-        return new ScriptDataSource(id, manager, config);
+        ScriptDataSource ds = new ScriptDataSource(id, manager, config);
+        ds.validate();
+
+        return ds;
     }
 
     private final ScriptEngineManager scriptManager;
@@ -197,7 +242,7 @@ public class ScriptDataSource extends NamedDataSource {
     protected ScriptEngine getScriptEngine(String schema, String query) {
         String extName = DEFAULT_SCRIPT_EXTENSION;
 
-        if (schema != null && !schema.isEmpty()) {
+        if (schema != null && !schema.isEmpty() && schema.indexOf(' ') == -1) {
             extName = schema;
         } else {
             // in case the "normalizedQuery" is a local file...
@@ -293,7 +338,9 @@ public class ScriptDataSource extends NamedDataSource {
         try {
             Object result = engine.eval(loadedQuery);
 
-            ColumnDefinition[] resultColumns = guessColumns(engine, result, params).getColumns();
+            ColumnDefinition[] resultColumns = requestColumns.length > 1
+                    && !Utils.DEFAULT_COLUMN_NAME.equals(requestColumns[0].getName()) ? requestColumns
+                            : guessColumns(engine, result, params).getColumns();
 
             if (result == null) {
                 try {

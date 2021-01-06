@@ -23,25 +23,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Dependencies
-        env:
-          DEBIAN_FRONTEND: noninteractive
-          CH_REPO: deb [trusted=yes] https://repo.clickhouse.tech/deb/stable/ main/
-          CH_CONF_DIR: /etc/clickhouse-server/config.d
-        run: |
-          sudo apt-get update -y -qq
-          sudo apt-get install -y -qq --no-install-recommends ca-certificates dpkg fakeroot rpm
-          echo $CH_REPO | sudo tee -a /etc/apt/sources.list
-          sudo apt-get update -y -qq
-          sudo apt-get install -y -qq clickhouse-server
-          sudo mkdir -p $CH_CONF_DIR
-          sudo touch $CH_CONF_DIR/test.xml
-          echo "<yandex><jdbc_bridge><host>127.0.0.1</host><port>9019</port></jdbc_bridge></yandex>" | sudo tee -a $CH_CONF_DIR/test.xml
-          sudo /usr/sbin/clickhouse-server --config=/etc/clickhouse-server/config.xml &
       - uses: actions/checkout@v2
       - name: Set up JDK 1.8
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
       - name: Build with Maven
-        run: mvn --batch-mode --update-snapshots -Prelease verify
+        run: mvn --batch-mode --update-snapshots verify

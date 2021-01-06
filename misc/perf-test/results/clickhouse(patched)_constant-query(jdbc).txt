@@ -1,0 +1,45 @@
+This is ApacheBench, Version 2.3 <$Revision: 1430300 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking ch-server (be patient)
+
+
+Server Software:        
+Server Hostname:        ch-server
+Server Port:            8123
+
+Document Path:          /?query=select%20%2A%20from%20jdbc%28%27mariadb%27%2C%27constant%27%29
+Document Length:        2 bytes
+
+Concurrency Level:      20
+Time taken for tests:   833.892 seconds
+Complete requests:      100000
+Failed requests:        1577
+   (Connect: 0, Receive: 0, Length: 1577, Exceptions: 0)
+Write errors:           0
+Non-2xx responses:      1577
+Total transferred:      42456772 bytes
+HTML transferred:       390817 bytes
+Requests per second:    119.92 [#/sec] (mean)
+Time per request:       166.778 [ms] (mean)
+Time per request:       8.339 [ms] (mean, across all concurrent requests)
+Transfer rate:          49.72 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0  101 306.5      1    3091
+Processing:     9   65 121.8     48    2039
+Waiting:        9   64 121.8     48    2038
+Total:         10  167 325.7     51    3109
+
+Percentage of the requests served within a certain time (ms)
+  50%     51
+  66%     56
+  75%     60
+  80%     64
+  90%   1012
+  95%   1088
+  98%   1096
+  99%   1103
+ 100%   3109 (longest request)

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public abstract class ManagedEntity {
         this.aliases = new LinkedHashSet<>();
         this.createDateTime = new Date();
         this.digest = Utils.digest(config);
-        this.id = id;
+        this.id = id == null && config != null ? config.getString(CONF_ID) : id;
 
         String defaultType = getClass().getSimpleName();
         if (config != null) {
@@ -70,6 +70,12 @@ public abstract class ManagedEntity {
         } else {
             this.type = defaultType;
         }
+    }
+
+    /**
+     * Validate this instance and throw runtime exception if something wrong.
+     */
+    public void validate() {
     }
 
     /**

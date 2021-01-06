@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,22 @@ public class NamedSchema extends ManagedEntity {
     protected static final String CONF_COLUMNS = "columns";
 
     private final TableDefinition columns;
+
+    public static NamedSchema newInstance(Object... args) {
+        if (Objects.requireNonNull(args).length < 2) {
+            throw new IllegalArgumentException(
+                    "In order to create named schema, you need to specify at least ID and repository.");
+        }
+
+        String id = (String) args[0];
+        Repository<NamedSchema> manager = (Repository<NamedSchema>) Objects.requireNonNull(args[1]);
+        JsonObject config = args.length > 2 ? (JsonObject) args[2] : null;
+
+        NamedSchema schema = new NamedSchema(id, manager, config);
+        schema.validate();
+
+        return schema;
+    }
 
     public NamedSchema(String id, Repository<? extends NamedSchema> repo, JsonObject config) {
         super(id, Objects.requireNonNull(config));

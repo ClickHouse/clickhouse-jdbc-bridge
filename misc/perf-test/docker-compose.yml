@@ -36,7 +36,7 @@ services:
       replicas: 1
       resources:
         reservations:
-          memory: 2048M
+          memory: 4196M
         limits:
           memory: 8192M
       placement:
@@ -102,12 +102,13 @@ services:
       JDBC_BRIDGE_JVM_OPTS: "-Dnashorn.args=--language=es6"
     deploy:
       mode: replicated
+      # docker service scale <jdbc-bridge-service>=2
       replicas: 1
       resources:
         reservations:
-          memory: 512M
-        limits:
           memory: 1024M
+        limits:
+          memory: 2048M
       placement:
         constraints:
           - node.labels.alias == perf-test3

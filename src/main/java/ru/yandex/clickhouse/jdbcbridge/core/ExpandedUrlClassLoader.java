@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -94,7 +95,9 @@ public class ExpandedUrlClassLoader extends URLClassLoader {
 
                 if (path != null && Files.isDirectory(path)) {
                     File dir = path.normalize().toFile();
-                    for (String file : dir.list()) {
+                    String[] files = dir.list();
+                    Arrays.sort(files);
+                    for (String file : files) {
                         if (file.endsWith(DRIVER_EXTENSION)) {
                             file = new StringBuilder().append(FILE_URL_PREFIX).append(dir.getPath())
                                     .append(File.separatorChar).append(file).toString();

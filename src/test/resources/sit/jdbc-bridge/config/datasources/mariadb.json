@@ -1,0 +1,13 @@
+{
+  "mariadb": {
+    "driverClassName": "org.mariadb.jdbc.Driver",
+    "jdbcUrl": "jdbc:mariadb://mariadb_server:3306/test?useSSL=false&useCompression=false",
+    "dataSource": {
+      "user": "root",
+      "password": "root"
+    },
+    "initializationFailTimeout": 0,
+    "minimumIdle": 0,
+    "maximumPoolSize": 5
+  }
+}

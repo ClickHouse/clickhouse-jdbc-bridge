@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
@@ -84,6 +86,7 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
     public static final String CONF_CLASS = "class";
     public static final String CONF_MAPPINGS = "mappings";
     public static final String CONF_JDBC_TYPE = "jdbcType";
+    public static final String CONF_JDBC_URL = "jdbcUrl";
     public static final String CONF_NATIVE_TYPE = "nativeType";
     public static final String CONF_TO_TYPE = "to";
 
@@ -115,14 +118,17 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
     public static NamedDataSource newInstance(Object... args) {
         if (Objects.requireNonNull(args).length < 2) {
             throw new IllegalArgumentException(
-                    "In order to create named datasource, you need to specify at least ID and datasource manager.");
+                    "In order to create named datasource, you need to specify at least ID and repository.");
         }
 
         String id = (String) args[0];
         Repository<NamedDataSource> manager = (Repository<NamedDataSource>) Objects.requireNonNull(args[1]);
         JsonObject config = args.length > 2 ? (JsonObject) args[2] : null;
 
-        return new NamedDataSource(id, manager, config);
+        NamedDataSource ds = new NamedDataSource(id, manager, config);
+        ds.validate();
+
+        return ds;
     }
 
     protected static String generateColumnName(int columnIndex) {
@@ -139,6 +145,7 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
     }
 
     private void writeDebugResult(String schema, String originalQuery, String loadedQuery, QueryParameters parameters,
+            ColumnDefinition[] requestColumns, ColumnDefinition[] customColumns, DefaultValues defaultValues,
             ResponseWriter writer) {
         TableDefinition metaData = TableDefinition.DEBUG_COLUMNS;
 
@@ -154,8 +161,19 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
         }
         sb.insert(0, '{').append('}');
 
-        for (String str : new String[] { getId(), getType(), metaData.toJsonString(loadedQuery), sb.toString(),
-                loadedQuery, parameters == null ? null : parameters.toQueryString() }) {
+        Map<String, String> values = new HashMap<>();
+        for (ColumnDefinition c : customColumns) {
+            values.put(c.getName(), converter.as(String.class, c.getValue()));
+        }
+
+        String[] cells = new String[] { getId(), getType(), metaData.toJsonString(loadedQuery), sb.toString(),
+                loadedQuery, parameters == null ? null : parameters.toQueryString() };
+        for (int i = 0; i < cells.length; i++) {
+            values.put(metaData.getColumn(i).getName(), cells[i]);
+        }
+
+        for (ColumnDefinition c : requestColumns) {
+            String str = values.get(c.getName());
             if (str == null) {
                 buffer.writeNull();
             } else {
@@ -177,11 +195,7 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
     }
 
     public NamedDataSource(String id, Repository<? extends NamedDataSource> repository, JsonObject config) {
-        super(Objects.requireNonNull(id), config);
-
-        if (id.isEmpty()) {
-            throw new IllegalArgumentException("Non-empty datasource id required.");
-        }
+        super(id, config);
 
         this.driverUrls = new LinkedHashSet<>();
 
@@ -283,6 +297,12 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
 
         this.columnsCache = Caffeine.newBuilder().maximumSize(cacheSize).recordStats()
                 .expireAfterAccess(cacheExpireMinute, TimeUnit.MINUTES).build();
+    }
+
+    public void validate() {
+        if (Objects.requireNonNull(this.id).isEmpty()) {
+            throw new IllegalArgumentException("Non-empty datasource id required.");
+        }
     }
 
     public String getCacheUsage() {
@@ -489,12 +509,11 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
             QueryParameters params, ResponseWriter writer) {
         log.info("Executing query(schema=[{}]):\n{}", schema, loadedQuery);
 
+        ColumnDefinition[] customColumns = this.customColumns.toArray(new ColumnDefinition[this.customColumns.size()]);
         if (params.isDebug()) {
-            writeDebugResult(schema, originalQuery, loadedQuery, params, writer);
+            writeDebugResult(schema, originalQuery, loadedQuery, params, columns.getColumns(), customColumns,
+                    this.getDefaultValues(), writer);
         } else {
-            ColumnDefinition[] customColumns = this.customColumns
-                    .toArray(new ColumnDefinition[this.customColumns.size()]);
-
             if (params.isMutation()) {
                 writeMutationResult(schema, originalQuery, loadedQuery, params, columns.getColumns(), customColumns,
                         this.getDefaultValues(), writer);
@@ -508,10 +527,6 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
     public void executeMutation(String schema, String target, TableDefinition columns, QueryParameters parameters,
             ByteBuffer buffer) {
         log.info("Executing mutation: schema=[{}], target=[{}]", schema, target);
-    }
-
-    public boolean undertandsSQL() {
-        return false;
     }
 
     public String getQuoteIdentifier() {

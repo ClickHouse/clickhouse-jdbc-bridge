@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public class ExpandedUrlClassLoaderTest {
         assertEquals(urls.length, 2);
     }
 
-    @Test(groups = { "unit" })
+    @Test(groups = { "sit" })
     public void testClassLoaderWithOldAndNewClass() throws IOException {
         // https://github.com/ClickHouse/clickhouse-jdbc/commit/ee0b57cbed7a09108e5e3eab461f7adfe97ca546
         String className = "ru.yandex.clickhouse.settings.ClickHouseProperties";

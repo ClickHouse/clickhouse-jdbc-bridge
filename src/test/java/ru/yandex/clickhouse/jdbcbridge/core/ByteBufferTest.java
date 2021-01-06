@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,15 @@ public class ByteBufferTest {
         ByteBuffer buffer = ByteBuffer.newInstance(100);
 
         buffer.writeFixedString("A", 2);
-        assertEquals(buffer.buffer.getBytes(), new byte[] { (byte) 1, (byte) 65 });
-        // assertEquals(buffer.readString(), str);
+        assertEquals(buffer.buffer.getBytes(), new byte[] { (byte) 65, (byte) 0 });
+        buffer.writeFixedString("A", 1);
+        assertEquals(buffer.buffer.getBytes(), new byte[] { (byte) 65, (byte) 0, (byte) 65 });
+        assertThrows(IllegalArgumentException.class, new ThrowingRunnable() {
+            @Override
+            public void run() throws Throwable {
+                buffer.writeFixedString("AA", 1);
+            }
+        });
     }
 
     @Test(groups = { "unit" })

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,5 +62,13 @@ public class TableDefinitionTest {
         for (int i = 0; i < list.size(); i++) {
             assertEquals(list.getColumn(i).value.getValue(), expectedValues[i]);
         }
+    }
+
+    @Test(groups = { "unit" })
+    public void testFromString() {
+        String inlineSchema = "a Nullable(UInt8) default 3, b Enum8('N/A'=1, 'SB'=2)";
+        TableDefinition def = TableDefinition.fromString(inlineSchema);
+        
+        assertNotNull(def.getColumn(1).toString());
     }
 }

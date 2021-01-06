@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -339,8 +339,28 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
     private void handleColumnsInfo(RoutingContext ctx) {
         final QueryParser parser = QueryParser.fromRequest(ctx, getDataSourceRepository());
 
-        String rawQuery = parser.getRawQuery();
+        // priority: named/inline schema -> named query -> type inferring
+        TableDefinition tableDef = null;
 
+        // check if we got named schema first
+        String rawSchema = parser.getRawSchema();
+        NamedSchema namedSchema = getSchemaRepository().get(rawSchema);
+        if (namedSchema == null) { // try harder as we may got an inline schema
+            String schema = parser.getNormalizedSchema();
+            if (schema.indexOf(' ') != -1) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Got inline schema:\n[{}]", schema);
+                }
+                tableDef = TableDefinition.fromString(schema);
+            }
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Got named schema:\n[{}]", namedSchema);
+            }
+            tableDef = namedSchema.getColumns();
+        }
+
+        String rawQuery = parser.getRawQuery();
         log.info("Raw query:\n{}", rawQuery);
 
         String uri = parser.getConnectionString();
@@ -353,21 +373,20 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
             params = ds.newQueryParameters(params);
         }
 
-        // even it's a named query, the column list could be empty
-        NamedQuery namedQuery = getQueryRepository().get(rawQuery);
-        // priority: name query -> named schema -> type inferring
-        NamedSchema namedSchema = getSchemaRepository().get(parser.getNormalizedSchema());
+        if (tableDef == null) {
+            // even it's a named query, the column list could be empty
+            NamedQuery namedQuery = getQueryRepository().get(rawQuery);
 
-        TableDefinition tableDef;
-        if (namedQuery != null) {
-            if (namedSchema == null) {
-                namedSchema = getSchemaRepository().get(namedQuery.getSchema());
+            if (namedQuery != null) {
+                if (namedSchema == null) {
+                    namedSchema = getSchemaRepository().get(namedQuery.getSchema());
+                }
+
+                tableDef = namedSchema != null ? namedSchema.getColumns() : namedQuery.getColumns();
+            } else {
+                tableDef = namedSchema != null ? namedSchema.getColumns()
+                        : ds.getResultColumns(rawSchema, parser.getNormalizedQuery(), params);
             }
-
-            tableDef = namedQuery.getColumns(params);
-        } else {
-            tableDef = namedSchema != null ? namedSchema.getColumns()
-                    : ds.getResultColumns(parser.getSchema(), parser.getNormalizedQuery(), params);
         }
 
         List<ColumnDefinition> additionalColumns = new ArrayList<ColumnDefinition>();
@@ -393,6 +412,7 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
     }
 
     private void handleIdentifierQuote(RoutingContext ctx) {
+        // don't want to repeat datasource lookup here
         ctx.response().end(ByteBuffer.asBuffer(NamedDataSource.DEFAULT_QUOTE_IDENTIFIER));
     }
 
@@ -411,8 +431,8 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
             NamedDataSource ds = getDataSource(manager, parser.getConnectionString(), params.isDebug());
             params = ds.newQueryParameters(params);
 
-            String schema = parser.getSchema();
-            NamedSchema namedSchema = getSchemaRepository().get(parser.getNormalizedSchema());
+            String rawSchema = parser.getRawSchema();
+            NamedSchema namedSchema = getSchemaRepository().get(rawSchema);
 
             String generatedQuery = parser.getRawQuery();
             String normalizedQuery = parser.getNormalizedQuery();
@@ -444,26 +464,11 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
                 // - named query 'test' is: select a, b, c from table
                 // - clickhouse query: select b, a from jdbc('?','','test')
                 // - requested columns: b, a
-                ds.executeQuery(schema, namedQuery, namedSchema != null ? namedSchema.getColumns() : parser.getTable(),
-                        params, writer);
+                ds.executeQuery(rawSchema, namedQuery,
+                        namedSchema != null ? namedSchema.getColumns() : parser.getTable(), params, writer);
             } else {
                 // columnsInfo could be different from what we responded earlier, so let's parse
                 // it again
-                Boolean containsWhitespace = ds.undertandsSQL() ? null : Boolean.TRUE;
-                if (containsWhitespace == null) { // limit this weird behaviour to SQL datasources
-                    for (int i = 0; i < normalizedQuery.length(); i++) {
-                        char ch = normalizedQuery.charAt(i);
-                        if (Character.isWhitespace(ch)) {
-                            if (containsWhitespace != null) {
-                                containsWhitespace = Boolean.TRUE;
-                                break;
-                            }
-                        } else if (containsWhitespace == null) {
-                            containsWhitespace = Boolean.FALSE;
-                        }
-                    }
-                }
-
                 TableDefinition queryColumns = namedSchema != null ? namedSchema.getColumns() : parser.getTable();
                 // unfortunately default values will be lost between two requests, so we have to
                 // add it back...
@@ -478,9 +483,8 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
 
                 queryColumns.updateValues(additionalColumns);
 
-                ds.executeQuery(schema, parser.getNormalizedQuery(),
-                        Boolean.TRUE.equals(containsWhitespace) ? normalizedQuery : generatedQuery, queryColumns,
-                        params, writer);
+                ds.executeQuery(namedSchema == null ? rawSchema : Utils.EMPTY_STRING, parser.getNormalizedQuery(),
+                        normalizedQuery, queryColumns, params, writer);
             }
 
             if (log.isDebugEnabled()) {
@@ -540,7 +544,7 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
                 table = parser.extractTable(ds.loadSavedQueryAsNeeded(normalizedQuery, params));
             }
 
-            ds.executeMutation(parser.getSchema(), table, parser.getTable(), params, ByteBuffer.wrap(ctx.getBody()));
+            ds.executeMutation(parser.getRawSchema(), table, parser.getTable(), params, ByteBuffer.wrap(ctx.getBody()));
 
             resp.write(ByteBuffer.asBuffer(WRITE_RESPONSE));
 
@@ -644,22 +648,29 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
     public static void main(String[] args) {
         startTime = System.currentTimeMillis();
 
-        MeterRegistry registry = Utils.getDefaultMetricRegistry();
-        new ClassLoaderMetrics().bindTo(registry);
-        new JvmGcMetrics().bindTo(registry);
-        new JvmMemoryMetrics().bindTo(registry);
-        new JvmThreadMetrics().bindTo(registry);
-        new ProcessorMetrics().bindTo(registry);
-        new UptimeMetrics().bindTo(registry);
-
-        // https://github.com/eclipse-vertx/vert.x/blob/master/src/main/generated/io/vertx/core/VertxOptionsConverter.java
-        Vertx vertx = Vertx.vertx(new VertxOptions(Utils.loadJsonFromFile(Paths
+        VertxOptions options = new VertxOptions(Utils.loadJsonFromFile(Paths
                 .get(CONFIG_PATH,
                         Utils.getConfiguration("vertx.json", "VERTX_CONFIG_FILE", "jdbc-bridge.vertx.config.file"))
-                .toString()))
-                        .setMetricsOptions(new MicrometerMetricsOptions()
-                                .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
-                                .setMicrometerRegistry(registry).setEnabled(true)));
+                .toString()));
+
+        Object metricRegistry = Utils.getDefaultMetricRegistry();
+        // only MicroMeter is supported at this point
+        if (metricRegistry instanceof MeterRegistry) {
+            MeterRegistry registry = (MeterRegistry) metricRegistry;
+            new ClassLoaderMetrics().bindTo(registry);
+            new JvmGcMetrics().bindTo(registry);
+            new JvmMemoryMetrics().bindTo(registry);
+            new JvmThreadMetrics().bindTo(registry);
+            new ProcessorMetrics().bindTo(registry);
+            new UptimeMetrics().bindTo(registry);
+
+            options.setMetricsOptions(
+                    new MicrometerMetricsOptions().setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
+                            .setMicrometerRegistry(registry).setEnabled(true));
+        }
+
+        // https://github.com/eclipse-vertx/vert.x/blob/master/src/main/generated/io/vertx/core/VertxOptionsConverter.java
+        Vertx vertx = Vertx.vertx(options);
 
         vertx.deployVerticle(new JdbcBridgeVerticle());
     }

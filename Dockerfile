@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020, Zhichun Wu
+# Copyright (C) 2019-2021, Zhichun Wu
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -27,7 +27,7 @@ LABEL maintainer="zhicwu@gmail.com"
 
 # Environment variables
 ENV JDBC_BRIDGE_HOME=/app JDBC_BRIDGE_VERSION=${revision} \
-	JDBC_BRIDGE_REL_URL=https://github.com/${repository}/releases/download/v${revision}/
+	JDBC_BRIDGE_REL_URL=https://github.com/${repository}/releases/download/v${revision}
 
 # Labels
 LABEL app_name="ClickHouse JDBC Bridge" app_version="$JDBC_BRIDGE_VERSION"
@@ -57,6 +57,3 @@ EXPOSE 9019
 VOLUME ["${JDBC_BRIDGE_HOME}/drivers", "${JDBC_BRIDGE_HOME}/extensions", "${JDBC_BRIDGE_HOME}/logs", "${JDBC_BRIDGE_HOME}/scripts"]
 
 CMD "./docker-entrypoint.sh"
-
-HEALTHCHECK --start-period=5m --interval=30s --timeout=5s \
-	CMD curl --connect-timeout 3 --no-keepalive -f http://localhost:9019/ping || exit 1

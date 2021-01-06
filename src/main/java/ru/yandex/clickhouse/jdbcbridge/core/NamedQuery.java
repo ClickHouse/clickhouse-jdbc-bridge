@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,22 @@ public class NamedQuery extends NamedSchema {
 
     private final QueryParameters parameters;
 
+    public static NamedQuery newInstance(Object... args) {
+        if (Objects.requireNonNull(args).length < 2) {
+            throw new IllegalArgumentException(
+                    "In order to create named query, you need to specify at least ID and repository.");
+        }
+
+        String id = (String) args[0];
+        Repository<NamedQuery> manager = (Repository<NamedQuery>) Objects.requireNonNull(args[1]);
+        JsonObject config = args.length > 2 ? (JsonObject) args[2] : null;
+
+        NamedQuery query = new NamedQuery(id, manager, config);
+        query.validate();
+
+        return query;
+    }
+
     public NamedQuery(String id, Repository<NamedQuery> repo, JsonObject config) {
         super(id, repo, config);
 
@@ -52,10 +68,6 @@ public class NamedQuery extends NamedSchema {
 
     public String getSchema() {
         return this.schema;
-    }
-
-    public TableDefinition getColumns(QueryParameters params) {
-        return this.getColumns();
     }
 
     public QueryParameters getParameters() {

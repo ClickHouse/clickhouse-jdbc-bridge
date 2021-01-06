@@ -1,0 +1,43 @@
+This is ApacheBench, Version 2.3 <$Revision: 1430300 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking ch-server (be patient)
+
+
+Server Software:        
+Server Hostname:        ch-server
+Server Port:            8123
+
+Document Path:          /?query=select%20%2A%20from%20remote%28%27ch-server%3A9000%27%2C%20system.constant%2C%20%27default%27%2C%20%27%27%29
+Document Length:        2 bytes
+
+Concurrency Level:      20
+Time taken for tests:   802.212 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Total transferred:      42400000 bytes
+HTML transferred:       200000 bytes
+Requests per second:    124.66 [#/sec] (mean)
+Time per request:       160.442 [ms] (mean)
+Time per request:       8.022 [ms] (mean, across all concurrent requests)
+Transfer rate:          51.62 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0  153 362.4      1    3064
+Processing:     2    7   3.2      7      65
+Waiting:        2    6   3.0      6      64
+Total:          2  160 363.2      8    3073
+
+Percentage of the requests served within a certain time (ms)
+  50%      8
+  66%     10
+  75%     11
+  80%     13
+  90%   1023
+  95%   1025
+  98%   1027
+  99%   1028
+ 100%   3073 (longest request)

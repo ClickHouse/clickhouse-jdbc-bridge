@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,6 @@ public class QueryParameters {
     private final TypedParameter<Integer> offset;
     private final TypedParameter<Integer> position;
     private final TypedParameter<Integer> timeout;
-    private final TypedParameter<Boolean> useDateTime;
 
     private final TypedParameter<Boolean> debug;
 
@@ -90,8 +89,6 @@ public class QueryParameters {
                 this.position = new TypedParameter<>(Integer.class, PARAM_POSITION, DEFAULT_POSITION));
         Utils.addTypedParameter(params,
                 this.timeout = new TypedParameter<>(Integer.class, PARAM_TIMEOUT, DEFAULT_TIMEOUT));
-        Utils.addTypedParameter(params,
-                this.useDateTime = new TypedParameter<>(Boolean.class, PARAM_USE_DATETIME, false));
 
         Utils.addTypedParameter(params, this.debug = new TypedParameter<>(Boolean.class, PARAM_DEBUG, false));
     }
@@ -209,10 +206,6 @@ public class QueryParameters {
 
     public int getTimeout() {
         return this.timeout.getValue();
-    }
-
-    public boolean useDateTime() {
-        return this.useDateTime.getValue();
     }
 
     public boolean showDatasourceColumn() {

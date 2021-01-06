@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020, Zhichun Wu
+ * Copyright 2019-2021, Zhichun Wu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TimeZone;
+import java.util.Map.Entry;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -36,7 +38,7 @@ public class ColumnDefinition {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ColumnDefinition.class);
 
     static final boolean DEFAULT_VALUE_SUPPORT = String.valueOf(true)
-            .equalsIgnoreCase(Utils.getConfiguration("false", "DEFAULT_VALUE", "jdbc-bridge.type.default.value"));
+            .equalsIgnoreCase(Utils.getConfiguration("false", "DEFAULT_VALUE", "jdbc-bridge.type.default"));
 
     public static final String DEFAULT_NAME = "unknown";
     public static final DataType DEFAULT_TYPE = DataType.Str;
@@ -302,8 +304,8 @@ public class ColumnDefinition {
         return column;
     }
 
-    // FIXME below implementation is buggy, better use JavaCC/ANTLR to implement
-    // a more serious parser
+    // FIXME naive implementation, use ANTLR4 in future release for consistency
+    // https://github.com/ClickHouse/ClickHouse/pull/11298
     public static ColumnDefinition fromString(String columnInfo) {
         String name = DEFAULT_NAME;
         DataType type = DEFAULT_TYPE;
@@ -337,8 +339,8 @@ public class ColumnDefinition {
 
                     i = columnInfo.length() - 1;
 
-                    // default value
-                    int defaultIndex = declaredType.indexOf(TOKEN_DEFAULT);
+                    // default value. unlike Nullable etc. default is case-insensitive...
+                    int defaultIndex = Utils.indexOfKeywordIgnoreCase(declaredType, TOKEN_DEFAULT);
                     if (defaultIndex > 0) {
                         defaultValue = declaredType.substring(defaultIndex + TOKEN_DEFAULT.length()).trim();
                         declaredType = declaredType.substring(0, defaultIndex).trim();
@@ -386,6 +388,7 @@ public class ColumnDefinition {
                                     break;
                                 case FixedStr:
                                     length = Integer.parseInt(arguments.remove(0));
+                                    break;
                                 case DateTime64:
                                     scale = Integer.parseInt(arguments.remove(0));
                                 case DateTime:
@@ -436,12 +439,26 @@ public class ColumnDefinition {
         return new ColumnDefinition(name, type, nullable, length, precision, scale, timezone, value, options);
     }
 
+    public ColumnDefinition(ColumnDefinition def) {
+        this.name = Objects.requireNonNull(def).name;
+        this.type = def.type;
+        this.nullable = def.nullable;
+        this.length = def.length;
+        this.precision = def.precision;
+        this.scale = def.scale;
+
+        this.timezone = def.timezone;
+        this.hasDefaultValue = def.hasDefaultValue;
+        this.value = new DefaultValues().getTypedValue(type).merge(def.value.getValue());
+        this.options.putAll(def.options);
+    }
+
     public ColumnDefinition(String name, DataType type, boolean nullable, int length, int precision, int scale) {
         this(name, type, nullable, length, precision, scale, null, null, null);
     }
 
     public ColumnDefinition(String name, DataType type, boolean nullable, int length, int precision, int scale,
-            String timezone, String value, Map<String, Integer> options) {
+            String timezone, Object value, Map<String, Integer> options) {
         this.name = name == null ? DEFAULT_NAME : name;
         this.type = type;
         this.nullable = nullable;
@@ -449,7 +466,7 @@ public class ColumnDefinition {
                 ? (timezone == null ? null : TimeZone.getTimeZone(timezone))
                 : null;
         this.hasDefaultValue = DEFAULT_VALUE_SUPPORT && value != null;
-        this.value = new DefaultValues().getTypedValue(type).merge(value);
+        this.value = new DefaultValues().getTypedValue(type).merge(value == null ? null : String.valueOf(value));
         if (options != null) {
             this.options.putAll(options);
         }
@@ -494,11 +511,6 @@ public class ColumnDefinition {
         this.length = type == FixedStr ? (length <= 0 ? 1 : length) : type.getLength();
         this.precision = recommendedPrecision < type.getPrecision() ? recommendedPrecision : type.getPrecision();
         this.scale = scale <= 0 ? recommendedScale : (scale > this.precision ? this.precision : scale);
-        /*
-         * this.scale = this.type == DataType.DateTime64 ? DEFAULT_DATETIME64_SCALE :
-         * (scale <= 0 ? recommendedScale : (scale > this.precision ? this.precision :
-         * scale));
-         */
     }
 
     public String getName() {
@@ -535,6 +547,27 @@ public class ColumnDefinition {
 
     public Map<String, Integer> getOptions() {
         return Collections.unmodifiableMap(this.options);
+    }
+
+    public int getOptionValue(String optionName) {
+        for (Entry<String, Integer> entry : this.options.entrySet()) {
+            // case-insensitive?
+            if (entry.getKey().equals(optionName)) {
+                return entry.getValue();
+            }
+        }
+
+        throw new IllegalArgumentException("Unknown option: " + optionName);
+    }
+
+    public int requireValidOptionValue(int value) {
+        for (int v : this.options.values()) {
+            if (v == value) {
+                return value;
+            }
+        }
+
+        throw new IllegalArgumentException("Invalid option: " + value);
     }
 
     public void setIndex(int index) {
@@ -663,7 +696,7 @@ public class ColumnDefinition {
         } else if (this.type == DataType.Decimal) {
             sb.append('(').append(this.precision).append(',').append(this.scale).append(')');
         } else if (this.type == DataType.Decimal32 || this.type == DataType.Decimal64
-                || this.type == DataType.Decimal128) {
+                || this.type == DataType.Decimal128 || this.type == DataType.Decimal256) {
             sb.append('(').append(this.scale).append(')');
         } else if (this.type == DataType.DateTime && this.timezone != null) {
             sb.append('(').append('\'').append(this.timezone.getID()).append('\'').append(')');
@@ -673,6 +706,8 @@ public class ColumnDefinition {
                 sb.append(',').append('\'').append(this.timezone.getID()).append('\'');
             }
             sb.append(')');
+        } else if (this.type == DataType.FixedStr) {
+            sb.append('(').append(this.length).append(')');
         }
 
         if (this.nullable) {
