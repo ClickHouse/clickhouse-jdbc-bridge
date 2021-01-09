@@ -202,8 +202,10 @@ public class ScriptDataSource extends NamedDataSource {
     public static void initialize(ExtensionManager manager) {
         ScriptDataSource.vars.putAll(manager.getScriptableObjects());
 
+        Repository<NamedDataSource> dsRepo = manager.getRepositoryManager().getRepository(NamedDataSource.class);
+
         Extension<NamedDataSource> thisExtension = manager.getExtension(ScriptDataSource.class);
-        manager.getRepositoryManager().getRepository(NamedDataSource.class).registerType(EXTENSION_NAME, thisExtension);
+        dsRepo.registerType(EXTENSION_NAME, thisExtension);
     }
 
     public static ScriptDataSource newInstance(Object... args) {

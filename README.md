@@ -54,7 +54,7 @@ JDBC bridge for ClickHouse®. It acts as a stateless proxy passing queries from 
     # build all-in-one docker image
     git clone https://github.com/ClickHouse/clickhouse-jdbc-bridge.git
     cd clickhouse-jdbc-bridge
-    docker build -t my/clickhouse-all-in-one .
+    docker build -t my/clickhouse-all-in-one -f all-in-one.Dockerfile .
 
     # start container in background
     docker run --rm -d --name ch-and-jdbc-bridge my/clickhouse-all-in-one
@@ -397,7 +397,7 @@ clickhouse_url(clickhouse) | `http://ch-server:8123/?query=select * from url('ht
 clickhouse_url(jdbc-bridge) | `http://ch-server:8123/?query=select * from url('http://jdbc-bridge:9019/ping', CSV, 'results String')`
 clickhouse_constant-query | `http://ch-server:8123/?query=select 1`
 clickhouse_constant-query(mysql) | `http://ch-server:8123/?query=select * from mysql('mariadb:3306', 'test', 'constant', 'root', 'root')`
-clickhouse_constant-query(remote) | `select * from remote('ch-server:9000', system.constant, 'default', '')`
+clickhouse_constant-query(remote) | `http://ch-server:8123/?query=select * from remote('ch-server:9000', system.constant, 'default', '')`
 clickhouse_constant-query(url) | `http://ch-server:8123/?query=select * from url('http://ch-server:8123/?query=select 1', CSV, 'results String')`
 clickhouse*_constant-query(jdbc*) | `http://ch-server:8123/?query=select * from jdbc('mariadb', 'constant')`
 clickhouse_10k-rows-query | `http://ch-server:8123/?query=select 1`

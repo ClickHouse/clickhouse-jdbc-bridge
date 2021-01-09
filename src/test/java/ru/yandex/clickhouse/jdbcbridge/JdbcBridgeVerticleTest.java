@@ -72,7 +72,7 @@ public class JdbcBridgeVerticleTest {
     }
 
     @BeforeSuite(groups = { "sit" })
-    public void beforeSuite() {
+    public static void beforeSuite() {
         pgServer.start();
         mdServer.start();
         chServer.start();
@@ -80,7 +80,7 @@ public class JdbcBridgeVerticleTest {
     }
 
     @AfterSuite(groups = { "sit" })
-    public void afterSuite() {
+    public static void afterSuite() {
         pgServer.stop();
         mdServer.stop();
         chServer.stop();
