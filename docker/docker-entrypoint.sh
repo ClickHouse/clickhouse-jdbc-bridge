@@ -3,9 +3,9 @@
 set -e
 
 start_server() {
-	local base_url="${MAVEN_REPO_URL:='https://repo1.maven.org/maven2'}"
+	local base_url="${MAVEN_REPO_URL:="https://repo1.maven.org/maven2"}"
 	local driver_dir="$JDBC_BRIDGE_HOME/drivers"
-	local jdbc_drivers="${JDBC_DRIVERS:=''}"
+	local jdbc_drivers="${JDBC_DRIVERS:=""}"
 
 	# change work directory explicitly
 	cd $JDBC_BRIDGE_HOME
