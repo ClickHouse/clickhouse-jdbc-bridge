@@ -156,8 +156,6 @@ public class ConfigDataSource extends NamedDataSource {
     public static void initialize(ExtensionManager manager) {
         Repository<NamedDataSource> dsRepo = manager.getRepositoryManager().getRepository(NamedDataSource.class);
 
-        Extension<NamedDataSource> thisExtension = manager.getExtension(ConfigDataSource.class);
-        dsRepo.registerType(EXTENSION_NAME, thisExtension);
         dsRepo.put(Utils.EMPTY_STRING, new ConfigDataSource(dsRepo));
     }
 
