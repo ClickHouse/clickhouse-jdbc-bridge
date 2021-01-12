@@ -286,9 +286,10 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
             log.debug("[{}] Parameters:\n{}", path, req.params());
         }
 
-        if (log.isTraceEnabled()) {
-            log.trace("[{}] Body:\n{}", path, ctx.getBodyAsString());
-        }
+        // bad assumption here as it may lead to UTF8 decode issue like #83
+        // if (log.isTraceEnabled()) {
+        // log.trace("[{}] Body:\n{}", path, ctx.getBodyAsString());
+        // }
 
         HttpServerResponse resp = ctx.response();
 
