@@ -397,7 +397,7 @@ Test Case | Time Spent(s) | Throughput(#/s) | Failed Requests | Min(ms) | Mean(m
 [clickhouse_constant-query](misc/perf-test/results/clickhouse_constant-query.txt) | 797.775 | 125.35 | 0 | 1 | 159 | 4 | 1,077
 [clickhouse_constant-query(mysql)](misc/perf-test/results/clickhouse_constant-query(mysql).txt) | 1,598.426 | 62.56 | 0 | 7 | 320 | 18 | 2,049
 [clickhouse_constant-query(remote)](misc/perf-test/results/clickhouse_constant-query(remote).txt) | 802.212 | 124.66 | 0 | 2 | 160 | 8 | 3,073
-[clickhouse_constant-query(url)](misc/perf-test/results/clickhouclickhouse_constant-query(url)se_ping.txt) | 801.686 | 124.74 | 0 | 3 | 160 | 11 | 1,123
+[clickhouse_constant-query(url)](misc/perf-test/results/clickhouse_constant-query(url).txt) | 801.686 | 124.74 | 0 | 3 | 160 | 11 | 1,123
 [clickhouse_constant-query(jdbc)](misc/perf-test/results/clickhouse_constant-query(jdbc).txt) | 925.087 | 108.10 | 5,813 | 14 | 185 | 75 | 4,091
 [clickhouse(patched)_constant-query(jdbc)](misc/perf-test/results/clickhouse(patched)_constant-query(jdbc).txt) | 833.892 | 119.92 | 1,577 | 10 | 167 | 51 | 3,109
 [clickhouse(patched)_constant-query(jdbc-dual)](misc/perf-test/results/clickhouse(patched)_constant-query(jdbc-dual).txt) | 846.403 | 118.15 | 3,021 | 8 | 169 | 50 | 3,054
