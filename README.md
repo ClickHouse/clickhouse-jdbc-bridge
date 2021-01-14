@@ -89,16 +89,38 @@ JDBC bridge for ClickHouse®. It acts as a stateless proxy passing queries from 
         --query="select * from jdbc('self?datasource_column', 'select 1')"
     ```
 
+* Debian/RPM Package
+
+    Besides docker, you can download and install released Debian/RPM package on existing Linux system.
+
+    Debian/Ubuntu
+    ```bash
+    apt update && apt install -y procps wget
+    export JDBC_BRIDGE_VERSION=2.0.0
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge_$JDBC_BRIDGE_VERSION-1_all.deb
+    apt install --no-install-recommends -f ./clickhouse-jdbc-bridge_$JDBC_BRIDGE_VERSION-1_all.deb
+    clickhouse-jdbc-bridge
+    ```
+
+    CentOS/RHEL
+    ```bash
+    yum install -y wget
+    export JDBC_BRIDGE_VERSION=2.0.0
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-1.noarch.rpm
+    yum localinstall -y clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-1.noarch.rpm
+    clickhouse-jdbc-bridge
+    ```
+
 * Java CLI
 
     ```bash
     export JDBC_BRIDGE_VERSION=2.0.0
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION.jar
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-shaded.jar
     # add named datasource
     wget -P config/datasources https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/master/misc/quick-start/jdbc-bridge/config/datasources/ch-server.json
     # start jdbc bridge, and then issue below query in ClickHouse for testing
     # select * from jdbc('ch-server', 'select 1')
-    java -jar clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION.jar
+    java -jar clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-shaded.jar
     ```
 
 
@@ -205,7 +227,7 @@ Assuming you started a test environment using docker-compose, please refer to ex
     create table system.jdbc_table (
         a String,
         b UInt8
-    ) engine=JDBC('ch-server', 'system', 'test_table');
+    ) engine=JDBC('ch-server?batch_size=1000', 'system', 'test_table');
 
     insert into system.jdbc_table(a, b) values('a', 1);
 
