@@ -380,7 +380,7 @@ public class ScriptDataSource extends NamedDataSource {
 
     @Override
     public void executeMutation(String schema, String table, TableDefinition columns, QueryParameters parameters,
-            ByteBuffer buffer) {
-        super.executeMutation(schema, table, columns, parameters, buffer);
+            ByteBuffer buffer, ResponseWriter writer) {
+        super.executeMutation(schema, table, columns, parameters, buffer, writer);
     }
 }

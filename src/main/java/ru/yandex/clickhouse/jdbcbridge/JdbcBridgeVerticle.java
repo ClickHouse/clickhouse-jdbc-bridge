@@ -291,27 +291,19 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
         // log.trace("[{}] Body:\n{}", path, ctx.getBodyAsString());
         // }
 
-        HttpServerResponse resp = ctx.response();
-
-        resp.endHandler(handler -> {
+        ctx.response().endHandler(handler -> {
             if (log.isTraceEnabled()) {
                 log.trace("[{}] About to end response...", ctx.normalisedPath());
             }
-        });
-
-        resp.closeHandler(handler -> {
+        }).closeHandler(handler -> {
             if (log.isTraceEnabled()) {
                 log.trace("[{}] About to close response...", ctx.normalisedPath());
             }
-        });
-
-        resp.drainHandler(handler -> {
+        }).drainHandler(handler -> {
             if (log.isTraceEnabled()) {
                 log.trace("[{}] About to drain response...", ctx.normalisedPath());
             }
-        });
-
-        resp.exceptionHandler(throwable -> {
+        }).exceptionHandler(throwable -> {
             log.error("Caught exception", throwable);
         });
 
@@ -421,7 +413,7 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
         final Repository<NamedDataSource> manager = getDataSourceRepository();
         final QueryParser parser = QueryParser.fromRequest(ctx, manager);
 
-        ctx.response().setChunked(true);
+        final HttpServerResponse resp = ctx.response().setChunked(true);
 
         vertx.executeBlocking(promise -> {
             if (log.isTraceEnabled()) {
@@ -445,8 +437,6 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
             if (log.isDebugEnabled()) {
                 log.debug("Generated query:\n{}\nNormalized query:\n{}", generatedQuery, normalizedQuery);
             }
-
-            final HttpServerResponse resp = ctx.response();
 
             ResponseWriter writer = new ResponseWriter(resp, parser.getStreamOptions(),
                     ds.getQueryTimeout(params.getTimeout()));
@@ -510,7 +500,7 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
         final Repository<NamedDataSource> manager = getDataSourceRepository();
         final QueryParser parser = QueryParser.fromRequest(ctx, manager, true);
 
-        ctx.response().setChunked(true);
+        final HttpServerResponse resp = ctx.response().setChunked(true);
 
         vertx.executeBlocking(promise -> {
             if (log.isTraceEnabled()) {
@@ -520,9 +510,6 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
             QueryParameters params = parser.getQueryParameters();
             NamedDataSource ds = getDataSource(manager, parser.getConnectionString(), params.isDebug());
             params = ds == null ? params : ds.newQueryParameters(params);
-
-            // final HttpServerRequest req = ctx.request();
-            final HttpServerResponse resp = ctx.response();
 
             final String generatedQuery = parser.getRawQuery();
 
@@ -545,17 +532,24 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
                 table = parser.extractTable(ds.loadSavedQueryAsNeeded(normalizedQuery, params));
             }
 
-            ds.executeMutation(parser.getRawSchema(), table, parser.getTable(), params, ByteBuffer.wrap(ctx.getBody()));
+            ResponseWriter writer = new ResponseWriter(resp, parser.getStreamOptions(),
+                    ds.getWriteTimeout(params.getTimeout()));
 
-            resp.write(ByteBuffer.asBuffer(WRITE_RESPONSE));
+            ds.executeMutation(parser.getRawSchema(), table, parser.getTable(), params, ByteBuffer.wrap(ctx.getBody()),
+                    writer);
 
-            promise.complete();
+            if (resp.closed() || resp.ended()) {
+                promise.fail("Respose has already been closed");
+            } else {
+                resp.write(ByteBuffer.asBuffer(WRITE_RESPONSE));
+                promise.complete();
+            }
         }, false, res -> {
             if (res.succeeded()) {
                 if (log.isDebugEnabled()) {
                     log.debug("Wrote back query result");
                 }
-                ctx.response().end();
+                resp.end();
             } else {
                 ctx.fail(res.cause());
             }

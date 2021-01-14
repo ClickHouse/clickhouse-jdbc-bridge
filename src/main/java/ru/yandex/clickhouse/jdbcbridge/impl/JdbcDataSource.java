@@ -309,7 +309,7 @@ public class JdbcDataSource extends NamedDataSource {
 
         int[] results = stmt.executeBatch();
         for (int i = 0; i < results.length; i++) {
-            mutationCount += i;
+            mutationCount += results[i];
         }
         stmt.clearBatch();
 
@@ -874,7 +874,7 @@ public class JdbcDataSource extends NamedDataSource {
 
     @Override
     public void executeMutation(String schema, String table, TableDefinition columns, QueryParameters params,
-            ByteBuffer buffer) {
+            ByteBuffer buffer, ResponseWriter writer) {
         log.info("Executing mutation: schema=[{}], table=[{}]", schema, table);
 
         StringBuilder sql = new StringBuilder();
@@ -900,6 +900,7 @@ public class JdbcDataSource extends NamedDataSource {
             setTimeout(stmt, this.getWriteTimeout(params.getTimeout()));
 
             int counter = 0;
+            boolean stopped = false;
             while (!buffer.isExausted()) {
                 write(stmt, cols, params, buffer);
                 rowCount++;
@@ -914,14 +915,19 @@ public class JdbcDataSource extends NamedDataSource {
                         counter = 0;
                     }
                 }
+
+                if (!writer.isOpen()) {
+                    stopped = true;
+                    break;
+                }
             }
 
-            if (batchSize > 0 && counter > 0) {
+            if (!stopped && batchSize > 0 && counter > 0) {
                 mutationCount += this.bulkMutation(stmt);
             }
 
-            log.info("Mutation status(batchSize={}): inputRows={}, effectedRows={}", batchSize, rowCount,
-                    mutationCount);
+            log.info("Mutation {} on [{}]: batchSize={}, inputRows={}, effectedRows={}",
+                    stopped ? "stopped" : "completed", this.getId(), batchSize, rowCount, mutationCount);
         } catch (SQLException e) {
             throw new IllegalStateException(
                     "Failed to mutate in [" + this.getId() + "] due to: " + buildErrorMessage(e), e);

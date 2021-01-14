@@ -525,7 +525,7 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
     }
 
     public void executeMutation(String schema, String target, TableDefinition columns, QueryParameters parameters,
-            ByteBuffer buffer) {
+            ByteBuffer buffer, ResponseWriter writer) {
         log.info("Executing mutation: schema=[{}], target=[{}]", schema, target);
     }
 
