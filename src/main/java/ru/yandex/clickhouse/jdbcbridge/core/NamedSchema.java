@@ -29,6 +29,7 @@ public class NamedSchema extends ManagedEntity {
 
     private final TableDefinition columns;
 
+    @SuppressWarnings("unchecked")
     public static NamedSchema newInstance(Object... args) {
         if (Objects.requireNonNull(args).length < 2) {
             throw new IllegalArgumentException(

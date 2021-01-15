@@ -38,7 +38,7 @@ RUN apt-get update \
 		apt-transport-https curl htop iftop iptraf iputils-ping jq lsof net-tools tzdata wget \
 	&& apt-get clean \
 	&& wget -q -P $JDBC_BRIDGE_HOME $JDBC_BRIDGE_REL_URL/LICENSE $JDBC_BRIDGE_REL_URL/NOTICE \
-		$JDBC_BRIDGE_REL_URL/clickhouse-jdbc-bridge-${revision}.jar \
+		$JDBC_BRIDGE_REL_URL/clickhouse-jdbc-bridge-${revision}-shaded.jar \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY --chown=root:root docker/ $JDBC_BRIDGE_HOME
@@ -46,8 +46,8 @@ COPY --chown=root:root docker/ $JDBC_BRIDGE_HOME
 RUN chmod +x $JDBC_BRIDGE_HOME/*.sh \
 	&& mkdir -p $JDBC_BRIDGE_HOME/logs /usr/local/lib/java \
 	&& ln -s $JDBC_BRIDGE_HOME/logs /var/log/clickhouse-jdbc-bridge \
-	&& ln -s $JDBC_BRIDGE_HOME/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION.jar \
-		/usr/local/lib/java/clickhouse-jdbc-bridge.jar \
+	&& ln -s $JDBC_BRIDGE_HOME/clickhouse-jdbc-bridge-${revision}-shaded.jar \
+		/usr/local/lib/java/clickhouse-jdbc-bridge-shaded.jar \
 	&& ln -s $JDBC_BRIDGE_HOME /etc/clickhouse-jdbc-bridge
 
 WORKDIR $JDBC_BRIDGE_HOME

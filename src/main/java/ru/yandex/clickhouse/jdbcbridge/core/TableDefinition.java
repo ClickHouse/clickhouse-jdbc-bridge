@@ -59,7 +59,8 @@ public class TableDefinition {
             // datasource type: jdbc, config, script etc.
             new ColumnDefinition("type", DataType.Str, true, DEFAULT_LENGTH, DEFAULT_PRECISION, DEFAULT_SCALE),
             // operation: read or write
-            new ColumnDefinition("operation", DataType.Str, true, DEFAULT_LENGTH, DEFAULT_PRECISION, DEFAULT_SCALE),
+            // new ColumnDefinition("operation", DataType.Str, true, DEFAULT_LENGTH,
+            // DEFAULT_PRECISION, DEFAULT_SCALE),
             new ColumnDefinition("rows", DataType.UInt64, false, DEFAULT_LENGTH, DEFAULT_PRECISION, DEFAULT_SCALE));
 
     private static final String COLUMN_HEADER = "columns format version: ";

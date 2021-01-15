@@ -43,7 +43,7 @@ init_env() {
 
 start_server() {
     # override below environment variables as needed in $INIT_SCRIPT
-    : ${APP_PACKAGE:="/usr/local/lib/java/clickhouse-jdbc-bridge.jar"}
+    : ${APP_PACKAGE:="/usr/local/lib/java/clickhouse-jdbc-bridge-shaded.jar"}
     : ${JVM_ARGS:="-Xmx512m"}
     : ${WORK_DIRECTORY:=$(dirname "$INIT_SCRIPT")}
 
@@ -61,7 +61,7 @@ start_server() {
     fi
 
     echo "Work directory is set to [$WORK_DIRECTORY]"
-
+    cd "$WORK_DIRECTORY"
     java $JVM_ARGS -Dlog4j.configuration=file:///$WORK_DIRECTORY/log4j.properties \
         -Duser.dir="$WORK_DIRECTORY" -jar "$APP_PACKAGE"
 }

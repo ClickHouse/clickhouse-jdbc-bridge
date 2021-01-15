@@ -240,7 +240,7 @@
                             <packageDescription>JDBC bridge for ClickHouse. It acts as a stateless proxy passing queries from ClickHouse to external datasources.</packageDescription>
                             <createSymLinks>true</createSymLinks>
                             <createIncludeFiles>false</createIncludeFiles>
-                            <excludeAllArtifacts>false</excludeAllArtifacts>
+                            <excludeAllArtifacts>true</excludeAllArtifacts>
                             <excludeAllDependencies>true</excludeAllDependencies>
                             <libDirectory>/usr/local/lib/java</libDirectory>
                             <useDefaultCopyResources>false</useDefaultCopyResources>
@@ -327,11 +327,11 @@
                                     <groupname>root</groupname>
                                     <sources>
                                         <source>
-                                            <location>target/clickhouse-jdbc-bridge-${project.version}.jar</location>
+                                            <location>target/clickhouse-jdbc-bridge-${project.version}-shaded.jar</location>
                                         </source>
                                         <softlinkSource>
-                                            <location>/usr/local/lib/java/clickhouse-jdbc-bridge-${project.version}.jar</location>
-                                            <destination>clickhouse-jdbc-bridge.jar</destination>
+                                            <location>/usr/local/lib/java/clickhouse-jdbc-bridge-${project.version}-shaded.jar</location>
+                                            <destination>clickhouse-jdbc-bridge-shaded.jar</destination>
                                         </softlinkSource>
                                     </sources>
                                 </mapping>
@@ -513,7 +513,7 @@
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>${shade-plugin.version}</version>
                 <configuration>
-                    <shadedArtifactAttached>false</shadedArtifactAttached>
+                    <shadedArtifactAttached>true</shadedArtifactAttached>
                     <createDependencyReducedPom>true</createDependencyReducedPom>
                     <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                     <shadedClassifierName>shaded</shadedClassifierName>

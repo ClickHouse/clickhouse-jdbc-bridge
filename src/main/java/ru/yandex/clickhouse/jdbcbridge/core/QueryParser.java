@@ -119,6 +119,10 @@ public class QueryParser {
         return this.columns;
     }
 
+    public boolean useNullable() {
+        return this.useNull;
+    }
+
     public QueryParameters getQueryParameters() {
         if (this.queryParams == null) {
             this.queryParams = new QueryParameters(this.uri);
@@ -253,8 +257,6 @@ public class QueryParser {
 
         String uri = Objects.requireNonNull(resolver).resolve(req.getParam(PARAM_CONNECTION_STRING));
         if (forWrite) {
-            // boolean useNull =
-            // Boolean.parseBoolean(req.getParam(PARAM_EXT_TABLE_USE_NULLS));
             query = new QueryParser(uri, req.getParam(PARAM_DB_NAME), req.getParam(PARAM_TABLE_NAME),
                     req.getParam(PARAM_COLUMNS), req.getParam(PARAM_FORMAT_NAME), null, null);
         } else {
