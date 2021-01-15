@@ -1,6 +1,6 @@
 {
   "requestTimeout": 5000,
-  "queryTimeout": 30000,
+  "queryTimeout": 60000,
   "configScanPeriod": 5000,
   "repositories": [
     {
