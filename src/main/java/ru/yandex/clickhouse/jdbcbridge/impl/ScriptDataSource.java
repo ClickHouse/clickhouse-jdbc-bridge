@@ -208,6 +208,7 @@ public class ScriptDataSource extends NamedDataSource {
         dsRepo.registerType(EXTENSION_NAME, thisExtension);
     }
 
+    @SuppressWarnings("unchecked")
     public static ScriptDataSource newInstance(Object... args) {
         if (Objects.requireNonNull(args).length < 2) {
             throw new IllegalArgumentException(

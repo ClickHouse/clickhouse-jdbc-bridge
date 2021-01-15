@@ -160,6 +160,7 @@ public final class Extension<T> {
      * @throws IllegalArgumentException      if failed to create new instance using
      *                                       given arguments
      */
+    @SuppressWarnings("unchecked")
     public T newInstance(Object... args) {
         final Thread current = Thread.currentThread();
         final ClassLoader currentLoader = current.getContextClassLoader();

@@ -110,6 +110,7 @@ public class TypedParameter<T> {
         return this.merge(p, this.name);
     }
 
+    @SuppressWarnings("unchecked")
     public TypedParameter<T> merge(JsonObject p, String name) {
         name = name == null ? this.name : name;
 
@@ -145,6 +146,7 @@ public class TypedParameter<T> {
         return merge(v == null ? (String) null : String.valueOf(v));
     }
 
+    @SuppressWarnings("unchecked")
     public TypedParameter<T> merge(String v) {
         if (v != null) {
             if (this.type.isAssignableFrom(BigDecimal.class)) {

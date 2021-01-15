@@ -282,6 +282,7 @@ public class JdbcDataSource extends NamedDataSource {
         manager.getRepositoryManager().getRepository(NamedDataSource.class).registerType(EXTENSION_NAME, thisExtension);
     }
 
+    @SuppressWarnings("unchecked")
     public static JdbcDataSource newInstance(Object... args) {
         if (Objects.requireNonNull(args).length < 2) {
             throw new IllegalArgumentException(

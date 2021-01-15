@@ -110,11 +110,11 @@ public class QueryParameters {
     public QueryParameters merge(QueryParameters p) {
         if (p != null) {
             for (TypedParameter<?> tp : p.params.values()) {
-                TypedParameter x = this.params.get(tp.getName());
+                TypedParameter<?> x = this.params.get(tp.getName());
                 if (x == null) {
                     this.params.put(tp.getName(), tp);
                 } else if (x.getType() == tp.getType()) {
-                    x.merge(tp);
+                    x.merge(tp.getValue());
                 }
             }
         }
@@ -220,10 +220,12 @@ public class QueryParameters {
         return this.debug.getValue();
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getParameterDefaultValue(String key, Class<T> type) {
         return ((TypedParameter<T>) this.params.get(key)).getDefaultValue();
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getParameterValue(String key, Class<T> type) {
         return ((TypedParameter<T>) this.params.get(key)).getValue();
     }

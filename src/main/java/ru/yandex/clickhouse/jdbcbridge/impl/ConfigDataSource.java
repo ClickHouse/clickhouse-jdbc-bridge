@@ -22,7 +22,6 @@ import ru.yandex.clickhouse.jdbcbridge.core.UsageStats;
 import ru.yandex.clickhouse.jdbcbridge.core.NamedDataSource;
 import ru.yandex.clickhouse.jdbcbridge.core.DataType;
 import ru.yandex.clickhouse.jdbcbridge.core.DefaultValues;
-import ru.yandex.clickhouse.jdbcbridge.core.Extension;
 import ru.yandex.clickhouse.jdbcbridge.core.ExtensionManager;
 import ru.yandex.clickhouse.jdbcbridge.core.ResponseWriter;
 import ru.yandex.clickhouse.jdbcbridge.core.Utils;

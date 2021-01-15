@@ -115,6 +115,7 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
 
     protected final DataTypeConverter converter;
 
+    @SuppressWarnings("unchecked")
     public static NamedDataSource newInstance(Object... args) {
         if (Objects.requireNonNull(args).length < 2) {
             throw new IllegalArgumentException(

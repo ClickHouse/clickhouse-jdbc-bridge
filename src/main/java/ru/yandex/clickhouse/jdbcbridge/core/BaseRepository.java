@@ -45,7 +45,6 @@ public abstract class BaseRepository<T extends ManagedEntity> implements Reposit
     private final Class<T> clazz;
     private final String name;
     private final DnsResolver resolver;
-    private final List<UsageStats> stats;
 
     private String defaultType = null;
 
@@ -229,7 +228,6 @@ public abstract class BaseRepository<T extends ManagedEntity> implements Reposit
         this.clazz = Objects.requireNonNull(clazz);
         this.name = clazz.getSimpleName();
         this.resolver = new DnsResolver();
-        this.stats = new ArrayList<>();
 
         this.defaultExtension = new Extension<>(clazz);
     }
