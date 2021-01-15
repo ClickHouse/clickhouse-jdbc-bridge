@@ -208,6 +208,7 @@ public class ScriptDataSource extends NamedDataSource {
         dsRepo.registerType(EXTENSION_NAME, thisExtension);
     }
 
+    @SuppressWarnings("unchecked")
     public static ScriptDataSource newInstance(Object... args) {
         if (Objects.requireNonNull(args).length < 2) {
             throw new IllegalArgumentException(
@@ -380,7 +381,7 @@ public class ScriptDataSource extends NamedDataSource {
 
     @Override
     public void executeMutation(String schema, String table, TableDefinition columns, QueryParameters parameters,
-            ByteBuffer buffer) {
-        super.executeMutation(schema, table, columns, parameters, buffer);
+            ByteBuffer buffer, ResponseWriter writer) {
+        super.executeMutation(schema, table, columns, parameters, buffer, writer);
     }
 }

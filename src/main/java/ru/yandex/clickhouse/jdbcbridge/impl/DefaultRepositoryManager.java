@@ -33,6 +33,7 @@ import ru.yandex.clickhouse.jdbcbridge.core.RepositoryManager;
 public class DefaultRepositoryManager implements RepositoryManager {
     private final List<Repository<? extends ManagedEntity>> repos = Collections.synchronizedList(new ArrayList<>());
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends ManagedEntity> Repository<T> getRepository(Class<T> clazz) {
         Objects.requireNonNull(clazz);

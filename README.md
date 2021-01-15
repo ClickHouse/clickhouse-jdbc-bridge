@@ -89,16 +89,38 @@ JDBC bridge for ClickHouse®. It acts as a stateless proxy passing queries from 
         --query="select * from jdbc('self?datasource_column', 'select 1')"
     ```
 
+* Debian/RPM Package
+
+    Besides docker, you can download and install released Debian/RPM package on existing Linux system.
+
+    Debian/Ubuntu
+    ```bash
+    apt update && apt install -y procps wget
+    export JDBC_BRIDGE_VERSION=2.0.0
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge_$JDBC_BRIDGE_VERSION-1_all.deb
+    apt install --no-install-recommends -f ./clickhouse-jdbc-bridge_$JDBC_BRIDGE_VERSION-1_all.deb
+    clickhouse-jdbc-bridge
+    ```
+
+    CentOS/RHEL
+    ```bash
+    yum install -y wget
+    export JDBC_BRIDGE_VERSION=2.0.0
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-1.noarch.rpm
+    yum localinstall -y clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-1.noarch.rpm
+    clickhouse-jdbc-bridge
+    ```
+
 * Java CLI
 
     ```bash
     export JDBC_BRIDGE_VERSION=2.0.0
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION.jar
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-shaded.jar
     # add named datasource
     wget -P config/datasources https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/master/misc/quick-start/jdbc-bridge/config/datasources/ch-server.json
     # start jdbc bridge, and then issue below query in ClickHouse for testing
     # select * from jdbc('ch-server', 'select 1')
-    java -jar clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION.jar
+    java -jar clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-shaded.jar
     ```
 
 
@@ -195,6 +217,13 @@ Assuming you started a test environment using docker-compose, please refer to ex
 
 * Mutation
     ```sql
+    -- use query parameter
+    select * from jdbc('ch-server?mutation', 'drop table if exists system.test_table');
+    select * from jdbc('ch-server?mutation', 'create table system.test_table(a String, b UInt8) engine=Memory()');
+    select * from jdbc('ch-server?mutation', 'insert into system.test_table values(''a'', 1)');
+	select * from jdbc('ch-server?mutation', 'truncate table system.test_table');
+
+    -- use JDBC table engine
     drop table if exists system.test_table;
     create table system.test_table (
         a String,
@@ -205,7 +234,7 @@ Assuming you started a test environment using docker-compose, please refer to ex
     create table system.jdbc_table (
         a String,
         b UInt8
-    ) engine=JDBC('ch-server', 'system', 'test_table');
+    ) engine=JDBC('ch-server?batch_size=1000', 'system', 'test_table');
 
     insert into system.jdbc_table(a, b) values('a', 1);
 
@@ -280,8 +309,9 @@ Assuming you started a test environment using docker-compose, please refer to ex
     Couple of timeout settings you should be aware of:
     1. datasource timeout, for example: `max_execution_time` in MariaDB
     2. JDBC driver timeout, for example: `connectTimeout` and `socketTimeout` in [MariaDB Connector/J](https://mariadb.com/kb/en/about-mariadb-connector-j/)
-    3. Vertx timeout - see `config/server.json` and `config/vertx.json`
-    4. Client(ClickHouse JDBC driver) timeout - see timeout settings in ClickHouse JDBC driver
+    3. JDBC bridge timeout, for examples: `queryTimeout` in `config/server.json`, and `maxWorkerExecuteTime` in `config/vertx.json`
+    4. ClickHouse timeout like `max_execution_time` and `keep_alive_timeout` etc.
+    5. Client timeout, for example: `socketTimeout` in ClickHouse JDBC driver
 
 
 ## Migration
@@ -375,7 +405,7 @@ Test Case | Time Spent(s) | Throughput(#/s) | Failed Requests | Min(ms) | Mean(m
 [clickhouse_constant-query](misc/perf-test/results/clickhouse_constant-query.txt) | 797.775 | 125.35 | 0 | 1 | 159 | 4 | 1,077
 [clickhouse_constant-query(mysql)](misc/perf-test/results/clickhouse_constant-query(mysql).txt) | 1,598.426 | 62.56 | 0 | 7 | 320 | 18 | 2,049
 [clickhouse_constant-query(remote)](misc/perf-test/results/clickhouse_constant-query(remote).txt) | 802.212 | 124.66 | 0 | 2 | 160 | 8 | 3,073
-[clickhouse_constant-query(url)](misc/perf-test/results/clickhouclickhouse_constant-query(url)se_ping.txt) | 801.686 | 124.74 | 0 | 3 | 160 | 11 | 1,123
+[clickhouse_constant-query(url)](misc/perf-test/results/clickhouse_constant-query(url).txt) | 801.686 | 124.74 | 0 | 3 | 160 | 11 | 1,123
 [clickhouse_constant-query(jdbc)](misc/perf-test/results/clickhouse_constant-query(jdbc).txt) | 925.087 | 108.10 | 5,813 | 14 | 185 | 75 | 4,091
 [clickhouse(patched)_constant-query(jdbc)](misc/perf-test/results/clickhouse(patched)_constant-query(jdbc).txt) | 833.892 | 119.92 | 1,577 | 10 | 167 | 51 | 3,109
 [clickhouse(patched)_constant-query(jdbc-dual)](misc/perf-test/results/clickhouse(patched)_constant-query(jdbc-dual).txt) | 846.403 | 118.15 | 3,021 | 8 | 169 | 50 | 3,054

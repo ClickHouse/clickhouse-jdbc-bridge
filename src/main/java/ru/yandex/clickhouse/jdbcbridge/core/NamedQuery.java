@@ -35,6 +35,7 @@ public class NamedQuery extends NamedSchema {
 
     private final QueryParameters parameters;
 
+    @SuppressWarnings("unchecked")
     public static NamedQuery newInstance(Object... args) {
         if (Objects.requireNonNull(args).length < 2) {
             throw new IllegalArgumentException(

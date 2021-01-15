@@ -41,6 +41,7 @@ public interface DataTypeConverter {
     static final String M_FACET_SINGLE = "Single.Type";
     static final String M_FACET_DOUBLE = "Double.Type";
 
+    @SuppressWarnings("unchecked")
     default <T> T as(Class<T> type, Object value) {
         final Object result;
 

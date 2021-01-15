@@ -282,6 +282,7 @@ public class JdbcDataSource extends NamedDataSource {
         manager.getRepositoryManager().getRepository(NamedDataSource.class).registerType(EXTENSION_NAME, thisExtension);
     }
 
+    @SuppressWarnings("unchecked")
     public static JdbcDataSource newInstance(Object... args) {
         if (Objects.requireNonNull(args).length < 2) {
             throw new IllegalArgumentException(
@@ -309,7 +310,7 @@ public class JdbcDataSource extends NamedDataSource {
 
         int[] results = stmt.executeBatch();
         for (int i = 0; i < results.length; i++) {
-            mutationCount += i;
+            mutationCount += results[i];
         }
         stmt.clearBatch();
 
@@ -516,6 +517,20 @@ public class JdbcDataSource extends NamedDataSource {
         }
     }
 
+    protected long getFirstMutationResult(Statement stmt) throws SQLException {
+        long count = 0L;
+
+        try {
+            count = stmt.getLargeUpdateCount();
+        } catch (SQLException e) {
+            throw e;
+        } catch (Exception e) {
+            count = stmt.getUpdateCount();
+        }
+
+        return count == -1 ? 0 : count;
+    }
+
     protected ResultSet getFirstQueryResult(Statement stmt, boolean hasResultSet) throws SQLException {
         ResultSet rs = null;
 
@@ -653,27 +668,14 @@ public class JdbcDataSource extends NamedDataSource {
         try (Connection conn = getConnection(); Statement stmt = createStatement(conn, params)) {
             setTimeout(stmt, this.getQueryTimeout(params.getTimeout()));
 
-            final ResultSet rs = getFirstQueryResult(stmt, stmt.execute(loadedQuery));
-
-            DataTableReader reader = new ResultSetReader(getId(), rs, params);
-            reader.process(getId(), requestColumns, customColumns, getColumnsFromResultSet(rs, params), defaultValues,
-                    getTimeZone(), params, writer);
-
-            /*
-             * if (stmt.execute(loadedQuery)) { // TODO multiple resultsets
-             * 
-             * } else if (columns.size() == 1 && columns.getColumn(0).getType() ==
-             * ClickHouseDataType.Int32) {
-             * writer.write(ClickHouseBuffer.newInstance(4).writeInt32(stmt.getUpdateCount()
-             * )); } else { throw new IllegalStateException(
-             * "Not able to handle query result due to incompatible columns: " + columns); }
-             */
+            stmt.execute(loadedQuery);
+            this.writeMutationResult(getFirstMutationResult(stmt), requestColumns, customColumns, writer);
         } catch (SQLException e) {
             throw new DataAccessException(getId(), buildErrorMessage(e), e);
         } catch (DataAccessException e) {
             Throwable cause = e.getCause();
             throw new IllegalStateException(
-                    "Failed to query against [" + this.getId() + "] due to: " + buildErrorMessage(cause), cause);
+                    "Failed to mutate against [" + this.getId() + "] due to: " + buildErrorMessage(cause), cause);
         }
     }
 
@@ -874,7 +876,7 @@ public class JdbcDataSource extends NamedDataSource {
 
     @Override
     public void executeMutation(String schema, String table, TableDefinition columns, QueryParameters params,
-            ByteBuffer buffer) {
+            ByteBuffer buffer, ResponseWriter writer) {
         log.info("Executing mutation: schema=[{}], table=[{}]", schema, table);
 
         StringBuilder sql = new StringBuilder();
@@ -900,6 +902,7 @@ public class JdbcDataSource extends NamedDataSource {
             setTimeout(stmt, this.getWriteTimeout(params.getTimeout()));
 
             int counter = 0;
+            boolean stopped = false;
             while (!buffer.isExausted()) {
                 write(stmt, cols, params, buffer);
                 rowCount++;
@@ -914,14 +917,19 @@ public class JdbcDataSource extends NamedDataSource {
                         counter = 0;
                     }
                 }
+
+                if (!writer.isOpen()) {
+                    stopped = true;
+                    break;
+                }
             }
 
-            if (batchSize > 0 && counter > 0) {
+            if (!stopped && batchSize > 0 && counter > 0) {
                 mutationCount += this.bulkMutation(stmt);
             }
 
-            log.info("Mutation status(batchSize={}): inputRows={}, effectedRows={}", batchSize, rowCount,
-                    mutationCount);
+            log.info("Mutation {} on [{}]: batchSize={}, inputRows={}, effectedRows={}",
+                    stopped ? "stopped" : "completed", this.getId(), batchSize, rowCount, mutationCount);
         } catch (SQLException e) {
             throw new IllegalStateException(
                     "Failed to mutate in [" + this.getId() + "] due to: " + buildErrorMessage(e), e);

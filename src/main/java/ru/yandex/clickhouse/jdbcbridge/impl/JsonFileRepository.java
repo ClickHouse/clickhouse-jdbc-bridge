@@ -32,6 +32,7 @@ import ru.yandex.clickhouse.jdbcbridge.core.Utils;
 public class JsonFileRepository<T extends ManagedEntity> extends BaseRepository<T> implements Reloadable {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JsonFileRepository.class);
 
+    @SuppressWarnings("unchecked")
     public static <T extends ManagedEntity> JsonFileRepository<T> newInstance(Object... args) {
         if (Objects.requireNonNull(args).length < 2) {
             throw new IllegalArgumentException(
