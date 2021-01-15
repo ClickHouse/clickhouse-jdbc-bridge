@@ -528,7 +528,9 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
         ds.executeMutation(parser.getRawSchema(), table, parser.getTable(), params, ByteBuffer.wrap(ctx.getBody()),
                 writer);
 
-        resp.end(ByteBuffer.asBuffer(WRITE_RESPONSE));
+        if (writer.isOpen()) {
+            resp.end(ByteBuffer.asBuffer(WRITE_RESPONSE));
+        }
     }
 
     private Repository<NamedDataSource> getDataSourceRepository() {

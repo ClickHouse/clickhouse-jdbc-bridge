@@ -185,6 +185,36 @@ public class NamedDataSource extends ManagedEntity implements Closeable {
         Objects.requireNonNull(writer).write(buffer);
     }
 
+    protected final void writeMutationResult(long effectedRows, ColumnDefinition[] requestColumns,
+            ColumnDefinition[] customColumns, ResponseWriter writer) {
+        ByteBuffer buffer = ByteBuffer.newInstance(100);
+        Map<String, String> values = new HashMap<>();
+        for (ColumnDefinition c : customColumns) {
+            values.put(c.getName(), converter.as(String.class, c.getValue()));
+        }
+
+        String typeName = TableDefinition.MUTATION_COLUMNS.getColumn(0).getName();
+        String rowsName = TableDefinition.MUTATION_COLUMNS.getColumn(1).getName();
+
+        values.put(typeName, this.getType());
+
+        for (ColumnDefinition c : requestColumns) {
+            String name = c.getName();
+            if (rowsName.equals(name)) {
+                buffer.writeUInt64(effectedRows);
+            } else {
+                String str = values.get(name);
+                if (str == null) {
+                    buffer.writeNull();
+                } else {
+                    buffer.writeNonNull().writeString(str);
+                }
+            }
+        }
+
+        Objects.requireNonNull(writer).write(buffer);
+    }
+
     protected void writeMutationResult(String schema, String originalQuery, String loadedQuery, QueryParameters params,
             ColumnDefinition[] requestColumns, ColumnDefinition[] customColumns, DefaultValues defaultValues,
             ResponseWriter writer) {

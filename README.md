@@ -217,6 +217,13 @@ Assuming you started a test environment using docker-compose, please refer to ex
 
 * Mutation
     ```sql
+    -- use query parameter
+    select * from jdbc('ch-server?mutation', 'drop table if exists system.test_table');
+    select * from jdbc('ch-server?mutation', 'create table system.test_table(a String, b UInt8) engine=Memory()');
+    select * from jdbc('ch-server?mutation', 'insert into system.test_table values(''a'', 1)');
+	select * from jdbc('ch-server?mutation', 'truncate table system.test_table');
+
+    -- use JDBC table engine
     drop table if exists system.test_table;
     create table system.test_table (
         a String,
@@ -302,8 +309,9 @@ Assuming you started a test environment using docker-compose, please refer to ex
     Couple of timeout settings you should be aware of:
     1. datasource timeout, for example: `max_execution_time` in MariaDB
     2. JDBC driver timeout, for example: `connectTimeout` and `socketTimeout` in [MariaDB Connector/J](https://mariadb.com/kb/en/about-mariadb-connector-j/)
-    3. Vertx timeout - see `config/server.json` and `config/vertx.json`
-    4. Client(ClickHouse JDBC driver) timeout - see timeout settings in ClickHouse JDBC driver
+    3. JDBC bridge timeout, for examples: `queryTimeout` in `config/server.json`, and `maxWorkerExecuteTime` in `config/vertx.json`
+    4. ClickHouse timeout like `max_execution_time` and `keep_alive_timeout` etc.
+    5. Client timeout, for example: `socketTimeout` in ClickHouse JDBC driver
 
 
 ## Migration

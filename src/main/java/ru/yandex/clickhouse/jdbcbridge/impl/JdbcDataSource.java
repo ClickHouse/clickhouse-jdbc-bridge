@@ -517,6 +517,20 @@ public class JdbcDataSource extends NamedDataSource {
         }
     }
 
+    protected long getFirstMutationResult(Statement stmt) throws SQLException {
+        long count = 0L;
+
+        try {
+            count = stmt.getLargeUpdateCount();
+        } catch (SQLException e) {
+            throw e;
+        } catch (Exception e) {
+            count = stmt.getUpdateCount();
+        }
+
+        return count == -1 ? 0 : count;
+    }
+
     protected ResultSet getFirstQueryResult(Statement stmt, boolean hasResultSet) throws SQLException {
         ResultSet rs = null;
 
@@ -654,27 +668,14 @@ public class JdbcDataSource extends NamedDataSource {
         try (Connection conn = getConnection(); Statement stmt = createStatement(conn, params)) {
             setTimeout(stmt, this.getQueryTimeout(params.getTimeout()));
 
-            final ResultSet rs = getFirstQueryResult(stmt, stmt.execute(loadedQuery));
-
-            DataTableReader reader = new ResultSetReader(getId(), rs, params);
-            reader.process(getId(), requestColumns, customColumns, getColumnsFromResultSet(rs, params), defaultValues,
-                    getTimeZone(), params, writer);
-
-            /*
-             * if (stmt.execute(loadedQuery)) { // TODO multiple resultsets
-             * 
-             * } else if (columns.size() == 1 && columns.getColumn(0).getType() ==
-             * ClickHouseDataType.Int32) {
-             * writer.write(ClickHouseBuffer.newInstance(4).writeInt32(stmt.getUpdateCount()
-             * )); } else { throw new IllegalStateException(
-             * "Not able to handle query result due to incompatible columns: " + columns); }
-             */
+            stmt.execute(loadedQuery);
+            this.writeMutationResult(getFirstMutationResult(stmt), requestColumns, customColumns, writer);
         } catch (SQLException e) {
             throw new DataAccessException(getId(), buildErrorMessage(e), e);
         } catch (DataAccessException e) {
             Throwable cause = e.getCause();
             throw new IllegalStateException(
-                    "Failed to query against [" + this.getId() + "] due to: " + buildErrorMessage(cause), cause);
+                    "Failed to mutate against [" + this.getId() + "] due to: " + buildErrorMessage(cause), cause);
         }
     }
 
