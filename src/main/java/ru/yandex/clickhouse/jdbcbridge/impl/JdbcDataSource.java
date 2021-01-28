@@ -762,7 +762,7 @@ public class JdbcDataSource extends NamedDataSource {
                     stmt.setInt(i, buffer.readUInt8());
                     break;
                 case UInt16:
-                    stmt.setInt(i, buffer.readUInt8());
+                    stmt.setInt(i, buffer.readUInt16());
                     break;
                 case UInt32:
                     stmt.setLong(i, buffer.readUInt32());
