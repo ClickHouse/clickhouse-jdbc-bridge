@@ -96,31 +96,28 @@ JDBC bridge for ClickHouse®. It acts as a stateless proxy passing queries from 
     Debian/Ubuntu
     ```bash
     apt update && apt install -y procps wget
-    export JDBC_BRIDGE_VERSION=2.0.0
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge_$JDBC_BRIDGE_VERSION-1_all.deb
-    apt install --no-install-recommends -f ./clickhouse-jdbc-bridge_$JDBC_BRIDGE_VERSION-1_all.deb
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.1/clickhouse-jdbc-bridge_2.0.1-1_all.deb
+    apt install --no-install-recommends -f ./clickhouse-jdbc-bridge_2.0.1-1_all.deb
     clickhouse-jdbc-bridge
     ```
 
     CentOS/RHEL
     ```bash
     yum install -y wget
-    export JDBC_BRIDGE_VERSION=2.0.0
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-1.noarch.rpm
-    yum localinstall -y clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-1.noarch.rpm
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.1/clickhouse-jdbc-bridge-2.0.1-1.noarch.rpm
+    yum localinstall -y clickhouse-jdbc-bridge-2.0.1-1.noarch.rpm
     clickhouse-jdbc-bridge
     ```
 
 * Java CLI
 
     ```bash
-    export JDBC_BRIDGE_VERSION=2.0.0
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v$JDBC_BRIDGE_VERSION/clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-shaded.jar
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.1/clickhouse-jdbc-bridge-2.0.1-shaded.jar
     # add named datasource
     wget -P config/datasources https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/master/misc/quick-start/jdbc-bridge/config/datasources/ch-server.json
     # start jdbc bridge, and then issue below query in ClickHouse for testing
     # select * from jdbc('ch-server', 'select 1')
-    java -jar clickhouse-jdbc-bridge-$JDBC_BRIDGE_VERSION-shaded.jar
+    java -jar clickhouse-jdbc-bridge-2.0.1-shaded.jar
     ```
 
 
@@ -267,7 +264,7 @@ Assuming you started a test environment using docker-compose, please refer to ex
                 "drivers/mariadb",
                 "D:\\drivers\\mariadb",
                 "/mnt/d/drivers/mariadb",
-                "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.0/mariadb-java-client-2.7.0.jar"
+                "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.2/mariadb-java-client-2.7.2.jar"
             ],
             "driverClassName": "org.mariadb.jdbc.Driver",
             ...
@@ -330,16 +327,16 @@ cd clickhouse-jdbc-bridge
 # compile and run unit tests
 mvn -Prelease verify
 # release shaded jar, rpm and debian packages
-mvn -Prelease -Drevision=2.0.0 package
+mvn -Prelease package
 ```
 
 In order to build docker images:
 ```bash
 git clone https://github.com/ClickHouse/clickhouse-jdbc-bridge.git
 cd clickhouse-jdbc-bridge
-docker build --squash --build-arg revision=2.0.0 -t my/clickhouse-jdbc-bridge .
+docker build -t my/clickhouse-jdbc-bridge .
 # or if you want to build the all-ine-one image
-docker build --squash --build-arg revision=20.9.3 -f all-in-one.Dockerfile -t my/clickhouse-all-in-one .
+docker build --build-arg revision=20.9.3 -f all-in-one.Dockerfile -t my/clickhouse-all-in-one .
 ```
 
 ## Develop
