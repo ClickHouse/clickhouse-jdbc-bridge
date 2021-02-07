@@ -318,17 +318,7 @@ public final class ByteBuffer {
     }
 
     public ByteBuffer writeInt128(BigInteger value) {
-        byte empty = value.signum() == -1 ? (byte) 0xFF : 0x00;
-        byte[] bytes = value.toByteArray();
-        for (int i = bytes.length - 1; i >= 0; i--) {
-            writeByte(bytes[i]);
-        }
-
-        for (int i = 16 - bytes.length; i > 0; i--) {
-            writeByte(empty);
-        }
-
-        return this;
+        return writeBigInteger(value, DataType.Int128.getLength());
     }
 
     public BigInteger readInt256() {
@@ -341,17 +331,7 @@ public final class ByteBuffer {
     }
 
     public ByteBuffer writeInt256(BigInteger value) {
-        byte empty = value.signum() == -1 ? (byte) 0xFF : 0x00;
-        byte[] bytes = value.toByteArray();
-        for (int i = bytes.length - 1; i >= 0; i--) {
-            writeByte(bytes[i]);
-        }
-
-        for (int i = 32 - bytes.length; i > 0; i--) {
-            writeByte(empty);
-        }
-
-        return this;
+        return writeBigInteger(value, DataType.Int256.getLength());
     }
 
     public BigInteger readUInt64() {
@@ -411,12 +391,20 @@ public final class ByteBuffer {
     }
 
     public ByteBuffer writeBigInteger(BigInteger value) {
+        return writeBigInteger(value, 16);
+    }
+
+    public ByteBuffer writeBigInteger(BigInteger value, int length) {
+        byte empty = value.signum() == -1 ? (byte) 0xFF : 0x00;
         byte[] bytes = value.toByteArray();
         for (int i = bytes.length - 1; i >= 0; i--) {
             writeByte(bytes[i]);
         }
 
-        writeBytes(new byte[16 - bytes.length]);
+        // FIXME when the given (byte)length is less than bytes.length...
+        for (int i = length - bytes.length; i > 0; i--) {
+            writeByte(empty);
+        }
 
         return this;
     }

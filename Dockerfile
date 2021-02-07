@@ -17,9 +17,9 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-FROM adoptopenjdk/openjdk8-openj9:jre8u275-b01_openj9-0.23.0-ubuntu
+FROM adoptopenjdk/openjdk8-openj9:jre8u282-b08_openj9-0.24.0-ubuntu
 
-ARG revision=2.0.0
+ARG revision=latest
 ARG repository=ClickHouse/clickhouse-jdbc-bridge
 
 # Maintainer
@@ -27,7 +27,7 @@ LABEL maintainer="zhicwu@gmail.com"
 
 # Environment variables
 ENV JDBC_BRIDGE_HOME=/app JDBC_BRIDGE_VERSION=${revision} \
-	JDBC_BRIDGE_REL_URL=https://github.com/${repository}/releases/download/v${revision}
+	JDBC_BRIDGE_REL_URL=https://github.com/${repository}/releases/download
 
 # Labels
 LABEL app_name="ClickHouse JDBC Bridge" app_version="$JDBC_BRIDGE_VERSION"
@@ -37,8 +37,11 @@ RUN apt-get update \
 	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated apache2-utils \
 		apt-transport-https curl htop iftop iptraf iputils-ping jq lsof net-tools tzdata wget \
 	&& apt-get clean \
+	&& if [ "$revision" = "latest" ] ; then export JDBC_BRIDGE_VERSION=$(curl -s https://repo1.maven.org/maven2/ru/yandex/clickhouse/clickhouse-jdbc-bridge/maven-metadata.xml | grep '<latest>' | sed -e 's|^.*>\(.*\)<.*$|\1|'); else export JDBC_BRIDGE_VERSION=${revision}; fi \
+	&& export JDBC_BRIDGE_REL_URL=$JDBC_BRIDGE_REL_URL/v$JDBC_BRIDGE_VERSION \
 	&& wget -q -P $JDBC_BRIDGE_HOME $JDBC_BRIDGE_REL_URL/LICENSE $JDBC_BRIDGE_REL_URL/NOTICE \
-		$JDBC_BRIDGE_REL_URL/clickhouse-jdbc-bridge-${revision}-shaded.jar \
+		$JDBC_BRIDGE_REL_URL/clickhouse-jdbc-bridge-${JDBC_BRIDGE_VERSION}-shaded.jar \
+	&& ln -s $JDBC_BRIDGE_HOME/clickhouse-jdbc-bridge-${JDBC_BRIDGE_VERSION}-shaded.jar $JDBC_BRIDGE_HOME/clickhouse-jdbc-bridge-shaded.jar \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY --chown=root:root docker/ $JDBC_BRIDGE_HOME
@@ -46,7 +49,7 @@ COPY --chown=root:root docker/ $JDBC_BRIDGE_HOME
 RUN chmod +x $JDBC_BRIDGE_HOME/*.sh \
 	&& mkdir -p $JDBC_BRIDGE_HOME/logs /usr/local/lib/java \
 	&& ln -s $JDBC_BRIDGE_HOME/logs /var/log/clickhouse-jdbc-bridge \
-	&& ln -s $JDBC_BRIDGE_HOME/clickhouse-jdbc-bridge-${revision}-shaded.jar \
+	&& ln -s $JDBC_BRIDGE_HOME/clickhouse-jdbc-bridge-${JDBC_BRIDGE_VERSION}-shaded.jar \
 		/usr/local/lib/java/clickhouse-jdbc-bridge-shaded.jar \
 	&& ln -s $JDBC_BRIDGE_HOME /etc/clickhouse-jdbc-bridge
 

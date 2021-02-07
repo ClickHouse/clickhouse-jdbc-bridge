@@ -19,9 +19,9 @@ on:
       - "misc/**"
 
 jobs:
-  build:
+  java:
+    name: "Build and verify Java code..."
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK 1.8
@@ -30,3 +30,28 @@ jobs:
           java-version: 1.8
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots verify
+
+  docker:
+    name: "Build and verify Dockerfile..."
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Build Default Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: my/clickhouse-jdbc-bridge:latest
+      - name: Build All-in-one Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./all-in-one.Dockerfile
+          push: false
+          tags: my/clickhouse-jdbc-bridge:latest
