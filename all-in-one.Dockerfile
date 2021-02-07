@@ -64,7 +64,7 @@ RUN apt-get update \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/mysql5 \
 		https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.49/mysql-connector-java-5.1.49.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/mysql8 \
-		https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.21/mysql-connector-java-8.0.23.jar \
+		https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.23/mysql-connector-java-8.0.23.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/postgres \
 		https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.18/postgresql-42.2.18.jar \
 	&& sed -i -e 's|\(^[[:space:]]*\)\(exec.*clickhouse-server.*$\)|\1exec -c clickhouse-jdbc-bridge >/dev/null \&\n\1\2|' /entrypoint.sh \
