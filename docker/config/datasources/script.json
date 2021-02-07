@@ -2,10 +2,10 @@
   "script": {
     "type": "script",
     "driverUrls": [
-      "/d/Tools/groovy-3.0.1/lib",
-      "!/d/Tools/groovy-3.0.1/lib/groovy-jaxb-3.0.1.jar",
-      "D:/Tools/groovy-3.0.1/lib",
-      "!D:/Tools/groovy-3.0.1/lib/groovy-jaxb-3.0.1.jar"
+      "/d/Tools/groovy-3.0.7/lib",
+      "!/d/Tools/groovy-3.0.7/lib/groovy-jaxb-3.0.7.jar",
+      "D:/Tools/groovy-3.0.7/lib",
+      "!D:/Tools/groovy-3.0.7/lib/groovy-jaxb-3.0.7.jar"
     ]
   }
 }
