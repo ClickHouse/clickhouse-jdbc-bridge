@@ -15,6 +15,7 @@
  */
 package ru.yandex.clickhouse.jdbcbridge.impl;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -758,6 +759,12 @@ public class JdbcDataSource extends NamedDataSource {
                 case Int64:
                     stmt.setLong(i, buffer.readInt64());
                     break;
+                case Int128:
+                    stmt.setBigDecimal(i, new BigDecimal(buffer.readInt128()));
+                    break;
+                case Int256:
+                    stmt.setBigDecimal(i, new BigDecimal(buffer.readInt256()));
+                    break;
                 case UInt8:
                     stmt.setInt(i, buffer.readUInt8());
                     break;
@@ -769,6 +776,12 @@ public class JdbcDataSource extends NamedDataSource {
                     break;
                 case UInt64:
                     stmt.setString(i, buffer.readUInt64().toString(10));
+                    break;
+                case UInt128:
+                    stmt.setBigDecimal(i, new BigDecimal(buffer.readUInt128()));
+                    break;
+                case UInt256:
+                    stmt.setBigDecimal(i, new BigDecimal(buffer.readUInt256()));
                     break;
                 case Float32:
                     stmt.setFloat(i, buffer.readFloat32());
