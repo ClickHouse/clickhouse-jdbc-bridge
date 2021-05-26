@@ -119,4 +119,24 @@ public class QueryParserTest {
 
         assertEquals(parser.getNormalizedQuery(), "select a from table where column = 2 and 'value1' != 'value2'");
     }
+
+    @Test(groups = { "unit" })
+    public void testUnescape() {
+        String str = "";
+        assertEquals(str, QueryParser.unescape(str));
+        assertEquals(str = "%", QueryParser.unescape(str));
+        assertEquals(str = "%b", QueryParser.unescape(str));
+        assertEquals("{", QueryParser.unescape("%7b"));
+        assertEquals("{", QueryParser.unescape("%7B"));
+        assertEquals("09AFaf", QueryParser.unescape("%30%39%41%46%61%66"));
+
+        try {
+            QueryParser.unescape(str = "%AGc");
+            fail("Should fail when unescape: " + str);
+        } catch (NumberFormatException e) {
+            assertNotNull(e);
+        }
+
+        assertEquals(str = "a\0\r\ncc123$%", QueryParser.unescape(str));
+    }
 }
