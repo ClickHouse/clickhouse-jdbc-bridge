@@ -48,6 +48,7 @@ public class QueryParser {
 
     private static final String EXPR_QUERY = PARAM_QUERY + "=";
     private static final String EXPR_FROM = " " + KEYWORD_FROM + " ";
+    private static final String EXPR_SAMPLE_BLOCK = "sample_block=";
 
     private static final String FORMAT_ROW_BINARY = "RowBinary";
 
@@ -263,15 +264,28 @@ public class QueryParser {
             String schema = req.getParam(PARAM_SCHEMA);
             String table = req.getParam(PARAM_TABLE);
 
+            String columns = null;
+
+            // since PR #23215(merged into 21.5), columns parameter is removed and it's
+            // replaced by sample_block in request_body
             if (table == null) {
                 table = ctx.getBodyAsString();
-
-                // remove optional prefix
-                if (table != null && table.startsWith(EXPR_QUERY)) {
-                    table = table.substring(EXPR_QUERY.length());
-                } else {
+                if (table == null) {
                     table = EMPTY_STRING;
+                } else {
+                    int len = EXPR_SAMPLE_BLOCK.length();
+                    int index = table.indexOf('&');
+                    if (table.startsWith(EXPR_SAMPLE_BLOCK) && index > len) {
+                        columns = unescape(table.substring(len, index));
+                        table = unescape(table.substring(index + 1));
+                    }
+
+                    table = table.startsWith(EXPR_QUERY) ? table.substring(EXPR_QUERY.length()) : table;
                 }
+            }
+
+            if (columns == null) {
+                columns = req.getParam(PARAM_COLUMNS);
             }
 
             if (schema == null) {
@@ -282,11 +296,28 @@ public class QueryParser {
                 }
             }
 
-            query = new QueryParser(uri, schema, table, req.getParam(PARAM_COLUMNS), null,
-                    req.getParam(PARAM_EXT_TABLE_USE_NULLS), req.params());
+            query = new QueryParser(uri, schema, table, columns, null, req.getParam(PARAM_EXT_TABLE_USE_NULLS),
+                    req.params());
         }
 
         return query;
+    }
+
+    // https://github.com/ClickHouse/ClickHouse/blob/v21.5.5.12-stable/src/Common/escapeForFileName.cpp#L33
+    static String unescape(String str) {
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0, len = str.length(); i < len; i++) {
+            char ch = str.charAt(i);
+            if (ch == '%' && i + 2 < len) {
+                ch = (char) Integer.parseInt(str.substring(i + 1, i + 3), 16);
+                i = i + 2;
+            }
+
+            builder.append(ch);
+        }
+
+        return builder.toString();
     }
 
     static String normalizeQuery(String query) {

@@ -90,6 +90,7 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
 
     private static final String WRITE_RESPONSE = "Ok.";
     private static final String PING_RESPONSE = WRITE_RESPONSE + "\n";
+    private static final String SCHEMA_ALLOWED_RESPONSE = "1\n";
 
     private final List<Extension<?>> extensions;
 
@@ -257,6 +258,7 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
 
         // stateless endpoints
         router.get("/ping").handler(requestTimeoutHandler).handler(this::handlePing);
+        router.get("/schema_allowed").handler(requestTimeoutHandler).handler(this::handleSchemaAllowed);
 
         router.post("/identifier_quote").produces(RESPONSE_CONTENT_TYPE).handler(requestTimeoutHandler)
                 .handler(this::handleIdentifierQuote);
@@ -319,6 +321,11 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
 
     private void handlePing(RoutingContext ctx) {
         ctx.response().end(PING_RESPONSE);
+    }
+
+    private void handleSchemaAllowed(RoutingContext ctx) {
+        // TODO some datasources do not support schema
+        ctx.response().end(SCHEMA_ALLOWED_RESPONSE);
     }
 
     private NamedDataSource getDataSource(String uri, boolean orCreate) {
