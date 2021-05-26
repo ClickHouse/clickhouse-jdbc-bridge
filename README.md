@@ -96,28 +96,28 @@ JDBC bridge for ClickHouse®. It acts as a stateless proxy passing queries from 
     Debian/Ubuntu
     ```bash
     apt update && apt install -y procps wget
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.1/clickhouse-jdbc-bridge_2.0.1-1_all.deb
-    apt install --no-install-recommends -f ./clickhouse-jdbc-bridge_2.0.1-1_all.deb
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.2/clickhouse-jdbc-bridge_2.0.2-1_all.deb
+    apt install --no-install-recommends -f ./clickhouse-jdbc-bridge_2.0.2-1_all.deb
     clickhouse-jdbc-bridge
     ```
 
     CentOS/RHEL
     ```bash
     yum install -y wget
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.1/clickhouse-jdbc-bridge-2.0.1-1.noarch.rpm
-    yum localinstall -y clickhouse-jdbc-bridge-2.0.1-1.noarch.rpm
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.2/clickhouse-jdbc-bridge-2.0.2-1.noarch.rpm
+    yum localinstall -y clickhouse-jdbc-bridge-2.0.2-1.noarch.rpm
     clickhouse-jdbc-bridge
     ```
 
 * Java CLI
 
     ```bash
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.1/clickhouse-jdbc-bridge-2.0.1-shaded.jar
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.2/clickhouse-jdbc-bridge-2.0.2-shaded.jar
     # add named datasource
     wget -P config/datasources https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/master/misc/quick-start/jdbc-bridge/config/datasources/ch-server.json
     # start jdbc bridge, and then issue below query in ClickHouse for testing
     # select * from jdbc('ch-server', 'select 1')
-    java -jar clickhouse-jdbc-bridge-2.0.1-shaded.jar
+    java -jar clickhouse-jdbc-bridge-2.0.2-shaded.jar
     ```
 
 
