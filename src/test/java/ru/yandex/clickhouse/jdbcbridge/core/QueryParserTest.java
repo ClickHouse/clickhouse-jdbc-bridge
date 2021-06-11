@@ -79,6 +79,13 @@ public class QueryParserTest {
 
         query = "SELECT \"col1\", \"col2\" FROM \"some_schema\".\"" + embeddedQuery + "\"";
         assertEquals(QueryParser.normalizeQuery(query), embeddedQuery);
+
+        query = "SELECT * FROM test.test_table";
+        assertEquals(QueryParser.normalizeQuery(query), query);
+
+        embeddedQuery = "SELECT 1 as \\`a\\`, ''\\`2'' as \\`b\\`";
+        query = "SELECT `col1`, `col2` FROM `" + embeddedQuery + "`";
+        assertEquals(QueryParser.normalizeQuery(query), embeddedQuery.replace("\\", ""));
     }
 
     @Test(groups = { "unit" })
