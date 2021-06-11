@@ -17,7 +17,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-FROM adoptopenjdk/openjdk8-openj9:jre8u282-b08_openj9-0.24.0-ubuntu
+FROM adoptopenjdk/openjdk8-openj9:jre8u292-b10_openj9-0.26.0-ubuntu
 
 ARG revision=latest
 ARG repository=ClickHouse/clickhouse-jdbc-bridge
@@ -38,6 +38,11 @@ RUN apt-get update \
 		apt-transport-https curl htop iftop iptraf iputils-ping jq lsof net-tools tzdata wget \
 	&& apt-get clean \
 	&& if [ "$revision" = "latest" ] ; then export JDBC_BRIDGE_VERSION=$(curl -s https://repo1.maven.org/maven2/ru/yandex/clickhouse/clickhouse-jdbc-bridge/maven-metadata.xml | grep '<latest>' | sed -e 's|^.*>\(.*\)<.*$|\1|'); else export JDBC_BRIDGE_VERSION=${revision}; fi \
+	&& export DOWNLOAD_URL=https://github.com/ClickHouse/clickhouse-jdbc/releases/download \
+		DRIVER_VER=$(curl -sL https://repo1.maven.org/maven2/ru/yandex/clickhouse/clickhouse-jdbc/maven-metadata.xml \
+        | grep '<release>' | sed -e 's|.*>\(.*\)<.*|\1|') \
+    && wget -P $JDBC_BRIDGE_HOME/drivers \
+		$DOWNLOAD_URL/v$DRIVER_VER/clickhouse-jdbc-$DRIVER_VER-shaded.jar \
 	&& export JDBC_BRIDGE_REL_URL=$JDBC_BRIDGE_REL_URL/v$JDBC_BRIDGE_VERSION \
 	&& wget -q -P $JDBC_BRIDGE_HOME $JDBC_BRIDGE_REL_URL/LICENSE $JDBC_BRIDGE_REL_URL/NOTICE \
 		$JDBC_BRIDGE_REL_URL/clickhouse-jdbc-bridge-${JDBC_BRIDGE_VERSION}-shaded.jar \
