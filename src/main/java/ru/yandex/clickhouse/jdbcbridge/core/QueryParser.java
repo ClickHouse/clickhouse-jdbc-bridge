@@ -57,6 +57,7 @@ public class QueryParser {
     private static final String MULTILINE_COMMENT_END = "*/";
     private static final String DOUBLE_QUOTES_STRING = "''";
     private static final String ESCAPED_QUOTE_STRING = "\\'";
+    private static final String ESCAPED_BACKTICK_STRING = "\\`";
 
     private final String uri;
     private final String schema;
@@ -193,7 +194,8 @@ public class QueryParser {
             } else if (MULTILINE_COMMENT_BEGIN.equals(nextTwo)) {
                 int newIdx = query.indexOf(MULTILINE_COMMENT_END, i);
                 i = newIdx != -1 ? newIdx + 1 : len;
-            } else if (DOUBLE_QUOTES_STRING.equals(nextTwo) || ESCAPED_QUOTE_STRING.equals(nextTwo)) {
+            } else if (DOUBLE_QUOTES_STRING.equals(nextTwo) || ESCAPED_QUOTE_STRING.equals(nextTwo)
+                    || ESCAPED_BACKTICK_STRING.equals(nextTwo)) {
                 // ignore escaped single quote
                 i += nextTwo.length() - 1;
             } else if (nextTwo.charAt(0) == '\'') {
@@ -331,23 +333,15 @@ public class QueryParser {
         if (index > 0 && len > (index = index + EXPR_FROM.length())) {
             // assume quote is just one character and it always exists
             char quote = query.charAt(index++);
+            boolean isQuote = quote == '"' || quote == '`';
 
-            int dotIndex = query.indexOf('.', index);
+            int dotIndex = isQuote ? query.indexOf('.', index) : -1;
 
-            if (dotIndex > index && len > dotIndex && query.charAt(dotIndex - 1) == quote
-                    && query.charAt(dotIndex + 1) == quote) { // has schema
+            if (dotIndex > index && query.charAt(dotIndex - 1) == quote && query.charAt(dotIndex + 1) == quote) { // has
+                                                                                                                  // schema
                 dotIndex += 2;
-                /*
-                 * int endIndex = query.indexOf(quote, dotIndex); // .lastIndexOf(quote); if
-                 * (endIndex > dotIndex) { extractedQuery = query.substring(dotIndex, endIndex);
-                 * }
-                 */
-            } else if (quote == '"' || quote == '`') {
+            } else if (isQuote) {
                 dotIndex = index;
-                /*
-                 * int endIndex = query.indexOf(quote, index); // query.lastIndexOf(quote); if
-                 * (endIndex > index) { extractedQuery = query.substring(index, endIndex); }
-                 */
             } else {
                 dotIndex = len;
             }
@@ -362,7 +356,8 @@ public class QueryParser {
                 } else if (MULTILINE_COMMENT_BEGIN.equals(nextTwo)) {
                     int newIdx = query.indexOf(MULTILINE_COMMENT_END, i);
                     i = newIdx != -1 ? newIdx + 1 : len;
-                } else if (DOUBLE_QUOTES_STRING.equals(nextTwo) || ESCAPED_QUOTE_STRING.equals(nextTwo)) {
+                } else if (DOUBLE_QUOTES_STRING.equals(nextTwo) || ESCAPED_QUOTE_STRING.equals(nextTwo)
+                        || ESCAPED_BACKTICK_STRING.equals(nextTwo)) {
                     // ignore escaped single quote
                     i += nextTwo.length() - 1;
                 } else if (nextTwo.charAt(0) == '\'') {
@@ -387,6 +382,7 @@ public class QueryParser {
         // \f Insert a formfeed in the text at this point.
         // \' Insert a single quote character in the text at this point.
         // \" Insert a double quote character in the text at this point.
+        // \` Insert a backtick character in the text at this point.
         // \\ Insert a backslash character in the text at this point.
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < len; i++) {
@@ -420,6 +416,10 @@ public class QueryParser {
                         break;
                     case '"':
                         builder.append('"');
+                        i++;
+                        break;
+                    case '`':
+                        builder.append('`');
                         i++;
                         break;
                     case '\\':
