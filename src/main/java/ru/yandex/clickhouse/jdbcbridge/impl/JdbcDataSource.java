@@ -70,6 +70,7 @@ public class JdbcDataSource extends NamedDataSource {
     private static final Properties DEFAULT_DATASOURCE_PROPERTIES = new Properties();
 
     private static final String PROP_DRIVER_CLASS = "driverClassName";
+    private static final String PROP_INITIALIZATION_FAIL_TIMEOUT = "initializationFailTimeout";
     private static final String PROP_POOL_NAME = "poolName";
     private static final String PROP_PASSWORD = "password";
 
@@ -405,6 +406,9 @@ public class JdbcDataSource extends NamedDataSource {
                 }
             }
 
+            if (!props.containsKey(PROP_INITIALIZATION_FAIL_TIMEOUT)) {
+                props.setProperty(PROP_INITIALIZATION_FAIL_TIMEOUT, "0");
+            }
             props.setProperty(PROP_POOL_NAME, id);
 
             this.jdbcUrl = null;
