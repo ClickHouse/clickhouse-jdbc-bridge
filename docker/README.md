@@ -75,6 +75,7 @@ In order to customize the container, please refer to directory structure and sup
 Environment Variable | Java System Property | Default Value | Remark
 -- | -- | -- | --
 CONFIG_DIR | jdbc-bridge.config.dir | config | Configuration   directory
+SERIAL_MODE | jdbc-bridge.serial.mode | false | Whether run query in serial mode or not
 CUSTOM_DRIVER_LOADER | jdbc-bridge.driver.loader | true | Whether use custom driver class loader   or not
 DATASOURCE_CONFIG_DIR | jdbc-bridge.datasource.config.dir | datasources | Directory   for named datasources
 DEFAULT_VALUE | jdbc-bridge.type.default | false | Whether support default expression in   column definition or not
