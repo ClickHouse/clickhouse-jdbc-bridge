@@ -264,7 +264,7 @@ Assuming you started a test environment using docker-compose, please refer to ex
                 "drivers/mariadb",
                 "D:\\drivers\\mariadb",
                 "/mnt/d/drivers/mariadb",
-                "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.2/mariadb-java-client-2.7.2.jar"
+                "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.4/mariadb-java-client-2.7.4.jar"
             ],
             "driverClassName": "org.mariadb.jdbc.Driver",
             ...

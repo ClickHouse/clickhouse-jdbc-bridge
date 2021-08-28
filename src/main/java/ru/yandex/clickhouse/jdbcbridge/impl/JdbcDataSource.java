@@ -463,14 +463,14 @@ public class JdbcDataSource extends NamedDataSource {
 
             try {
                 conn.setAutoCommit(true);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.warn("Failed to enable auto-commit due to {}", e.getMessage());
             }
         }
 
         try {
             conn.setClientInfo(PROP_CLIENT_NAME, DEFAULT_CLIENT_NAME);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.warn("Failed call setClientInfo due to {}", e.getMessage());
         }
 
