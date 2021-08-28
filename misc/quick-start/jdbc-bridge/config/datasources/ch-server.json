@@ -3,7 +3,7 @@
   "ch-server": {
     "aliases": ["self"],
     "driverUrls": [
-      "https://repo1.maven.org/maven2/ru/yandex/clickhouse/clickhouse-jdbc/0.2.5/clickhouse-jdbc-0.2.5-shaded.jar"
+      "https://repo1.maven.org/maven2/ru/yandex/clickhouse/clickhouse-jdbc/0.3.1-patch/clickhouse-jdbc-0.3.1-patch-shaded.jar"
     ],
     "driverClassName": "ru.yandex.clickhouse.ClickHouseDriver",
     "jdbcUrl": "jdbc:clickhouse://ch-server:8123/system",

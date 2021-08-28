@@ -58,15 +58,15 @@ RUN apt-get update \
 	&& apt-get clean \
 	&& rm -rf /*.deb /var/lib/apt/lists/* /tmp/* /var/tmp/* \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/clickhouse \
-		https://repo1.maven.org/maven2/ru/yandex/clickhouse/clickhouse-jdbc/0.2.5/clickhouse-jdbc-0.2.5-shaded.jar \
+		https://repo1.maven.org/maven2/ru/yandex/clickhouse/clickhouse-jdbc/0.3.1-patch/clickhouse-jdbc-0.3.1-patch-shaded.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/mariadb \
-		https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.2/mariadb-java-client-2.7.2.jar \
+		https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.4/mariadb-java-client-2.7.4.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/mysql5 \
 		https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.49/mysql-connector-java-5.1.49.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/mysql8 \
-		https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.23/mysql-connector-java-8.0.23.jar \
+		https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/postgres \
-		https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.18/postgresql-42.2.18.jar \
+		https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.23/postgresql-42.2.23.jar \
 	&& sed -i -e 's|\(^[[:space:]]*\)\(exec.*clickhouse-server.*$\)|\1exec -c clickhouse-jdbc-bridge >/dev/null \&\n\1\2|' /entrypoint.sh \
 	&& echo '{\n\
   "$schema": "../datasource-schema.json",\n\
