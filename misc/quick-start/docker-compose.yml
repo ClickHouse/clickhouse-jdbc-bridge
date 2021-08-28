@@ -69,6 +69,7 @@ services:
     # Below are all default settings just for demonstration
     environment:
       CONFIG_DIR: config # configuration directory
+      SERIAL_MODE: "false" # whether run query in serial mode or not
       HTTPD_CONFIG_FILE: httpd.json # httpd configuration file
       SERVER_CONFIG_FILE: server.json # server configuration file
       VERTX_CONFIG_FILE: vertx.json # vertx configuration file

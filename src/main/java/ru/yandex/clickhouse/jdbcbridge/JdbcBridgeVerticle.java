@@ -83,6 +83,8 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
     private static volatile long startTime;
 
     private static final String CONFIG_PATH = Utils.getConfiguration("config", "CONFIG_DIR", "jdbc-bridge.config.dir");
+    private static final boolean SERIAL_MODE = Boolean
+            .valueOf(Utils.getConfiguration("false", "SERIAL_MODE", "jdbc-bridge.serial.mode"));
 
     private static final int DEFAULT_SERVER_PORT = 9019;
 
@@ -264,10 +266,10 @@ public class JdbcBridgeVerticle extends AbstractVerticle implements ExtensionMan
                 .handler(this::handleIdentifierQuote);
         router.post("/columns_info").produces(RESPONSE_CONTENT_TYPE).handler(queryTimeoutHandler)
                 .handler(this::handleColumnsInfo);
-        router.post("/").produces(RESPONSE_CONTENT_TYPE).handler(queryTimeoutHandler)
-                .blockingHandler(this::handleQuery);
+        router.post("/").produces(RESPONSE_CONTENT_TYPE).handler(queryTimeoutHandler).blockingHandler(this::handleQuery,
+                SERIAL_MODE);
         router.post("/write").produces(RESPONSE_CONTENT_TYPE).handler(queryTimeoutHandler)
-                .blockingHandler(this::handleWrite);
+                .blockingHandler(this::handleWrite, SERIAL_MODE);
 
         log.info("Starting web server...");
         int port = bridgeServerConfig.getInteger("serverPort", DEFAULT_SERVER_PORT);

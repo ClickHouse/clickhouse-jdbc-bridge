@@ -2,7 +2,7 @@
   "$schema": "../../../../../docker/config/datasource.jschema",
   "mariadb10": {
     "driverUrls": [
-      "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.2/mariadb-java-client-2.7.2.jar"
+      "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.4/mariadb-java-client-2.7.4.jar"
     ],
     "driverClassName": "org.mariadb.jdbc.Driver",
     "jdbcUrl": "jdbc:mariadb://db-mariadb10/test?useSSL=false&useCompression=false&useOldAliasMetadataBehavior=true&allowMultiQueries=true",

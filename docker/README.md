@@ -12,13 +12,13 @@ The latest tag points to the latest release from `master` branch. Branch tags li
 ```bash
 docker run -d --name ch-jdbc-bridge -p9019:9019 \
     -e MAVEN_REPO_URL="https://repo1.maven.org/maven2" \
-    -e JDBC_DRIVERS="org/mariadb/jdbc/mariadb-java-client/2.7.2/mariadb-java-client-2.7.2.jar,org/postgresql/postgresql/42.2.18/postgresql-42.2.18.jar" yandex/clickhouse-jdbc-bridge
+    -e JDBC_DRIVERS="org/mariadb/jdbc/mariadb-java-client/2.7.4/mariadb-java-client-2.7.4.jar,org/postgresql/postgresql/42.2.23/postgresql-42.2.23.jar" yandex/clickhouse-jdbc-bridge
 ```
 If you prefer to use JDBC drivers and named datasources on host, you can use the following commands:
 ```bash
 wget -P drivers \
-    https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.2/mariadb-java-client-2.7.2.jar \
-    https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.18/postgresql-42.2.18.jar
+    https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.4/mariadb-java-client-2.7.4.jar \
+    https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.23/postgresql-42.2.23.jar
 wget -P datasources \
     https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/master/misc/quick-start/jdbc-bridge/config/datasources/mariadb10.json \
     https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/master/misc/quick-start/jdbc-bridge/config/datasources/postgres13.json
@@ -75,6 +75,7 @@ In order to customize the container, please refer to directory structure and sup
 Environment Variable | Java System Property | Default Value | Remark
 -- | -- | -- | --
 CONFIG_DIR | jdbc-bridge.config.dir | config | Configuration   directory
+SERIAL_MODE | jdbc-bridge.serial.mode | false | Whether run query in serial mode or not
 CUSTOM_DRIVER_LOADER | jdbc-bridge.driver.loader | true | Whether use custom driver class loader   or not
 DATASOURCE_CONFIG_DIR | jdbc-bridge.datasource.config.dir | datasources | Directory   for named datasources
 DEFAULT_VALUE | jdbc-bridge.type.default | false | Whether support default expression in   column definition or not
