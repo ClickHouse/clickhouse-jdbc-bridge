@@ -74,7 +74,7 @@ JDBC bridge for ClickHouse®. It acts as a stateless proxy passing queries from 
     # create a network for ClickHouse and JDBC brigde, so that they can communicate with each other
     docker network create ch-net --attachable
     # start the two containers
-    docker run --rm -d --network ch-net --name jdbc-bridge --hostname jdbc-bridge yandex/clickhouse-jdbc-bridge
+    docker run --rm -d --network ch-net --name jdbc-bridge --hostname jdbc-bridge clickhouse/jdbc-bridge
     docker run --rm -d --network ch-net --name ch-server --hostname ch-server \
         --entrypoint /bin/bash yandex/clickhouse-server -c \
         "echo '<yandex><jdbc_bridge><host>jdbc-bridge</host><port>9019</port></jdbc_bridge></yandex>' \

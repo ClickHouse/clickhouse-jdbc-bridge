@@ -80,7 +80,7 @@ services:
         window: 60s
 
   jdbc-bridge:
-    image: yandex/clickhouse-jdbc-bridge
+    image: clickhouse/jdbc-bridge
     hostname: jdbc-bridge
     ports:
       - "9019:9019"
