@@ -63,7 +63,7 @@ services:
     restart: always
 
   jdbc-bridge:
-    image: yandex/clickhouse-jdbc-bridge:2.0
+    image: clickhouse/jdbc-bridge:2.0
     hostname: jdbc-bridge
     # In general you don't need to define any environment variable
     # Below are all default settings just for demonstration
