@@ -18,7 +18,7 @@ on:
       organization:
         description: "DockerHub organization"
         required: false
-        default: "clickhouse"
+        default: "yandex"
 
 jobs:
   pre-release:
@@ -82,7 +82,12 @@ jobs:
             revision=${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }}
             repository=${{ github.repository }}
           tags: |
-            ${{ github.event.inputs.organization }}/jdbc-bridge:latest
-            ${{ github.event.inputs.organization }}/jdbc-bridge:${{ github.event.inputs.major }}
-            ${{ github.event.inputs.organization }}/jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}
-            ${{ github.event.inputs.organization }}/jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }}
+            ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:latest
+            ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:${{ github.event.inputs.major }}
+            ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}
+            ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }}
+            clickhouse/jdbc-bridge:latest
+            clickhouse/jdbc-bridge:${{ github.event.inputs.major }}
+            clickhouse/jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}
+            clickhouse/jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }}
+
