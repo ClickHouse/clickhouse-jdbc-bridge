@@ -12,7 +12,7 @@ The latest tag points to the latest release from `master` branch. Branch tags li
 ```bash
 docker run -d --name ch-jdbc-bridge -p9019:9019 \
     -e MAVEN_REPO_URL="https://repo1.maven.org/maven2" \
-    -e JDBC_DRIVERS="org/mariadb/jdbc/mariadb-java-client/2.7.4/mariadb-java-client-2.7.4.jar,org/postgresql/postgresql/42.2.23/postgresql-42.2.23.jar" yandex/clickhouse-jdbc-bridge
+    -e JDBC_DRIVERS="org/mariadb/jdbc/mariadb-java-client/2.7.4/mariadb-java-client-2.7.4.jar,org/postgresql/postgresql/42.2.23/postgresql-42.2.23.jar" clickhouse/jdbc-bridge
 ```
 If you prefer to use JDBC drivers and named datasources on host, you can use the following commands:
 ```bash
@@ -24,7 +24,7 @@ wget -P datasources \
     https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/master/misc/quick-start/jdbc-bridge/config/datasources/postgres13.json
 # please edit datasources/*.json to connect to your database servers
 docker run -d --name ch-jdbc-bridge -p9019:9019 -v `pwd`/drivers:/app/drivers \
-    -v `pwd`/datasources:/app/config/datasources yandex/clickhouse-jdbc-bridge
+    -v `pwd`/datasources:/app/config/datasources clickhouse/jdbc-bridge
 ```
 
 ### Configure ClickHouse server
