@@ -53,7 +53,7 @@ public class JdbcBridgeVerticleTest {
             .waitingFor(new LogMessageWaitStrategy().withRegEx(".*mysqld: ready for connections.*").withTimes(2)
                     .withStartupTimeout(Duration.of(60, SECONDS)));
 
-    private static final GenericContainer<?> jbServer = new GenericContainer<>("yandex/clickhouse-jdbc-bridge")
+    private static final GenericContainer<?> jbServer = new GenericContainer<>("clickhouse/jdbc-bridge")
             .withNetwork(sharedNetwork).withNetworkAliases("jdbc_bridge_server")
             .withFileSystemBind("target", "/build", BindMode.READ_WRITE)
             .withWorkingDirectory("/build/test-classes/sit/jdbc-bridge")
