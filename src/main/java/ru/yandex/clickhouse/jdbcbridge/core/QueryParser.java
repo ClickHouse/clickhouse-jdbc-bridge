@@ -38,7 +38,7 @@ public class QueryParser {
     // Otherwise NULLs will be substituted with default values.
     // Currently supported only for 'mysql' table function.
     private static final String PARAM_EXT_TABLE_USE_NULLS = "external_table_functions_use_nulls";
-    private static final String PARAM_COLUMNS = "columns";
+    private static final String PARAM_COLUMNS = "sample_block";
     private static final String PARAM_QUERY = "query";
     private static final String PARAM_DB_NAME = "db_name";
     private static final String PARAM_TABLE_NAME = "table_name";
