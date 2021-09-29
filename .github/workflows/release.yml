@@ -86,3 +86,8 @@ jobs:
             ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:${{ github.event.inputs.major }}
             ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}
             ${{ github.event.inputs.organization }}/clickhouse-jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }}
+            clickhouse/jdbc-bridge:latest
+            clickhouse/jdbc-bridge:${{ github.event.inputs.major }}
+            clickhouse/jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}
+            clickhouse/jdbc-bridge:${{ github.event.inputs.major }}.${{ github.event.inputs.minor }}.${{ github.event.inputs.patch }}
+

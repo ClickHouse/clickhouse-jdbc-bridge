@@ -66,7 +66,7 @@ RUN apt-get update \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/mysql8 \
 		https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar \
 	&& wget -q -P /etc/clickhouse-jdbc-bridge/drivers/postgres \
-		https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.23/postgresql-42.2.23.jar \
+		https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.24/postgresql-42.2.24.jar \
 	&& sed -i -e 's|\(^[[:space:]]*\)\(exec.*clickhouse-server.*$\)|\1exec -c clickhouse-jdbc-bridge >/dev/null \&\n\1\2|' /entrypoint.sh \
 	&& echo '{\n\
   "$schema": "../datasource-schema.json",\n\
