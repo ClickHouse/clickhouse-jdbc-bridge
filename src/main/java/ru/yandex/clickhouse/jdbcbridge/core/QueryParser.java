@@ -38,7 +38,8 @@ public class QueryParser {
     // Otherwise NULLs will be substituted with default values.
     // Currently supported only for 'mysql' table function.
     private static final String PARAM_EXT_TABLE_USE_NULLS = "external_table_functions_use_nulls";
-    private static final String PARAM_COLUMNS = "sample_block";
+    private static final String PARAM_COLUMNS = "columns";
+    private static final String PARAM_SAMPLE_BLOCK = "sample_block";
     private static final String PARAM_QUERY = "query";
     private static final String PARAM_DB_NAME = "db_name";
     private static final String PARAM_TABLE_NAME = "table_name";
@@ -260,8 +261,12 @@ public class QueryParser {
 
         String uri = Objects.requireNonNull(resolver).resolve(req.getParam(PARAM_CONNECTION_STRING));
         if (forWrite) {
-            query = new QueryParser(uri, req.getParam(PARAM_DB_NAME), req.getParam(PARAM_TABLE_NAME),
-                    req.getParam(PARAM_COLUMNS), req.getParam(PARAM_FORMAT_NAME), null, null);
+            String columns = req.getParam(PARAM_SAMPLE_BLOCK);
+            if (columns == null) {
+                columns = req.getParam(PARAM_COLUMNS);
+            }
+            query = new QueryParser(uri, req.getParam(PARAM_DB_NAME), req.getParam(PARAM_TABLE_NAME), columns,
+                    req.getParam(PARAM_FORMAT_NAME), null, null);
         } else {
             String schema = req.getParam(PARAM_SCHEMA);
             String table = req.getParam(PARAM_TABLE);
@@ -287,7 +292,10 @@ public class QueryParser {
             }
 
             if (columns == null) {
-                columns = req.getParam(PARAM_COLUMNS);
+                columns = req.getParam(PARAM_SAMPLE_BLOCK);
+                if (columns == null) {
+                    columns = req.getParam(PARAM_COLUMNS);
+                }
             }
 
             if (schema == null) {
