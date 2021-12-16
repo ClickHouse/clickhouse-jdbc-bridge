@@ -131,7 +131,7 @@
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-jdk14</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
 
@@ -301,7 +301,7 @@
                                     <groupname>root</groupname>
                                     <sources>
                                         <source>
-                                            <location>docker/log4j.properties</location>
+                                            <location>docker/logging.properties</location>
                                         </source>
                                         <source>
                                             <location>docker/set-env.sh.example</location>
@@ -408,29 +408,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>com.google.code.maven-replacer-plugin</groupId>
-                <artifactId>replacer</artifactId>
-                <version>${replacer-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>replace</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <file>src/main/resources/log4j.properties</file>
-                    <outputFile>target/classes/log4j.properties</outputFile>
-                    <replacements>
-                        <replacement>
-                            <token>org.apache.log4j</token>
-                            <value>${shade.base}.log4j</value>
-                        </replacement>
-                    </replacements>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>com.mycila</groupId>
@@ -556,10 +533,6 @@
                         <relocation>
                             <pattern>com.codahale.metrics</pattern>
                             <shadedPattern>${shade.base}.metrics</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>org.apache.log4j</pattern>
-                            <shadedPattern>${shade.base}.log4j</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.checkerframework</pattern>

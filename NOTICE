@@ -19,7 +19,6 @@ under the License.
 
 This project includes:
   Apache Commons Compress under Apache License, Version 2.0
-  Apache Log4j under The Apache Software License, Version 2.0
   Caffeine cache under Apache License, Version 2.0
   Checker Qual under The MIT License
   ClickHouse JDBC Bridge under Apache License, Version 2.0
@@ -56,7 +55,7 @@ This project includes:
   Prometheus Java Simpleclient under The Apache Software License, Version 2.0
   Prometheus Java Simpleclient Common under The Apache Software License, Version 2.0
   SLF4J API Module under MIT License
-  SLF4J LOG4J-12 Binding under MIT License
+  SLF4J JDK14 Binding under MIT License
   Testcontainers Core under MIT
   testng under Apache 2.0
   Vert.x Bridge Common under The Apache Software License, Version 2.0 or Eclipse Public License - v 1.0

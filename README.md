@@ -286,7 +286,7 @@ Assuming you started a test environment using docker-compose, please refer to ex
 
 * Logging
 
-    You can customize logging configuration in [log4j.properties](docker/log4j.properties).
+    You can customize logging configuration in [logging.properties](docker/logging.properties).
 
 * Vert.x
 
