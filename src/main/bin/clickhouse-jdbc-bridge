@@ -62,7 +62,7 @@ start_server() {
 
     echo "Work directory is set to [$WORK_DIRECTORY]"
     cd "$WORK_DIRECTORY"
-    java $JVM_ARGS -Dlog4j.configuration=file:///$WORK_DIRECTORY/log4j.properties \
+    java $JVM_ARGS -Djava.util.logging.config.file=$WORK_DIRECTORY/logging.properties \
         -Duser.dir="$WORK_DIRECTORY" -jar "$APP_PACKAGE"
 }
 
