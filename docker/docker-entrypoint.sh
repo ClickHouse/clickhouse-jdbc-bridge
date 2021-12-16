@@ -24,12 +24,12 @@ start_server() {
 		local classpath="./clickhouse-jdbc-bridge-shaded.jar:$(echo $(ls ${DRIVER_DIR:="drivers"}/*.jar) | tr ' ' ':'):."
 		java -XX:+UseContainerSupport -XX:+IdleTuningCompactOnIdle -XX:+IdleTuningGcOnIdle \
 			-Xdump:none -Xdump:tool:events=systhrow+throw,filter=*OutOfMemoryError,exec="kill -9 %pid" \
-			-Dlog4j.configuration=file:///$JDBC_BRIDGE_HOME/log4j.properties -Dnashorn.args=--language=es6 \
+			-Djava.util.logging.config.file=$JDBC_BRIDGE_HOME/logging.properties -Dnashorn.args=--language=es6 \
 			${JDBC_BRIDGE_JVM_OPTS:=""} -cp $classpath ru.yandex.clickhouse.jdbcbridge.JdbcBridgeVerticle
 	else
 		java -XX:+UseContainerSupport -XX:+IdleTuningCompactOnIdle -XX:+IdleTuningGcOnIdle \
 			-Xdump:none -Xdump:tool:events=systhrow+throw,filter=*OutOfMemoryError,exec="kill -9 %pid" \
-			-Dlog4j.configuration=file:///$JDBC_BRIDGE_HOME/log4j.properties -Dnashorn.args=--language=es6 \
+			-Djava.util.logging.config.file=$JDBC_BRIDGE_HOME/logging.properties -Dnashorn.args=--language=es6 \
 			${JDBC_BRIDGE_JVM_OPTS:=""} -jar clickhouse-jdbc-bridge-shaded.jar
 	fi
 }
