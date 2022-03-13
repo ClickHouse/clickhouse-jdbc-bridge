@@ -127,7 +127,7 @@ public class QueryParserTest {
         assertEquals(parser.getNormalizedQuery(), "select a from table where column = 2 and 'value1' != 'value2'");
     }
 
-    // Reference: https://github.com/ClickHouse/ClickHouse/blob/v21.5.5.12-stable/src/Common/escapeForFileName.cpp#L33
+    // Reference: https://github.com/ClickHouse/ClickHouse/blob/06446b4f08a142d6f1bc30664c47ded88ab51782/src/Common/tests/gtest_unescapeForFileName.cpp#L9
     @Test(groups = { "unit" })
     public void testUnescape() {
         String str = "";
