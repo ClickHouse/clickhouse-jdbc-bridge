@@ -15,6 +15,8 @@
  */
 package ru.yandex.clickhouse.jdbcbridge.core;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Objects;
 
 import io.vertx.core.MultiMap;
@@ -30,6 +32,8 @@ import static ru.yandex.clickhouse.jdbcbridge.core.Utils.EMPTY_STRING;
  * @since 2.0
  */
 public class QueryParser {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(QueryParser.class);
+
     private static final String PARAM_CONNECTION_STRING = "connection_string";
     private static final String PARAM_SCHEMA = "schema";
     private static final String PARAM_TABLE = "table";
@@ -313,21 +317,16 @@ public class QueryParser {
         return query;
     }
 
-    // https://github.com/ClickHouse/ClickHouse/blob/v21.5.5.12-stable/src/Common/escapeForFileName.cpp#L33
-    static String unescape(String str) {
-        StringBuilder builder = new StringBuilder();
 
-        for (int i = 0, len = str.length(); i < len; i++) {
-            char ch = str.charAt(i);
-            if (ch == '%' && i + 2 < len) {
-                ch = (char) Integer.parseInt(str.substring(i + 1, i + 3), 16);
-                i = i + 2;
-            }
-
-            builder.append(ch);
+    static String unescape(String str){
+        String parserStr = "";
+        try {
+            parserStr = URLDecoder.decode(str, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            log.error("Failed to parser columns or table, parser text(url): ",str);
+            e.printStackTrace();
         }
-
-        return builder.toString();
+        return parserStr;
     }
 
     static String normalizeQuery(String query) {

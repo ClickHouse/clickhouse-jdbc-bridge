@@ -127,23 +127,21 @@ public class QueryParserTest {
         assertEquals(parser.getNormalizedQuery(), "select a from table where column = 2 and 'value1' != 'value2'");
     }
 
+    // Reference: https://github.com/ClickHouse/ClickHouse/blob/v21.5.5.12-stable/src/Common/escapeForFileName.cpp#L33
     @Test(groups = { "unit" })
     public void testUnescape() {
         String str = "";
         assertEquals(str, QueryParser.unescape(str));
-        assertEquals(str = "%", QueryParser.unescape(str));
-        assertEquals(str = "%b", QueryParser.unescape(str));
+        assertEquals(str= "172.19.0.6", QueryParser.unescape(str));
+        assertEquals(str= "abcd.", QueryParser.unescape(str));
+        assertEquals(str= "abcd", QueryParser.unescape(str));
+        assertEquals(str= "..::", QueryParser.unescape(str));
+
+        assertEquals("`nbusfreq` Nullable(String)", QueryParser.unescape("%60nbusfreq%60%20Nullable%28String%29"));
+        assertEquals("里程", QueryParser.unescape("%E9%87%8C%E7%A8%8B"));
+
         assertEquals("{", QueryParser.unescape("%7b"));
         assertEquals("{", QueryParser.unescape("%7B"));
         assertEquals("09AFaf", QueryParser.unescape("%30%39%41%46%61%66"));
-
-        try {
-            QueryParser.unescape(str = "%AGc");
-            fail("Should fail when unescape: " + str);
-        } catch (NumberFormatException e) {
-            assertNotNull(e);
-        }
-
-        assertEquals(str = "a\0\r\ncc123$%", QueryParser.unescape(str));
     }
 }
