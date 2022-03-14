@@ -317,13 +317,12 @@ public class QueryParser {
         return query;
     }
 
-    static String unescape(String str){
+    static String unescape(String str) {
         String parserStr = "";
         try {
             parserStr = URLDecoder.decode(str, "utf-8");
         } catch (UnsupportedEncodingException e) {
-            log.error("Failed to parser columns or table, parser text(url): ",str);
-            e.printStackTrace();
+            log.error("Failed to parser columns or table, parser text(url): {}", str, e);
         }
         return parserStr;
     }
