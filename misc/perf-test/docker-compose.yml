@@ -5,7 +5,7 @@ version: "3"
 #
 services:
   clickhouse:
-    image: yandex/clickhouse-server:20.8
+    image: clickhouse/clickhouse-server:22.3
     hostname: ch-server
     ports:
       - "3307:3307"
@@ -15,7 +15,7 @@ services:
     entrypoint: /bin/bash
     command: >
       -c "
-      echo '<yandex>
+      echo '<clickhouse>
         <listen_host>0.0.0.0</listen_host>
         <mysql_port>3307</mysql_port>
         <jdbc_bridge>
@@ -29,7 +29,7 @@ services:
           <events>true</events>
           <asynchronous_metrics>true</asynchronous_metrics>
         </prometheus>
-      </yandex>' > /etc/clickhouse-server/config.d/perf_test_config.xml && /entrypoint.sh
+      </clickhouse>' > /etc/clickhouse-server/config.d/perf_test_config.xml && /entrypoint.sh
       "
     deploy:
       mode: replicated

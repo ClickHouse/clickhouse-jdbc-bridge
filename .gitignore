@@ -8,3 +8,4 @@ dependency-reduced-pom.xml
 demo/
 target/
 test.sh
+test-dir/

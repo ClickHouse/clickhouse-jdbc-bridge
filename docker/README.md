@@ -30,14 +30,14 @@ docker run -d --name ch-jdbc-bridge -p9019:9019 -v `pwd`/drivers:/app/drivers \
 ### Configure ClickHouse server
 By default, ClickHouse assumes JDBC bridge is available at `localhost:9019`. You can customize the host and port in `/etc/clickhouse-server/config.xml` like below:
 ```xml
-<yandex>
+<clickhouse>
     ...
     <jdbc_bridge>
         <host>localhost</host>
         <port>9019</port>
     </jdbc_bridge>
     ...
-</yandex>
+</clickhouse>
 ```
 
 ### Issue query on ClickHouse

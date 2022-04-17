@@ -76,8 +76,8 @@ JDBC bridge for ClickHouse®. It acts as a stateless proxy passing queries from 
     # start the two containers
     docker run --rm -d --network ch-net --name jdbc-bridge --hostname jdbc-bridge clickhouse/jdbc-bridge
     docker run --rm -d --network ch-net --name ch-server --hostname ch-server \
-        --entrypoint /bin/bash yandex/clickhouse-server -c \
-        "echo '<yandex><jdbc_bridge><host>jdbc-bridge</host><port>9019</port></jdbc_bridge></yandex>' \
+        --entrypoint /bin/bash clickhouse/clickhouse-server -c \
+        "echo '<clickhouse><jdbc_bridge><host>jdbc-bridge</host><port>9019</port></jdbc_bridge></clickhouse>' \
             > /etc/clickhouse-server/config.d/jdbc_bridge_config.xml && /entrypoint.sh"
     # add named datasource and query
     docker exec -it jdbc-bridge cp /app/config/datasources/datasource.json.example \
@@ -96,28 +96,28 @@ JDBC bridge for ClickHouse®. It acts as a stateless proxy passing queries from 
     Debian/Ubuntu
     ```bash
     apt update && apt install -y procps wget
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.2/clickhouse-jdbc-bridge_2.0.2-1_all.deb
-    apt install --no-install-recommends -f ./clickhouse-jdbc-bridge_2.0.2-1_all.deb
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.1.0/clickhouse-jdbc-bridge_2.1.0-1_all.deb
+    apt install --no-install-recommends -f ./clickhouse-jdbc-bridge_2.1.0-1_all.deb
     clickhouse-jdbc-bridge
     ```
 
     CentOS/RHEL
     ```bash
     yum install -y wget
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.2/clickhouse-jdbc-bridge-2.0.2-1.noarch.rpm
-    yum localinstall -y clickhouse-jdbc-bridge-2.0.2-1.noarch.rpm
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.1.0/clickhouse-jdbc-bridge-2.1.0-1.noarch.rpm
+    yum localinstall -y clickhouse-jdbc-bridge-2.1.0-1.noarch.rpm
     clickhouse-jdbc-bridge
     ```
 
 * Java CLI
 
     ```bash
-    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.0.2/clickhouse-jdbc-bridge-2.0.2-shaded.jar
+    wget https://github.com/ClickHouse/clickhouse-jdbc-bridge/releases/download/v2.1.0/clickhouse-jdbc-bridge-2.1.0-shaded.jar
     # add named datasource
     wget -P config/datasources https://raw.githubusercontent.com/ClickHouse/clickhouse-jdbc-bridge/master/misc/quick-start/jdbc-bridge/config/datasources/ch-server.json
     # start jdbc bridge, and then issue below query in ClickHouse for testing
     # select * from jdbc('ch-server', 'select 1')
-    java -jar clickhouse-jdbc-bridge-2.0.2-shaded.jar
+    java -jar clickhouse-jdbc-bridge-2.1.0-shaded.jar
     ```
 
 
@@ -294,7 +294,7 @@ Assuming you started a test environment using docker-compose, please refer to ex
 
 * Query Parameters
 
-    All supported query parameters can be found at [here](src/main/java/ru/yandex/clickhouse/jdbcbridge/core/QueryParameters.java). `datasource_column=true` can be simplied as `datasource_column`, for example:
+    All supported query parameters can be found at [here](src/main/java/com/clickhouse/jdbcbridge/core/QueryParameters.java). `datasource_column=true` can be simplied as `datasource_column`, for example:
     ```sql
     select * from jdbc('ch-server?datasource_column=true', 'select 1')
 
@@ -341,7 +341,7 @@ docker build --build-arg revision=20.9.3 -f all-in-one.Dockerfile -t my/clickhou
 
 ## Develop
 
-JDBC bridge is extensible. You may take [ConfigDataSource](src/main/java/ru/yandex/clickhouse/jdbcbridge/impl/ConfigDataSource.java) and [ScriptDataSource](src/main/java/ru/yandex/clickhouse/jdbcbridge/impl/ScriptDataSource.java) as examples to create your own extension.
+JDBC bridge is extensible. You may take [ConfigDataSource](src/main/java/com/clickhouse/jdbcbridge/impl/ConfigDataSource.java) and [ScriptDataSource](src/main/java/com/clickhouse/jdbcbridge/impl/ScriptDataSource.java) as examples to create your own extension.
 
 An extension for JDBC bridge is basically a Java class with 3 optional parts:
 

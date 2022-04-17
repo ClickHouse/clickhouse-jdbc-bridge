@@ -25,7 +25,7 @@ start_server() {
 		java -XX:+UseContainerSupport -XX:+IdleTuningCompactOnIdle -XX:+IdleTuningGcOnIdle \
 			-Xdump:none -Xdump:tool:events=systhrow+throw,filter=*OutOfMemoryError,exec="kill -9 %pid" \
 			-Djava.util.logging.config.file=$JDBC_BRIDGE_HOME/logging.properties -Dnashorn.args=--language=es6 \
-			${JDBC_BRIDGE_JVM_OPTS:=""} -cp $classpath ru.yandex.clickhouse.jdbcbridge.JdbcBridgeVerticle
+			${JDBC_BRIDGE_JVM_OPTS:=""} -cp $classpath com.clickhouse.jdbcbridge.JdbcBridgeVerticle
 	else
 		java -XX:+UseContainerSupport -XX:+IdleTuningCompactOnIdle -XX:+IdleTuningGcOnIdle \
 			-Xdump:none -Xdump:tool:events=systhrow+throw,filter=*OutOfMemoryError,exec="kill -9 %pid" \
