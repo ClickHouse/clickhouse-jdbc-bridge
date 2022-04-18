@@ -5,9 +5,9 @@
       "self"
     ],
     "driverUrls": [
-      "https://repo1.maven.org/maven2/ru/yandex/clickhouse/clickhouse-jdbc/0.2.5/clickhouse-jdbc-0.2.5-shaded.jar"
+      "https://repo1.maven.org/maven2/com/clickhouse/clickhouse-jdbc/0.3.2-patch8/clickhouse-jdbc-0.3.2-patch8-http.jar"
     ],
-    "driverClassName": "ru.yandex.clickhouse.ClickHouseDriver",
+    "driverClassName": "com.clickhouse.jdbc.ClickHouseDriver",
     "jdbcUrl": "jdbc:clickhouse://ch-server:8123/system?compress=false",
     "username": "default",
     "password": "",

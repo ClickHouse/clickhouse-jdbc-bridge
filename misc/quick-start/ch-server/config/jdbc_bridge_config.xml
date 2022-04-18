@@ -1,8 +1,8 @@
-<yandex>
+<clickhouse>
     <listen_host>0.0.0.0</listen_host>
 
     <jdbc_bridge>
         <host>jdbc-bridge</host>
         <port>9019</port>
     </jdbc_bridge>
-</yandex>
+</clickhouse>

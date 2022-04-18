@@ -22,7 +22,7 @@ This project includes:
   Caffeine cache under Apache License, Version 2.0
   Checker Qual under The MIT License
   ClickHouse JDBC Bridge under Apache License, Version 2.0
-  dnsjava under BSD-2-Clause
+  dnsjava under BSD-3-Clause
   docker-java-api under The Apache Software License, Version 2.0
   docker-java-transport under The Apache Software License, Version 2.0
   docker-java-transport-zerodep under The Apache Software License, Version 2.0
@@ -36,6 +36,7 @@ This project includes:
   jackson-databind under The Apache Software License, Version 2.0
   Java Native Access under LGPL, version 2.1 or Apache License v2.0
   jcommander under Apache 2.0
+  JetBrains Java Annotations under The Apache Software License, Version 2.0
   JUnit under Eclipse Public License 1.0
   LatencyUtils under Public Domain, per Creative Commons CC0
   micrometer-core under The Apache Software License, Version 2.0
@@ -51,6 +52,7 @@ This project includes:
   Netty/Handler/Proxy under Apache License, Version 2.0
   Netty/Resolver under Apache License, Version 2.0
   Netty/Resolver/DNS under Apache License, Version 2.0
+  Netty/TomcatNative [OpenSSL - Classes] under The Apache Software License, Version 2.0
   Netty/Transport under Apache License, Version 2.0
   Prometheus Java Simpleclient under The Apache Software License, Version 2.0
   Prometheus Java Simpleclient Common under The Apache Software License, Version 2.0

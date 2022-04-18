@@ -10,7 +10,7 @@ on:
       minor:
         description: "Minor version"
         required: false
-        default: "0"
+        default: "1"
       patch:
         description: "Patch"
         required: false
@@ -18,7 +18,7 @@ on:
       organization:
         description: "DockerHub organization"
         required: false
-        default: "yandex"
+        default: "clickhouse"
 
 jobs:
   pre-release:
