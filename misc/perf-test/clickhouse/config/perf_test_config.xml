@@ -1,4 +1,4 @@
-<yandex>
+<clickhouse>
     <listen_host>0.0.0.0</listen_host>
     <mysql_port>3307</mysql_port>
     <jdbc_bridge>
@@ -12,4 +12,4 @@
         <events>true</events>
         <asynchronous_metrics>true</asynchronous_metrics>
     </prometheus>
-</yandex>
+</clickhouse>

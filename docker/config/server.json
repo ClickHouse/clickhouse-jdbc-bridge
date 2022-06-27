@@ -4,27 +4,27 @@
   "configScanPeriod": 5000,
   "repositories": [
     {
-      "entity": "ru.yandex.clickhouse.jdbcbridge.core.NamedDataSource",
-      "repository": "ru.yandex.clickhouse.jdbcbridge.impl.JsonFileRepository"
+      "entity": "com.clickhouse.jdbcbridge.core.NamedDataSource",
+      "repository": "com.clickhouse.jdbcbridge.impl.JsonFileRepository"
     },
     {
-      "entity": "ru.yandex.clickhouse.jdbcbridge.core.NamedSchema",
-      "repository": "ru.yandex.clickhouse.jdbcbridge.impl.JsonFileRepository"
+      "entity": "com.clickhouse.jdbcbridge.core.NamedSchema",
+      "repository": "com.clickhouse.jdbcbridge.impl.JsonFileRepository"
     },
     {
-      "entity": "ru.yandex.clickhouse.jdbcbridge.core.NamedQuery",
-      "repository": "ru.yandex.clickhouse.jdbcbridge.impl.JsonFileRepository"
+      "entity": "com.clickhouse.jdbcbridge.core.NamedQuery",
+      "repository": "com.clickhouse.jdbcbridge.impl.JsonFileRepository"
     }
   ],
   "extensions": [
     {
-      "class": "ru.yandex.clickhouse.jdbcbridge.impl.JdbcDataSource"
+      "class": "com.clickhouse.jdbcbridge.impl.JdbcDataSource"
     },
     {
-      "class": "ru.yandex.clickhouse.jdbcbridge.impl.ConfigDataSource"
+      "class": "com.clickhouse.jdbcbridge.impl.ConfigDataSource"
     },
     {
-      "class": "ru.yandex.clickhouse.jdbcbridge.impl.ScriptDataSource"
+      "class": "com.clickhouse.jdbcbridge.impl.ScriptDataSource"
     }
   ]
 }

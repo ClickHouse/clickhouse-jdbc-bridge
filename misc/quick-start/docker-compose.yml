@@ -4,7 +4,7 @@ version: "2"
 # You may remove any db-xxx to save memory.
 services:
   db-elasticsearch:
-    image: amazon/opendistro-for-elasticsearch:1.11.0
+    image: amazon/opendistro-for-elasticsearch:1.13.2
     hostname: db-elasticsearch
     environment:
       # admin/admin
@@ -12,7 +12,7 @@ services:
       # curl -XGET https://localhost:9200/_cat/nodes?v -u admin:admin --insecure
       # curl -XGET https://localhost:9200/_cat/plugins?v -u admin:admin --insecure
       discovery.type: single-node
-    mem_limit: 512m
+    mem_limit: 768m
     restart: always
 
   db-mariadb10:
@@ -21,7 +21,7 @@ services:
     environment:
       MYSQL_DATABASE: test
       MYSQL_ROOT_PASSWORD: root
-    mem_limit: 512m
+    mem_limit: 256m
     restart: always
 
   db-postgres13:
@@ -31,7 +31,7 @@ services:
       POSTGRES_DB: test
       POSTGRES_USER: sa
       POSTGRES_PASSWORD: sa
-    mem_limit: 512m
+    mem_limit: 256m
     restart: always
 
   db-mysql5:
@@ -40,7 +40,7 @@ services:
     environment:
       MYSQL_DATABASE: test
       MYSQL_ROOT_PASSWORD: root
-    mem_limit: 512m
+    mem_limit: 256m
     restart: always
 
   db-mysql8:
@@ -49,21 +49,21 @@ services:
     environment:
       MYSQL_DATABASE: test
       MYSQL_ROOT_PASSWORD: root
-    mem_limit: 512m
+    mem_limit: 256m
     restart: always
 
   ch-server:
-    image: yandex/clickhouse-server:20.8
+    image: clickhouse/clickhouse-server:22.3
     hostname: ch-server
     volumes:
       - ./ch-server/config:/etc/clickhouse-server/config.d
       #- ./ch-server/data:/var/lib/clickhouse
       #- ./ch-server/logs:/var/log/clickhouse
-    mem_limit: 512m
+    mem_limit: 256m
     restart: always
 
   jdbc-bridge:
-    image: clickhouse/jdbc-bridge:2.0
+    image: clickhouse/jdbc-bridge:2.1
     hostname: jdbc-bridge
     # In general you don't need to define any environment variable
     # Below are all default settings just for demonstration
@@ -85,5 +85,5 @@ services:
       - ./jdbc-bridge/config:/app/config
       - ./jdbc-bridge/drivers:/app/drivers
       - ./jdbc-bridge/scripts:/app/scripts
-    mem_limit: 512m
+    mem_limit: 256m
     restart: always

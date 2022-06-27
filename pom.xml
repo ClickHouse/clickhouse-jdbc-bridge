@@ -1,27 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>ru.yandex.clickhouse</groupId>
+    <groupId>com.clickhouse</groupId>
     <artifactId>clickhouse-jdbc-bridge</artifactId>
     <packaging>jar</packaging>
-    <version>2.0.7-SNAPSHOT</version>
+    <version>2.1.0-SNAPSHOT</version>
     <name>ClickHouse JDBC Bridge</name>
     <url>https://github.com/ClickHouse/clickhouse-jdbc-bridge</url>
     <description>JDBC bridge for ClickHouse.</description>
     <inceptionYear>2019</inceptionYear>
 
     <properties>
-        <caffeine.version>2.9.2</caffeine.version>
-        <dnsjava.version>3.4.2</dnsjava.version>
-        <vertx.version>3.9.9</vertx.version>
+        <caffeine.version>2.9.3</caffeine.version>
+        <dnsjava.version>3.5.0</dnsjava.version>
+        <vertx.version>3.9.13</vertx.version>
         <micrometer.version>1.1.19</micrometer.version>
-        <slf4j.version>1.7.32</slf4j.version>
+        <slf4j.version>1.7.36</slf4j.version>
         <hikaricp.version>3.4.5</hikaricp.version>
-        <project.current.year>2021</project.current.year>
+        <project.current.year>2022</project.current.year>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <testcontainers.version>1.16.0</testcontainers.version>
+        <testcontainers.version>1.16.3</testcontainers.version>
         <testng.version>6.14.3</testng.version>
         <main.basedir>${project.basedir}</main.basedir>
         <deploy-plugin.version>3.0.0-M1</deploy-plugin.version>
@@ -37,7 +36,7 @@
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
         <failsafe-plugin.version>3.0.0-M5</failsafe-plugin.version>
         <shade-plugin.version>3.2.4</shade-plugin.version>
-        <shade.base>ru.yandex.clickhouse.jdbcbridge.internal</shade.base>
+        <shade.base>com.clickhouse.jdbcbridge.internal</shade.base>
         <deb-plugin.version>1.0.20</deb-plugin.version>
         <rpm-plugin.version>2.2.0</rpm-plugin.version>
         <skipTests>false</skipTests>
@@ -399,6 +398,18 @@
                     <generateChildNotices>false</generateChildNotices>
                     <includeChildDependencies>false</includeChildDependencies>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>jakarta.xml.bind</groupId>
+                        <artifactId>jakarta.xml.bind-api</artifactId>
+                        <version>2.3.3</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.glassfish.jaxb</groupId>
+                        <artifactId>jaxb-runtime</artifactId>
+                        <version>2.3.3</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>check-license</id>
@@ -479,7 +490,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>ru.yandex.clickhouse.jdbcbridge.JdbcBridgeVerticle</mainClass>
+                            <mainClass>com.clickhouse.jdbcbridge.JdbcBridgeVerticle</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -556,9 +567,9 @@
                         </relocation>
                     </relocations>
                     <transformers>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer" />
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer" />
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                     </transformers>
                     <filters>
                         <filter>
