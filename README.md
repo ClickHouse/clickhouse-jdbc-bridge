@@ -286,7 +286,13 @@ Assuming you started a test environment using docker-compose, please refer to ex
 
 * Logging
 
-    You can customize logging configuration in [logging.properties](docker/logging.properties).
+    You can customize logging configuration in [logback.xml](docker/logback.xml). See the [logback documentation](https://logback.qos.ch/manual/configuration.html) for details about the contents of this file.
+
+    Note that the default logging level is `trace` -- you may wish to set this to `info` or `warning` for less verbose logs in production.
+
+    Note also that the default logging format is the default plaintext format suggested by logback. We also provide (by way of example) a structured log appender named `JSON_STDOUT`; to use it you will need to change the `appender-ref` property of the root logger to point to it.
+
+    WARNING: because the shaded jar build process relocates most classes to the `com.clickhouse.jdbcbridge.internal` path, using the default class paths offered in the logback documentation will result in import errors. If building your own logback.xml file, you will need to replace all references to `ch.qos.logback` with `com.clickhouse.jdbcbridge.internal.qos.logback` -- the included logback.xml file does this for you.
 
 * Vert.x
 
