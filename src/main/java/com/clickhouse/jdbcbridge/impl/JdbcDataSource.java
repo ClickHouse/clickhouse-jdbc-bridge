@@ -573,6 +573,7 @@ public class JdbcDataSource extends NamedDataSource {
 
     protected ColumnDefinition[] getColumnsFromResultSet(ResultSet rs, QueryParameters params) throws SQLException {
         ResultSetMetaData meta = Objects.requireNonNull(rs).getMetaData();
+        Boolean isPostgres = meta.getClass().getName().equals("org.postgresql.jdbc.PgResultSetMetaData");
 
         ColumnDefinition[] columns = new ColumnDefinition[meta.getColumnCount()];
 
@@ -612,7 +613,25 @@ public class JdbcDataSource extends NamedDataSource {
             String name = getColumnName(meta, i);
             String typeName = meta.getColumnTypeName(i);
             JDBCType jdbcType = JDBCType.valueOf(meta.getColumnType(i));
+
             DataType type = converter.from(jdbcType, typeName, precision, scale, isSigned);
+            /* Visiology - Begin */
+            // JDBC-bridge does not properly handle boolean and numeric types in PostgreSQL.
+            // Here we fix two problems:
+            // 1. Error: "Caused by: org.postgresql.util.PSQLException: Bad value for type int : t" while trying to execute select boolean types, for example:
+            // SELECT * FROM jdbc('jdbc:postgresql://host:5432/microsoft_contoso_integration_100k?user=postgres&password=', 'select true');
+            // 2. Loss of precision for numeric type, for example:
+            // SELECT * FROM jdbc('jdbc:postgresql://host:5432/microsoft_contoso_integration_100k?user=postgres&password=', 'select 123.456789');
+            // https://github.com/ClickHouse/clickhouse-jdbc-bridge/issues/160
+            if (isPostgres) {
+                if (typeName.equals("bool")) {
+                    type = DataType.Str;
+                } else if (jdbcType == JDBCType.NUMERIC && scale == 0 && precision == 0) {
+                    scale = 20;
+                    precision = 4;
+                }
+            }
+            /* Visiology - End */
 
             columns[i - 1] = new ColumnDefinition(name, type, ResultSetMetaData.columnNoNulls != nullability, length,
                     precision, scale);
