@@ -461,7 +461,13 @@ public class JdbcDataSource extends NamedDataSource {
             this.initQuoteIdentifier(conn);
 
             try {
-                conn.setAutoCommit(true);
+                /* Visiology - Begin */
+                // We have to turn off autocommit to be able to stream processing:
+                // https://jdbc.postgresql.org/documentation/query/#getting-results-based-on-a-cursor
+                // https://github.com/ClickHouse/clickhouse-jdbc-bridge/issues/161
+                // conn.setAutoCommit(true);
+                conn.setAutoCommit(false);
+                /* Visiology - End */
             } catch (Throwable e) {
                 log.warn("Failed to enable auto-commit due to {}", e.getMessage());
             }
