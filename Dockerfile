@@ -17,7 +17,8 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-FROM adoptopenjdk/openjdk8-openj9:jre8u322-b06_openj9-0.30.0-ubuntu
+ARG platform=linux/amd64
+FROM --platform=$platform adoptopenjdk/openjdk8-openj9:jre8u322-b06_openj9-0.30.0-ubuntu
 
 ARG revision=latest
 ARG repository=ClickHouse/clickhouse-jdbc-bridge
