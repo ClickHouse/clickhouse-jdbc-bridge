@@ -307,7 +307,7 @@ Assuming you started a test environment using docker-compose, please refer to ex
     1. datasource timeout, for example: `max_execution_time` in MariaDB
     2. JDBC driver timeout, for example: `connectTimeout` and `socketTimeout` in [MariaDB Connector/J](https://mariadb.com/kb/en/about-mariadb-connector-j/)
     3. JDBC bridge timeout, for examples: `queryTimeout` in `config/server.json`, and `maxWorkerExecuteTime` in `config/vertx.json`
-    4. ClickHouse timeout like `max_execution_time` and `keep_alive_timeout` etc.
+    4. ClickHouse timeout like `max_execution_time`, `keep_alive_timeout` and `http_receive_timeout` etc.
     5. Client timeout, for example: `socketTimeout` in ClickHouse JDBC driver
 
 
