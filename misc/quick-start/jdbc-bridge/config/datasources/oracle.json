@@ -1,0 +1,10 @@
+{
+  "oracle": {
+  "driverUrls": [
+    "/root/ojdbc8.jar"
+  ],
+  "jdbcUrl": "jdbc:oracle:thin:@//ip:1521/ORCLPDB1",
+  "username": "用户名",
+  "password": "密码"
+  }
+}
