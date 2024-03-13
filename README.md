@@ -1,3 +1,6 @@
+> [!NOTE]
+> clickhouse-jdbc-bridge contains experimental codes and is no longer supported. It may contain reliability and security vulnerabilities. Use it at your own risk.
+
 # ClickHouse JDBC Bridge
 
 ![Build](https://github.com/ClickHouse/clickhouse-jdbc-bridge/workflows/Build/badge.svg) ![Release](https://img.shields.io/github/v/release/ClickHouse/clickhouse-jdbc-bridge?include_prereleases)
