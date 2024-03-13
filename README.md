@@ -1,6 +1,5 @@
-### Disclaimer
-
-clickhouse-jdbc-bridge contains experimental code and is currently lack of support. As such this project is currently in **frozen** state. There may be reliability and security issues. Please use at your own risk.
+> [!NOTE]
+> clickhouse-jdbc-bridge contains experimental codes and is no longer supported. It may contain reliability and security vulnerabilities. Use it at your own risk.
 
 # ClickHouse JDBC Bridge
 
