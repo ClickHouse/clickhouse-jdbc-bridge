@@ -1,3 +1,7 @@
+### Disclaimer
+
+clickhouse-jdbc-bridge contains experimental code and is currently lack of support. As such this project is currently in **frozen** state. There may be reliability and security issues. Please use at your own risk.
+
 # ClickHouse JDBC Bridge
 
 ![Build](https://github.com/ClickHouse/clickhouse-jdbc-bridge/workflows/Build/badge.svg) ![Release](https://img.shields.io/github/v/release/ClickHouse/clickhouse-jdbc-bridge?include_prereleases)
